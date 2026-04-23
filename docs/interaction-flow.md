@@ -21,6 +21,17 @@ Scene updates:
 
 No layout change
 
+Slider resets to full "after" (splat fully visible) on every intent switch.
+
+---
+
+## Step 2b: Before / After Comparison (optional)
+
+User grabs the world-space seam handle and pulls left to reveal passthrough (real kitchen).
+Pulling right returns to the full intent splat.
+
+See `before-after-slider.md` for full design.
+
 ---
 
 ## Step 3: Exploration

@@ -14,11 +14,18 @@
 - anchor points in scene
 - triggers UI
 
-### 4. Product System
+### 4. Before / After System
+- world-space grabbable seam handle
+- GaussianCutout Box volume covers left portion of kitchen (passthrough reveals there)
+- BeforeAfterController maps handle X position to cutout size
+- resets to full splat on every intent switch
+- See `before-after-slider.md` for full design
+
+### 5. Product System
 - maps hotspot → product
 - supports variants
 
-### 5. UI System
+### 6. UI System
 - compact card
 - expanded card
 
