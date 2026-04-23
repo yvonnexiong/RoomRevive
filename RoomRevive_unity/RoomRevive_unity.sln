@@ -1,19 +1,35 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GaussianSplattingEditor", "GaussianSplattingEditor.csproj", "{5a0b1962-3d69-479f-6ed5-27ff91b5c288}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly-CSharp.csproj", "{eeb8f325-32c4-86d0-62a0-7771262bc938}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp-Editor", "Assembly-CSharp-Editor.csproj", "{6800f9c8-67c4-f0a9-3648-2ab97cdf9ac9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorldLabs", "WorldLabs.csproj", "{43d5c08a-8055-90a6-d671-9d0172637666}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorldLabsEditor", "WorldLabsEditor.csproj", "{9b2708e2-8823-e543-6759-39d7b938e12a}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GaussianSplatting", "GaussianSplatting.csproj", "{74cc691f-52d3-29f1-28e0-a9c1c37459b1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5a0b1962-3d69-479f-6ed5-27ff91b5c288}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5a0b1962-3d69-479f-6ed5-27ff91b5c288}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{eeb8f325-32c4-86d0-62a0-7771262bc938}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{eeb8f325-32c4-86d0-62a0-7771262bc938}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6800f9c8-67c4-f0a9-3648-2ab97cdf9ac9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6800f9c8-67c4-f0a9-3648-2ab97cdf9ac9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43d5c08a-8055-90a6-d671-9d0172637666}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43d5c08a-8055-90a6-d671-9d0172637666}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9b2708e2-8823-e543-6759-39d7b938e12a}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9b2708e2-8823-e543-6759-39d7b938e12a}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74cc691f-52d3-29f1-28e0-a9c1c37459b1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74cc691f-52d3-29f1-28e0-a9c1c37459b1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

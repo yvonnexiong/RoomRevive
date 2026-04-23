@@ -939,14 +939,14 @@
     <Reference Include="Meta.XR.BuildingBlocks">
       <HintPath>C:\Users\Yinan\Documents\YX_XR\XR_hackathon_projects\RoomRevive\RoomRevive_unity\Library\ScriptAssemblies\Meta.XR.BuildingBlocks.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.Rendering.LightTransport.Editor">
-      <HintPath>C:\Users\Yinan\Documents\YX_XR\XR_hackathon_projects\RoomRevive\RoomRevive_unity\Library\ScriptAssemblies\Unity.Rendering.LightTransport.Editor.dll</HintPath>
-    </Reference>
     <Reference Include="Meta.XR.MCP.Extension.Editor">
       <HintPath>C:\Users\Yinan\Documents\YX_XR\XR_hackathon_projects\RoomRevive\RoomRevive_unity\Library\ScriptAssemblies\Meta.XR.MCP.Extension.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Oculus.Interaction.Samples.Editor.UISet">
       <HintPath>C:\Users\Yinan\Documents\YX_XR\XR_hackathon_projects\RoomRevive\RoomRevive_unity\Library\ScriptAssemblies\Oculus.Interaction.Samples.Editor.UISet.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Rendering.LightTransport.Editor">
+      <HintPath>C:\Users\Yinan\Documents\YX_XR\XR_hackathon_projects\RoomRevive\RoomRevive_unity\Library\ScriptAssemblies\Unity.Rendering.LightTransport.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.SettingsProvider.Editor">
       <HintPath>C:\Users\Yinan\Documents\YX_XR\XR_hackathon_projects\RoomRevive\RoomRevive_unity\Library\ScriptAssemblies\Unity.VisualScripting.SettingsProvider.Editor.dll</HintPath>
@@ -1322,6 +1322,22 @@
     <ProjectReference Include="Assembly-CSharp.csproj">
       <Project>{eeb8f325-32c4-86d0-62a0-7771262bc938}</Project>
       <Name>Assembly-CSharp</Name>
+    </ProjectReference>
+    <ProjectReference Include="WorldLabsEditor.csproj">
+      <Project>{9b2708e2-8823-e543-6759-39d7b938e12a}</Project>
+      <Name>WorldLabsEditor</Name>
+    </ProjectReference>
+    <ProjectReference Include="GaussianSplattingEditor.csproj">
+      <Project>{5a0b1962-3d69-479f-6ed5-27ff91b5c288}</Project>
+      <Name>GaussianSplattingEditor</Name>
+    </ProjectReference>
+    <ProjectReference Include="WorldLabs.csproj">
+      <Project>{43d5c08a-8055-90a6-d671-9d0172637666}</Project>
+      <Name>WorldLabs</Name>
+    </ProjectReference>
+    <ProjectReference Include="GaussianSplatting.csproj">
+      <Project>{74cc691f-52d3-29f1-28e0-a9c1c37459b1}</Project>
+      <Name>GaussianSplatting</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

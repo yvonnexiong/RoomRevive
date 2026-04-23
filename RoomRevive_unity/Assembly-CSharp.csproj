@@ -51,6 +51,19 @@
     <Compile Include="Assets\RoomRevive\Scripts\Product\ProductSO.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Hotspot\HotspotSO.cs" />
+    <None Include="Packages\com.worldlabs.gaussian-splatting\Shaders\GaussianDebugRenderBoxes.shader" />
+    <None Include="Packages\com.worldlabs.gaussian-splatting\Shaders\DeviceRadixSort.hlsl" />
+    <None Include="Packages\com.worldlabs.gaussian-splatting\Shaders\SortCommon.hlsl" />
+    <None Include="Packages\com.worldlabs.gaussian-splatting\Shaders\BlackSkybox.shader" />
+    <None Include="Packages\com.worldlabs.gaussian-splatting\Shaders\GaussianDebugRenderPoints.shader" />
+    <None Include="Packages\com.worldlabs.gaussian-splatting\Shaders\GaussianSplatting.hlsl" />
+    <None Include="Packages\com.worldlabs.gaussian-splatting\Shaders\GpuSortFidelityFX.hlsl" />
+    <None Include="Packages\com.worldlabs.gaussian-splatting\package.json" />
+    <None Include="Packages\com.worldlabs.gaussian-splatting\Shaders\SplatUtilities_FidelityFX.compute" />
+    <None Include="Packages\com.worldlabs.gaussian-splatting\Shaders\SplatUtilities_DeviceRadixSort.compute" />
+    <None Include="Packages\com.worldlabs.gaussian-splatting\Shaders\RenderGaussianSplats.shader" />
+    <None Include="Packages\com.worldlabs.gaussian-splatting\Shaders\SphericalHarmonics.hlsl" />
+    <None Include="Packages\com.worldlabs.gaussian-splatting\Shaders\GaussianComposite.shader" />
     <Reference Include="UnityEngine">
       <HintPath>C:\Program Files\Unity\Hub\Editor\6000.3.14f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
     </Reference>
@@ -876,14 +889,14 @@
     <Reference Include="Meta.XR.BuildingBlocks">
       <HintPath>C:\Users\Yinan\Documents\YX_XR\XR_hackathon_projects\RoomRevive\RoomRevive_unity\Library\ScriptAssemblies\Meta.XR.BuildingBlocks.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.Rendering.LightTransport.Editor">
-      <HintPath>C:\Users\Yinan\Documents\YX_XR\XR_hackathon_projects\RoomRevive\RoomRevive_unity\Library\ScriptAssemblies\Unity.Rendering.LightTransport.Editor.dll</HintPath>
-    </Reference>
     <Reference Include="Meta.XR.MCP.Extension.Editor">
       <HintPath>C:\Users\Yinan\Documents\YX_XR\XR_hackathon_projects\RoomRevive\RoomRevive_unity\Library\ScriptAssemblies\Meta.XR.MCP.Extension.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Oculus.Interaction.Samples.Editor.UISet">
       <HintPath>C:\Users\Yinan\Documents\YX_XR\XR_hackathon_projects\RoomRevive\RoomRevive_unity\Library\ScriptAssemblies\Oculus.Interaction.Samples.Editor.UISet.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Rendering.LightTransport.Editor">
+      <HintPath>C:\Users\Yinan\Documents\YX_XR\XR_hackathon_projects\RoomRevive\RoomRevive_unity\Library\ScriptAssemblies\Unity.Rendering.LightTransport.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.SettingsProvider.Editor">
       <HintPath>C:\Users\Yinan\Documents\YX_XR\XR_hackathon_projects\RoomRevive\RoomRevive_unity\Library\ScriptAssemblies\Unity.VisualScripting.SettingsProvider.Editor.dll</HintPath>
@@ -1256,6 +1269,22 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="WorldLabsEditor.csproj">
+      <Project>{9b2708e2-8823-e543-6759-39d7b938e12a}</Project>
+      <Name>WorldLabsEditor</Name>
+    </ProjectReference>
+    <ProjectReference Include="GaussianSplattingEditor.csproj">
+      <Project>{5a0b1962-3d69-479f-6ed5-27ff91b5c288}</Project>
+      <Name>GaussianSplattingEditor</Name>
+    </ProjectReference>
+    <ProjectReference Include="WorldLabs.csproj">
+      <Project>{43d5c08a-8055-90a6-d671-9d0172637666}</Project>
+      <Name>WorldLabs</Name>
+    </ProjectReference>
+    <ProjectReference Include="GaussianSplatting.csproj">
+      <Project>{74cc691f-52d3-29f1-28e0-a9c1c37459b1}</Project>
+      <Name>GaussianSplatting</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

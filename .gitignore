@@ -9,6 +9,9 @@ RoomRevive_unity/Build/
 RoomRevive_unity/Builds/
 RoomRevive_unity/UserSettings/
 
+# Secrets
+RoomRevive_unity/.env
+
 # OS
 .DS_Store
 Thumbs.db
