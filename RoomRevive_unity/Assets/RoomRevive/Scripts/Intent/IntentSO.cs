@@ -1,4 +1,5 @@
 using UnityEngine;
+using GaussianSplatting.Runtime;
 
 namespace RoomRevive
 {
@@ -7,6 +8,6 @@ namespace RoomRevive
     {
         public string id;
         public string displayName;
-        public GameObject splatWorld;
+        public GaussianSplatAsset splatAsset;
     }
 }

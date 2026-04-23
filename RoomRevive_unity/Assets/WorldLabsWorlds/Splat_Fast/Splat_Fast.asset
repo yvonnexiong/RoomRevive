@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33b71fae31e6c7d438e8566dc713e666, type: 3}
+  m_Name: Splat_Fast
+  m_EditorClassIdentifier: 
+  m_FormatVersion: 20240801
+  m_SplatCount: 500000
+  m_BoundsMin: {x: -9.3671875, y: -0.21972656, z: -5.3867188}
+  m_BoundsMax: {x: 5.3671875, y: 10.359375, z: 8.546875}
+  m_DataHash:
+    serializedVersion: 2
+    Hash: 20a10700a1d934010000000000000000
+  m_LayerInfo:
+  - x: 0
+    y: 500000
+  m_PosFormat: 2
+  m_ScaleFormat: 2
+  m_SHFormat: 3
+  m_ColorFormat: 2
+  m_clusteredSHData: {fileID: 0}
+  m_layerData:
+  - layer: 0
+    m_PosData: {fileID: 4900000, guid: 07bb5f38bbf227e42b910a85e4f0f372, type: 3}
+    m_ColorData: {fileID: 4900000, guid: 51bb15c262a7f604a91a20b174f063fd, type: 3}
+    m_OtherData: {fileID: 4900000, guid: 7bd054c3b64580548909bc22ac75fcfa, type: 3}
+    m_SHData: {fileID: 4900000, guid: 5e9cf53d4297afc47834f8eaa2d43ce1, type: 3}
+    m_ChunkData: {fileID: 4900000, guid: 50192ca1d7edb7f48944b01ed0aed63c, type: 3}
+  m_Cameras: []

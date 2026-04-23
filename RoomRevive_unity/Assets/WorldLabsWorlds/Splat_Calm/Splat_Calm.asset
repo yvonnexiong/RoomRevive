@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33b71fae31e6c7d438e8566dc713e666, type: 3}
+  m_Name: Splat_Calm
+  m_EditorClassIdentifier: 
+  m_FormatVersion: 20240801
+  m_SplatCount: 500000
+  m_BoundsMin: {x: -9.296875, y: -2.2578125, z: -5.2460938}
+  m_BoundsMax: {x: 5.9453125, y: 6.6757812, z: 8.15625}
+  m_DataHash:
+    serializedVersion: 2
+    Hash: 20a10700a1d934010000000000000000
+  m_LayerInfo:
+  - x: 0
+    y: 500000
+  m_PosFormat: 2
+  m_ScaleFormat: 2
+  m_SHFormat: 3
+  m_ColorFormat: 2
+  m_clusteredSHData: {fileID: 0}
+  m_layerData:
+  - layer: 0
+    m_PosData: {fileID: 4900000, guid: 1e97da91abc2cab42ad7141a5589ecf1, type: 3}
+    m_ColorData: {fileID: 4900000, guid: 925db40a676172b409d868b16240ff67, type: 3}
+    m_OtherData: {fileID: 4900000, guid: f884a5feeb7db0644942008e334ad919, type: 3}
+    m_SHData: {fileID: 4900000, guid: 413109ef15ad4dd409c33d84c8779acd, type: 3}
+    m_ChunkData: {fileID: 4900000, guid: eaaab2fb270c85b4e86b9a144d1b7677, type: 3}
+  m_Cameras: []
