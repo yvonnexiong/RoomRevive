@@ -1,0 +1,20 @@
+WorkFiles_excludedFromGit/
+
+# Unity generated
+RoomRevive_unity/Library/
+RoomRevive_unity/Temp/
+RoomRevive_unity/Logs/
+RoomRevive_unity/obj/
+RoomRevive_unity/Build/
+RoomRevive_unity/Builds/
+RoomRevive_unity/UserSettings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.suo
+*.user
