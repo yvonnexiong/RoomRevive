@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using UnityEngine;
 using GaussianSplatting.Runtime;
 
@@ -13,7 +12,6 @@ namespace RoomRevive
         [SerializeField] private IntentSO defaultIntent;
 
         public IntentSO CurrentIntent { get; private set; }
-        public bool IsSwitching { get; private set; }
         public event Action<IntentSO> OnIntentChanged;
 
         void Awake()
@@ -30,26 +28,11 @@ namespace RoomRevive
 
         public void SetIntent(IntentSO intent)
         {
-            if (intent == null || intent == CurrentIntent || IsSwitching) return;
-            StartCoroutine(SwitchIntent(intent));
-        }
-
-        IEnumerator SwitchIntent(IntentSO intent)
-        {
-            IsSwitching = true;
-            Debug.Log($"[IntentManager] Starting switch to: {intent.displayName}");
-
-            splatRenderer.enabled = false;
-            yield return null;
+            if (intent == null || intent == CurrentIntent) return;
+            if (splatRenderer == null) { Debug.LogError("[IntentManager] No GaussianSplatRenderer assigned."); return; }
 
             splatRenderer.m_Asset = intent.splatAsset;
-            yield return null;
-
-            splatRenderer.enabled = true;
-
             CurrentIntent = intent;
-            IsSwitching = false;
-            Debug.Log($"[IntentManager] Switched to: {intent.displayName}");
             OnIntentChanged?.Invoke(intent);
         }
     }

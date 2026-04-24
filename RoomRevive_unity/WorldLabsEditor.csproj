@@ -911,11 +911,11 @@
     <Reference Include="Unity.RenderPipelines.Core.Runtime">
       <HintPath>C:\Users\Yinan\Documents\YX_XR\XR_hackathon_projects\RoomRevive\RoomRevive_unity\Library\ScriptAssemblies\Unity.RenderPipelines.Core.Runtime.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEditor.UI">
-      <HintPath>C:\Users\Yinan\Documents\YX_XR\XR_hackathon_projects\RoomRevive\RoomRevive_unity\Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
-    </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>C:\Users\Yinan\Documents\YX_XR\XR_hackathon_projects\RoomRevive\RoomRevive_unity\Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEditor.UI">
+      <HintPath>C:\Users\Yinan\Documents\YX_XR\XR_hackathon_projects\RoomRevive\RoomRevive_unity\Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.TestRunner">
       <HintPath>C:\Users\Yinan\Documents\YX_XR\XR_hackathon_projects\RoomRevive\RoomRevive_unity\Library\ScriptAssemblies\UnityEngine.TestRunner.dll</HintPath>

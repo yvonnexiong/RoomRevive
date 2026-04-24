@@ -11,9 +11,9 @@ namespace RoomRevive
 
         void Update()
         {
-            if (Keyboard.current.digit1Key.wasPressedThisFrame) { Debug.Log("[IntentSwitcher] Key 1 → Calm & Unwind"); IntentManager.Instance.SetIntent(calm); }
-            if (Keyboard.current.digit2Key.wasPressedThisFrame) { Debug.Log("[IntentSwitcher] Key 2 → Host & Gather"); IntentManager.Instance.SetIntent(host); }
-            if (Keyboard.current.digit3Key.wasPressedThisFrame) { Debug.Log("[IntentSwitcher] Key 3 → Fast & Focused"); IntentManager.Instance.SetIntent(fast); }
+            if (Keyboard.current.digit1Key.wasPressedThisFrame) IntentManager.Instance.SetIntent(calm);
+            if (Keyboard.current.digit2Key.wasPressedThisFrame) IntentManager.Instance.SetIntent(host);
+            if (Keyboard.current.digit3Key.wasPressedThisFrame) IntentManager.Instance.SetIntent(fast);
         }
     }
 }

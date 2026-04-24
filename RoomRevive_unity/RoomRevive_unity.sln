@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorldLabsEditor", "WorldLab
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GaussianSplatting", "GaussianSplatting.csproj", "{74cc691f-52d3-29f1-28e0-a9c1c37459b1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp-firstpass", "Assembly-CSharp-firstpass.csproj", "{2c1dd1f0-c6cd-9ee8-6a72-d42998079bfe}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,6 +32,8 @@ Global
 		{9b2708e2-8823-e543-6759-39d7b938e12a}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{74cc691f-52d3-29f1-28e0-a9c1c37459b1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{74cc691f-52d3-29f1-28e0-a9c1c37459b1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2c1dd1f0-c6cd-9ee8-6a72-d42998079bfe}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2c1dd1f0-c6cd-9ee8-6a72-d42998079bfe}.Debug|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
