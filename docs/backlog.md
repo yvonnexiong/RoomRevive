@@ -7,8 +7,8 @@
 - [x] Implement intent switching (single GaussianSplatRenderer, swap asset at runtime via IntentManager)
 - [x] Build intent selector UI (world-space, 3 buttons)
 - [x] Startup & world alignment flow (Start screen → grabbable pivot sphere → Confirm)
-- [ ] Implement before/after slider (GaussianCutout + SeamHandle + BeforeAfterController) ← **YOU ARE HERE**
-- [ ] Add hotspot interaction (manually position colliders, wire to OVR ray interactor)
+- [x] Implement before/after slider (head-following UI slider, moves GSCutout local position)
+- [ ] Add hotspot interaction (manually position colliders, wire to OVR ray interactor) ← **YOU ARE HERE**
 - [ ] Build compact product card UI
 
 ---

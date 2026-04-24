@@ -2,95 +2,72 @@
 
 ## Concept
 
-A world-space vertical seam the user grabs and pulls to reveal the real kitchen (passthrough) on the left and the intent Gaussian Splat world on the right.
+A head-following UI slider (0–1) that moves the `GSCutout` GaussianCutout box between two local positions to reveal passthrough ("before") or show the full splat world ("after").
 
-"Before" = Meta Quest passthrough (real kitchen)
-"After"  = Gaussian Splat intent world, spatially aligned on top
+- **0 = Before** — passthrough (real kitchen visible, cutout covers the splats)
+- **1 = After** — full splat intent world visible (cutout moved out of splat bounds)
+- **Default = 1 (After)**
 
 ---
 
-## Why It Works
+## Design Change Note
 
-The Gaussian Splat renderer composites on top of passthrough by default.
-The existing `GaussianCutout` (Box) system hides splats inside a volume at render time.
-Where splats are cut out, passthrough shows through underneath naturally — no extra cameras or compositing tricks needed.
+> Original design used a world-space vertical grabbable seam handle (`SeamHandle`) the user physically drags.
+> This was replaced with a **head-following UI slider** for simpler interaction and more reliable UX in XR.
 
 ---
 
 ## Mechanism
 
-A `GaussianCutout` Box volume covers the left portion of the kitchen:
+The `GSCutout` (a `GaussianCutout` Box volume, child of `SplatRenderer`) is moved between two **local positions**:
 
-```
-[← PASSTHROUGH | SPLAT →]
-         ↑
-    grab this seam
-```
-
-| Slider value | Cutout box | Result |
+| Slider | GSCutout local position | Result |
 |---|---|---|
-| 0 (full left) | covers entire kitchen | full passthrough (before) |
-| 0.5 (center) | covers left half | split view |
-| 1 (full right) | covers nothing | full splat (after) |
+| 0 (Before) | (-0.32, 1.45, -2.88) | Cutout covers splats → passthrough shows |
+| 1 (After)  | (-4.3, 1.45, -5.65)  | Cutout outside splat bounds → full splat |
 
-Default when an intent is selected = 1 (full splat visible).
-
----
-
-## Interaction
-
-A **vertical grabbable seam** at the dividing boundary:
-- Thin glowing vertical bar the user grabs with hand or controller
-- Constrained to move along the kitchen's X axis only
-- Moves in real time as the user pulls left or right
-- Handled by the existing OVR interaction rig (no extra setup needed)
-
-Recommended input: **grab** (hand closes around seam handle), since the boundary is typically within arm's reach of the kitchen island. Test ray-drag as fallback for far-side reaches.
+Lerp between positions is linear. Y is fixed at 1.45 throughout.
 
 ---
 
 ## Components
 
-**`BeforeAfterController`**
-- Owns `sliderValue` (float 0–1)
-- `SetSlider(float)` — repositions the `GaussianCutout` box and `SeamHandle` to match
-- `ResetToAfter()` — called automatically on every intent switch (resets to 1)
-
-**`SeamHandle`** (MonoBehaviour on the grabbable seam GameObject)
-- `OnGrab()`, `OnMove()`, `OnRelease()`
-- Maps world X position along rail → calls `BeforeAfterController.SetSlider()`
-
-**`SeamVisual`**
-- Thin vertical plane at the boundary
-- Glowing edge material to make the seam legible in XR
+**`BeforeAfterSlider`** (MonoBehaviour on `BeforeAfterUI` canvas)
+- `cutoutTransform` → `GSCutout` Transform
+- `slider` → Unity `Slider` (0–1)
+- `beforePosition` = (-0.32, 1.45, -2.88)
+- `afterPosition` = (-4.3, 1.45, -5.65)
+- `ResetToAfter()` — called on every intent switch (resets slider to 1)
+- Follows user head via `LateUpdate()` (same pattern as `SplatOpacitySlider`)
 
 ---
 
 ## Scene Setup
 
 ```
-BeforeAfter
-├── SeamHandle          ← OVR Grabbable, constrained to X axis
-├── SeamVisual          ← thin glowing vertical plane
-└── GaussianCutoutBox   ← GaussianCutout (Box), child of active SplatWorld
-```
+BeforeAfterUI        ← World Space Canvas, head-following, BeforeAfterSlider script
+├── Background
+├── Label            ← "Before / After"
+├── Slider           ← Unity Slider, 0–1
+├── ISDK_RayCanvasInteraction
+└── ISDK_PokeCanvasInteraction
 
-`OVRPassthroughLayer` on `OVRCameraRig` — standard Meta Quest passthrough setup, required.
+SplatPivot
+└── SplatRenderer
+    └── GSCutout     ← GaussianCutout (Box), driven by BeforeAfterSlider
+```
 
 ---
 
 ## Integration with Intent System
 
-- Intent selected → splat switches → `BeforeAfterController.ResetToAfter()` called
-- Slider persists during exploration (user can compare before/after while viewing hotspots)
-- Works identically across all 3 intents — "before" is always the real passthrough kitchen
+- Intent selected → `BeforeAfterSlider.ResetToAfter()` should be called to reset to full splat view
+- Slider persists during exploration within a single intent
 
 ---
 
-## Files to Create
+## Files
 
 | File | Location |
 |---|---|
-| `BeforeAfterController.cs` | `Assets/RoomRevive/Scripts/BeforeAfter/` |
-| `SeamHandle.cs` | `Assets/RoomRevive/Scripts/BeforeAfter/` |
-| `SeamHandle_Prefab.prefab` | `Assets/RoomRevive/Prefabs/` |
+| `BeforeAfterSlider.cs` | `Assets/RoomRevive/Scripts/BeforeAfter/` |

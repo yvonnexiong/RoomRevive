@@ -209,27 +209,28 @@ Assets/
 
 See `before-after-slider.md` for the full design.
 
-**Components:**
-- `BeforeAfterController` — owns `sliderValue` (0–1), repositions `GaussianCutout` box and seam handle
-- `SeamHandle` — OVR Grabbable constrained to X axis, maps world position → `SetSlider()`
-- `SeamVisual` — thin glowing vertical plane at the boundary
+> Original design (SeamHandle + grabbable seam) was replaced with a **head-following UI slider** for simpler interaction.
+
+**Component:**
+- `BeforeAfterSlider` — head-following world-space canvas slider (0–1), lerps `GSCutout.localPosition` between before/after positions
+  - 0 = before: `(-0.32, 1.45, -2.88)` — cutout covers splats, passthrough visible
+  - 1 = after: `(-4.3, 1.45, -5.65)` — cutout outside splat bounds, full splat visible
+  - Default = 1 (after)
+  - `ResetToAfter()` called on intent switch
 
 **Scene setup:**
 ```
-BeforeAfter
-├── SeamHandle          ← OVR Grabbable, X-axis constrained
-├── SeamVisual          ← glowing vertical plane
-└── GaussianCutoutBox   ← GaussianCutout (Box), child of active SplatWorld
+BeforeAfterUI       ← World Space Canvas, BeforeAfterSlider script, ray+poke interaction
+SplatPivot
+└── SplatRenderer
+    └── GSCutout    ← GaussianCutout (Box), driven by BeforeAfterSlider
 ```
-
-`ResetToAfter()` is called on every intent switch — slider always starts at full splat when a new intent is selected.
 
 **Folder:**
 ```
 Scripts/
 └── BeforeAfter/
-    ├── BeforeAfterController.cs
-    └── SeamHandle.cs
+    └── BeforeAfterSlider.cs
 ```
 
 ---

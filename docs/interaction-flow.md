@@ -40,9 +40,11 @@ Slider resets to full "after" (splat fully visible) on every intent switch.
 
 ## Step 2b: Before / After Comparison (optional)
 
-User grabs the world-space seam handle and pulls left to reveal passthrough (real kitchen).
-Pulling right returns to the full intent splat.
+A head-following slider (top-right of view) lets the user drag between 0 and 1:
+- 0 = passthrough (real kitchen)
+- 1 = full splat intent world (default)
 
+Moves `GSCutout` local position linearly between two preset positions.
 See `before-after-slider.md` for full design.
 
 ---
