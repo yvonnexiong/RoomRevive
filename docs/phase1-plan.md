@@ -46,7 +46,32 @@ ProductSO
 
 ---
 
-## 2. Intent System
+## 2. Startup & World Alignment Flow
+
+See `startup-alignment-flow.md` for full design.
+
+**App states:** `Startup → Aligning → IntentSelect → Experience`
+
+**`StartupController`** — owns the state machine:
+- On Start pressed: enables `SplatPivot` at user's feet, shows alignment UI
+- On Confirm pressed: hides sphere, fires `OnAlignmentComplete` → `IntentManager` initializes
+
+**Scene hierarchy:**
+```
+SplatPivot                    ← moved/rotated by AlignmentSphere
+├── SplatRenderer             ← child of pivot
+└── AlignmentSphere           ← glowing grabbable, deactivated after confirm
+```
+
+**`AlignmentSphere`** — OVR Grabbable, constrains motion to XZ position + Y rotation only.
+
+**`BillboardPanel`** — Start screen canvas, faces `CenterEyeAnchor` each frame.
+
+> `IntentManager.Start()` must NOT auto-load default intent — deferred until `OnAlignmentComplete`.
+
+---
+
+## 3. Intent System
 
 Since appearance is pre-baked into each `.spz`, intent switching is a splat renderer toggle — no lighting or material controllers needed.
 
@@ -214,8 +239,9 @@ Scripts/
 1. `IntentSO`, `HotspotSO`, `ProductSO` — data layer first, no Unity dependency
 2. Import `.spz` files, set up 3 `GaussianSplatRenderer` GameObjects in scene
 3. `IntentManager` — toggle splat renderers, verify switching works
-4. `HotspotAnchor` + `HotspotManager` — manually position colliders, wire to OVR ray interactor
-5. `ProductCardController` — compact card only, hardcoded data first
-6. Wire data assets — swap hardcoded data for ScriptableObjects
-7. Before/after slider — `BeforeAfterController`, `SeamHandle`, `GaussianCutoutBox`
-8. Intent selector UI — last, systems are testable without it
+4. Intent selector UI
+5. Startup & alignment flow — `StartupController`, `BillboardPanel`, `AlignmentSphere` ← **NEXT**
+6. Before/after slider — `BeforeAfterController`, `SeamHandle`, `GaussianCutoutBox`
+7. `HotspotAnchor` + `HotspotManager` — manually position colliders, wire to OVR ray interactor
+8. `ProductCardController` — compact card only, hardcoded data first
+9. Wire data assets — swap hardcoded data for ScriptableObjects

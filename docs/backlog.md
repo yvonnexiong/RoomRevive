@@ -6,9 +6,10 @@
 - [x] Import .spz files, set up GaussianSplatRenderer in scene
 - [x] Implement intent switching (single GaussianSplatRenderer, swap asset at runtime via IntentManager)
 - [x] Build intent selector UI (world-space, 3 buttons)
-- [ ] Add hotspot interaction (manually position colliders, wire to OVR ray interactor) ← **YOU ARE HERE**
-- [ ] Build compact product card UI
+- [ ] Startup & world alignment flow (Start screen → grabbable pivot sphere → Confirm) ← **YOU ARE HERE**
 - [ ] Implement before/after slider (GaussianCutout + SeamHandle + BeforeAfterController)
+- [ ] Add hotspot interaction (manually position colliders, wire to OVR ray interactor)
+- [ ] Build compact product card UI
 
 ---
 

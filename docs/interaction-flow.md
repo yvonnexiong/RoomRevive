@@ -1,7 +1,20 @@
 # Interaction Flow
 
-## Entry
-User sees their reconstructed kitchen
+## Entry: Startup & Alignment
+
+**Start screen** (billboard, head-following):
+- Shows "RoomRevive" and a single "Start" button
+- Passthrough only — splat not active yet
+
+User presses **Start**:
+- Splat world spawns at user's current position/orientation
+
+**Alignment step** (world-space panel):
+- "Grab the sphere to align the kitchen to your real room"
+- User grabs glowing sphere → drags and rotates splat world onto real kitchen (Y axis rotation + XZ position only)
+- User presses **Confirm — world is aligned** → sphere disappears
+
+See `startup-alignment-flow.md` for full design.
 
 ---
 

@@ -12,10 +12,12 @@ Not different kitchens
 
 ## Experience Flow
 
-1. User sees their real kitchen
-2. Chooses an intent
-3. Kitchen transforms instantly
-4. User explores products via hotspots
+1. Start screen appears (billboard) — user presses "Start"
+2. Splat world spawns at user's location — user grabs pivot sphere to align it to their real kitchen
+3. User confirms alignment — intent selector appears
+4. User chooses an intent — kitchen transforms instantly
+5. User explores products via hotspots
+6. Before/after slider available to compare real vs. transformed kitchen
 
 ## Success Criteria
 - User recognizes their own space
