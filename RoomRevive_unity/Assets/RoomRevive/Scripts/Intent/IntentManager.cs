@@ -20,7 +20,16 @@ namespace RoomRevive
             Instance = this;
         }
 
+        [SerializeField] private bool autoInitOnStart = false;
+
         void Start()
+        {
+            if (autoInitOnStart && defaultIntent != null)
+                SetIntent(defaultIntent);
+        }
+
+        // Called by StartupController after alignment is confirmed
+        public void Initialize()
         {
             if (defaultIntent != null)
                 SetIntent(defaultIntent);

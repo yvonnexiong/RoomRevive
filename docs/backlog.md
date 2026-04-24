@@ -13,6 +13,12 @@
 
 ---
 
+## Utilities (always-on extras)
+
+- [x] Splat opacity slider — head-following world-space slider, controls `GaussianSplatRenderer.m_OpacityScale` (0–1). Useful for comparing splat vs passthrough without the before/after seam. `SplatOpacitySlider.cs`, `SplatOpacityUI` canvas.
+
+---
+
 ## Phase 2
 
 - [ ] Expanded product view
