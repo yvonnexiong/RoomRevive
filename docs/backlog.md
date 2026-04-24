@@ -6,8 +6,8 @@
 - [x] Import .spz files, set up GaussianSplatRenderer in scene
 - [x] Implement intent switching (single GaussianSplatRenderer, swap asset at runtime via IntentManager)
 - [x] Build intent selector UI (world-space, 3 buttons)
-- [ ] Startup & world alignment flow (Start screen → grabbable pivot sphere → Confirm) ← **YOU ARE HERE**
-- [ ] Implement before/after slider (GaussianCutout + SeamHandle + BeforeAfterController)
+- [x] Startup & world alignment flow (Start screen → grabbable pivot sphere → Confirm)
+- [ ] Implement before/after slider (GaussianCutout + SeamHandle + BeforeAfterController) ← **YOU ARE HERE**
 - [ ] Add hotspot interaction (manually position colliders, wire to OVR ray interactor)
 - [ ] Build compact product card UI
 
@@ -37,6 +37,17 @@
 ---
 
 ## Implementation Notes
+
+### Startup & Alignment Flow
+- `SplatPivot` is the scene root — `SplatRenderer` is a child, so pivot movement moves the whole splat world
+- `AlignmentSphere` drives `SplatPivot` XZ position + Y rotation each frame (no event wiring needed — sphere only moves when grabbed)
+- `_floorY` captured in `OnEnable` so Y-lock is always correct when sphere is repositioned
+- Sphere spawns 1.5m above pivot (waist/chest height for easy grabbing)
+- `IntentManager.autoInitOnStart = false` — init deferred until `StartupController.OnAlignConfirmed()`
+- `IntentSelectorUI` positioned in front of user at the moment it's activated
+- `OVRManager.AllowRecenter = false` + `OVRManager.boundary.SetVisible(false)` called every frame to suppress boundary
+- `OnTrackingAcquired` restores saved pivot transform after any tracking loss/recenter
+- All UI canvases (StartUI, AlignmentUI, SplatOpacityUI) use ray + poke ISDK interaction
 
 ### Intent System
 - Single `GaussianSplatRenderer` (not 3 separate ones — toggling SetActive on GPU resources crashes Unity)
