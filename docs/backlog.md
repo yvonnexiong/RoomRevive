@@ -5,8 +5,8 @@
 - [x] Define data models (IntentSO, HotspotSO, ProductSO)
 - [x] Import .spz files, set up GaussianSplatRenderer in scene
 - [x] Implement intent switching (single GaussianSplatRenderer, swap asset at runtime via IntentManager)
-- [ ] Build intent selector UI (world-space, 3 buttons) ← **YOU ARE HERE**
-- [ ] Add hotspot interaction (manually position colliders, wire to OVR ray interactor)
+- [x] Build intent selector UI (world-space, 3 buttons)
+- [ ] Add hotspot interaction (manually position colliders, wire to OVR ray interactor) ← **YOU ARE HERE**
 - [ ] Build compact product card UI
 - [ ] Implement before/after slider (GaussianCutout + SeamHandle + BeforeAfterController)
 
