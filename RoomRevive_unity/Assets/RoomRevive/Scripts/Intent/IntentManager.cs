@@ -10,6 +10,7 @@ namespace RoomRevive
 
         [SerializeField] private GaussianSplatRenderer splatRenderer;
         [SerializeField] private IntentSO defaultIntent;
+        [SerializeField] private GameObject hotspotsRoot;
 
         public IntentSO CurrentIntent { get; private set; }
         public event Action<IntentSO> OnIntentChanged;
@@ -43,6 +44,9 @@ namespace RoomRevive
             splatRenderer.m_Asset = intent.splatAsset;
             CurrentIntent = intent;
             OnIntentChanged?.Invoke(intent);
+
+            if (hotspotsRoot != null && !hotspotsRoot.activeSelf)
+                hotspotsRoot.SetActive(true);
         }
     }
 }
