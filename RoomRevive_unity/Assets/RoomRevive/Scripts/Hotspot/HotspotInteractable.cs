@@ -1,47 +1,41 @@
 using UnityEngine;
-using Oculus.Interaction;
 
 namespace RoomRevive
 {
     [RequireComponent(typeof(Collider))]
-    [RequireComponent(typeof(RayInteractable))]
     public class HotspotInteractable : MonoBehaviour
     {
         [SerializeField] private HotspotSO _data;
-        [SerializeField] private float _hoverScale = 1.3f;
 
         public static event System.Action<ProductSO> OnAnySelected;
 
-        private RayInteractable _interactable;
         private Vector3 _baseScale;
 
         void Awake()
         {
-            _interactable = GetComponent<RayInteractable>();
             _baseScale = transform.localScale;
         }
 
-        void OnEnable()
+        public void OnGazeEnter()
         {
-            _interactable.WhenSelectingInteractorAdded.Action += HandleSelected;
-            _interactable.WhenInteractorAdded.Action          += HandleHoverEnter;
-            _interactable.WhenInteractorRemoved.Action        += HandleHoverExit;
+            transform.localScale = _baseScale * 1.3f;
         }
 
-        void OnDisable()
+        public void OnGazeExit()
         {
-            _interactable.WhenSelectingInteractorAdded.Action -= HandleSelected;
-            _interactable.WhenInteractorAdded.Action          -= HandleHoverEnter;
-            _interactable.WhenInteractorRemoved.Action        -= HandleHoverExit;
+            transform.localScale = _baseScale;
         }
 
-        void HandleSelected(RayInteractor _)
+        public void OnGazeDwell(float t)
         {
+            // t: 0-1, could drive a fill indicator here
+        }
+
+        public void OnGazeSelect()
+        {
+            transform.localScale = _baseScale;
             if (_data?.linkedProduct != null)
                 OnAnySelected?.Invoke(_data.linkedProduct);
         }
-
-        void HandleHoverEnter(RayInteractor _) => transform.localScale = _baseScale * _hoverScale;
-        void HandleHoverExit(RayInteractor _)  => transform.localScale = _baseScale;
     }
 }
