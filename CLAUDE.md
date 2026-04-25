@@ -63,7 +63,7 @@ Only modify:
 
 Hotspots (minimal):
 - cabinet edge → Nobilia
-- oven → Miele
+- fridge → Miele
 - lighting → Neuhaus
 
 On tap:

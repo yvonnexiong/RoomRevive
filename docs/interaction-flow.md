@@ -53,7 +53,7 @@ See `before-after-slider.md` for full design.
 
 Hotspots:
 - cabinet
-- oven
+- fridge
 - lighting
 
 ---

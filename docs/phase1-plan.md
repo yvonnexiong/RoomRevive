@@ -19,7 +19,7 @@ MainScene
 │   └── SplatWorld_Fast               (GaussianSplatRenderer)
 ├── Hotspots                           ← manually positioned, invisible colliders
 │   ├── HotspotCabinet
-│   ├── HotspotOven
+│   ├── HotspotFridge
 │   └── HotspotLighting
 └── UI
     └── ProductCardCanvas              ← world-space
@@ -95,7 +95,7 @@ IntentManager
 
 ## 3. Hotspot Interaction System
 
-Each hotspot is an invisible trigger collider in world space, manually positioned to align with the splat's visual features (cabinet edge, oven, lighting fixture). The OVR ray interactor works against the collider — not the splat geometry.
+Each hotspot is an invisible trigger collider in world space, manually positioned to align with the splat's visual features (cabinet edge, fridge, lighting fixture). The OVR ray interactor works against the collider — not the splat geometry.
 
 **`HotspotAnchor`** (MonoBehaviour on each hotspot GameObject):
 ```
@@ -179,7 +179,7 @@ Assets/
     │   │   └── Intent_Fast.asset
     │   ├── Hotspots/
     │   │   ├── Hotspot_Cabinet.asset
-    │   │   ├── Hotspot_Oven.asset
+    │   │   ├── Hotspot_Fridge.asset
     │   │   └── Hotspot_Lighting.asset
     │   └── Products/
     │       ├── Product_Nobilia.asset

@@ -8,7 +8,7 @@ Reduce noise, create calm
 Changes:
 - warm soft lighting
 - minimal objects (1–2)
-- subtle steam / oven glow
+- subtle steam / fridge glow
 - matte cabinet feel
 - centered layout
 
