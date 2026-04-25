@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33b71fae31e6c7d438e8566dc713e666, type: 3}
+  m_Name: Walnut Material Kitchen
+  m_EditorClassIdentifier: 
+  m_FormatVersion: 20240801
+  m_SplatCount: 500000
+  m_BoundsMin: {x: -9.3671875, y: -0.21972656, z: -5.3867188}
+  m_BoundsMax: {x: 5.3671875, y: 10.359375, z: 8.546875}
+  m_DataHash:
+    serializedVersion: 2
+    Hash: 20a10700a1d934010000000000000000
+  m_LayerInfo:
+  - x: 0
+    y: 500000
+  m_PosFormat: 2
+  m_ScaleFormat: 2
+  m_SHFormat: 3
+  m_ColorFormat: 2
+  m_clusteredSHData: {fileID: 0}
+  m_layerData:
+  - layer: 0
+    m_PosData: {fileID: 4900000, guid: e593dee29d4358b4ea32ed14a5c2e267, type: 3}
+    m_ColorData: {fileID: 4900000, guid: 0471ec5f9a4744a4ea1276018ee0b4c5, type: 3}
+    m_OtherData: {fileID: 4900000, guid: 328af754d03617c479e8193c6cc0c449, type: 3}
+    m_SHData: {fileID: 4900000, guid: cd55b8ed6d8eb30469b83102528f6d43, type: 3}
+    m_ChunkData: {fileID: 4900000, guid: 4e347e3a93ce2bc4b88cbd4e1336384f, type: 3}
+  m_Cameras: []

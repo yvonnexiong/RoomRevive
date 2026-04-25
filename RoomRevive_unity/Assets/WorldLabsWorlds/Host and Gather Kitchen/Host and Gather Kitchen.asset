@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33b71fae31e6c7d438e8566dc713e666, type: 3}
+  m_Name: Host and Gather Kitchen
+  m_EditorClassIdentifier: 
+  m_FormatVersion: 20240801
+  m_SplatCount: 500000
+  m_BoundsMin: {x: -10.1015625, y: -0.8642578, z: -9.4765625}
+  m_BoundsMax: {x: 10.375, y: 10.34375, z: 10.375}
+  m_DataHash:
+    serializedVersion: 2
+    Hash: 20a10700a1d934010000000000000000
+  m_LayerInfo:
+  - x: 0
+    y: 500000
+  m_PosFormat: 0
+  m_ScaleFormat: 0
+  m_SHFormat: 0
+  m_ColorFormat: 0
+  m_clusteredSHData: {fileID: 0}
+  m_layerData:
+  - layer: 0
+    m_PosData: {fileID: 4900000, guid: 91b856ed0b80cba44879975e13d60bf9, type: 3}
+    m_ColorData: {fileID: 4900000, guid: 76fdf6166bb657542b2e4b3d21229232, type: 3}
+    m_OtherData: {fileID: 4900000, guid: 227365dc9a3105e469af64253932bc0d, type: 3}
+    m_SHData: {fileID: 4900000, guid: 6a4f0c68b3743e14fb90aa51a2e4497c, type: 3}
+    m_ChunkData: {fileID: 0}
+  m_Cameras: []
