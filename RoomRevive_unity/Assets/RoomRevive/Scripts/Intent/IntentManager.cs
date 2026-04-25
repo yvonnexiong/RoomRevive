@@ -19,6 +19,7 @@ namespace RoomRevive
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
+            hotspotsRoot?.SetActive(false);
         }
 
         [SerializeField] private bool autoInitOnStart = false;

@@ -2299,6 +2299,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.HotspotInteractable
   _data: {fileID: 11400000, guid: 64a919e28fde4cd5b8157b1b68ccebc8, type: 2}
+  _hoverScale: 1.3
 --- !u!114 &413561736
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7910,7 +7911,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &928117881
 Transform:
   m_ObjectHideFlags: 0
@@ -7919,15 +7920,15 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 928117880}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.3643, y: 0, z: -1.75574}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1630858529}
   - {fileID: 413561734}
   - {fileID: 1722367294}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1415822195}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &931879967
 GameObject:
@@ -8748,7 +8749,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.IntentManager
   splatRenderer: {fileID: 620641905}
-  defaultIntent: {fileID: 11400000, guid: 9fe6b78f54b4a5d459d1ea03e88873eb, type: 2}
+  defaultIntent: {fileID: 0}
   hotspotsRoot: {fileID: 928117880}
   autoInitOnStart: 0
 --- !u!4 &969547838
@@ -13696,6 +13697,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 620641906}
+  - {fileID: 928117881}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1416573108
@@ -15112,6 +15114,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.HotspotInteractable
   _data: {fileID: 11400000, guid: 7e533cceec4bd28409644973eaa99e82, type: 2}
+  _hoverScale: 1.3
 --- !u!114 &1630858531
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15799,6 +15802,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.HotspotInteractable
   _data: {fileID: 11400000, guid: 5dc9f2163b412da44a654fa68367d2e6, type: 2}
+  _hoverScale: 1.3
 --- !u!114 &1722367296
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20130,5 +20134,4 @@ SceneRoots:
   - {fileID: 852404609}
   - {fileID: 845736056}
   - {fileID: 1299069120}
-  - {fileID: 928117881}
   - {fileID: 1501109028}
