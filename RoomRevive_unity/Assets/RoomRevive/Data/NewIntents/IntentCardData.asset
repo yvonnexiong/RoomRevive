@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: IntentCardData
+  m_EditorClassIdentifier: Assembly-CSharp::MetaRayIntentCardData
+  title: Intent
+  subtitle: Short description.
+  cardImage: {fileID: 0}
+  splatAction: 0
+  useCustomFallbackColor: 0
+  fallbackColor: {r: 0.14, g: 0.17, b: 0.24, a: 1}
+  onSelected:
+    m_PersistentCalls:
+      m_Calls: []
+  onConfirmed:
+    m_PersistentCalls:
+      m_Calls: []
