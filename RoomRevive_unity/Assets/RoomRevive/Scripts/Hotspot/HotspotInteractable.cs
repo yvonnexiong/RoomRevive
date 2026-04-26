@@ -34,6 +34,7 @@ namespace RoomRevive
         public void OnGazeSelect()
         {
             transform.localScale = _baseScale;
+            Debug.Log($"[Hotspot] OnGazeSelect — data={_data}, product={_data?.linkedProduct}, listeners={OnAnySelected?.GetInvocationList()?.Length ?? 0}");
             if (_data?.linkedProduct != null)
                 OnAnySelected?.Invoke(_data.linkedProduct);
         }

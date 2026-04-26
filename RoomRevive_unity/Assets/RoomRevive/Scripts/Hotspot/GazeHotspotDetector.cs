@@ -41,6 +41,7 @@ namespace RoomRevive
 
                 if (_dwellTimer >= dwellTime)
                 {
+                    Debug.Log($"[Gaze] Dwell complete on {_currentTarget.name}");
                     _currentTarget.OnGazeSelect();
                     _currentTarget = null;
                     _dwellTimer = 0f;

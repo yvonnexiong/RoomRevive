@@ -18,7 +18,21 @@ namespace RoomRevive
         [SerializeField] private float rightOffset = 0.45f;
         [SerializeField] private float verticalOffset = 0.05f;
 
+        [Header("Auto Hide")]
+        [SerializeField] private float autoHideDelay = 5f;
+
         private Transform _cam;
+        private float _autoHideTimer;
+
+        void Awake()
+        {
+            HotspotInteractable.OnAnySelected += Show;
+        }
+
+        void OnDestroy()
+        {
+            HotspotInteractable.OnAnySelected -= Show;
+        }
 
         void Start()
         {
@@ -34,14 +48,14 @@ namespace RoomRevive
             gameObject.SetActive(false);
         }
 
-        void OnEnable()
+        void Update()
         {
-            HotspotInteractable.OnAnySelected += Show;
-        }
-
-        void OnDisable()
-        {
-            HotspotInteractable.OnAnySelected -= Show;
+            if (_autoHideTimer > 0f)
+            {
+                _autoHideTimer -= Time.deltaTime;
+                if (_autoHideTimer <= 0f)
+                    gameObject.SetActive(false);
+            }
         }
 
         void LateUpdate()
@@ -66,12 +80,12 @@ namespace RoomRevive
                 thumbnailImage.enabled = product.thumbnail != null;
             }
 
+            _autoHideTimer = autoHideDelay;
             gameObject.SetActive(true);
         }
 
         void OnExplore()
         {
-            // Phase 2: open expanded product view
             Debug.Log("[ProductCard] Explore tapped — expanded view not yet implemented.");
         }
     }

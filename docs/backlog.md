@@ -21,18 +21,54 @@
 
 ## Phase 2
 
-- [ ] Expanded product view
-- [ ] Variants system
-- [ ] GaussianCutout hover effect (dim scene outside hovered hotspot region)
-- [ ] Animation polish (motion cues)
+### 0. Gaze Hotspot Polish *(do first)*
+Make gaze interaction feel premium: ambient glow at rest, eased scale on enter/exit, dwell ring progress indicator, select burst on confirm, intent-aware colors, card fade-in.
+→ See [`gaze-hotspot-polish.md`](gaze-hotspot-polish.md) for full design + implementation plan.
+
+---
+
+### 1. Expanded Product View
+- [ ] Implement expanded card state triggered by "Explore options" button
+- Currently `OnExplore()` in `ProductCardUI` is a debug log stub
+- Shows: variant thumbnails, minimal specs, price
+- Should slide/fade in from the compact card (no heavy animation)
+
+### 2. Variants System
+- [ ] Let users browse different versions of a product (e.g. cabinet finishes, fridge models)
+- `ProductSO` already has a `variants[]` array — just needs UI to display it
+- Variants shown in the expanded card view (depends on task 1)
+
+### 3. GaussianCutout Hover Effect
+- [ ] When a hotspot is gazed at, dim everything outside that kitchen feature using an inverted `GaussianCutout`
+- Draws the user's attention to the specific object being highlighted (fridge, cabinet, light)
+- Render-time only — no scene changes needed, cheap to implement
+
+### 4. Animation Polish
+- [ ] Add subtle motion cues per intent to reinforce the mood
+- Calm & Unwind: soft steam, gentle glow
+- Host & Gather: warm ambient flicker
+- Fast & Focused: active cooking cues, sharper motion
 
 ---
 
 ## Phase 3
 
-- [ ] Performance optimization
-- [ ] Personalization
-- [ ] Sound layer
+### 1. Sound Layer
+- [ ] Add ambient audio per intent to reinforce mood
+- Calm & Unwind: soft background music, quiet room tone
+- Host & Gather: light conversation ambience, gentle clinking
+- Fast & Focused: minimal, focused — maybe silence or a subtle kitchen hum
+- Audio should crossfade on intent switch
+
+### 2. Performance Optimization
+- [ ] Profile and reduce frame time on-device (Quest)
+- Gaussian Splat rendering is GPU-heavy — investigate LOD or culling strategies
+- Target: stable 72fps in all 3 intent worlds
+
+### 3. Personalization
+- [ ] Let users save or favourite an intent or product
+- Could persist across sessions (local save or cloud)
+- Stretch: remember the user's last intent on app launch
 
 ---
 

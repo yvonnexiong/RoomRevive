@@ -93,6 +93,6 @@ The card follows the head, so there is no spatial "looking away." A timer is the
 
 - [ ] Tune all 3 hotspot positions in editor against the splat
 - [ ] Assign thumbnail sprites to all 3 ProductSO assets
-- [ ] Delete `TestCanvas` from MainScene
+- [x] Delete `TestCanvas` from MainScene
 - [ ] Delete `DebugVisual` sphere children from each hotspot
 - [ ] Remove `GazeTestScene` from build settings
