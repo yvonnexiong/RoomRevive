@@ -203,6 +203,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.XR.OpenXR::UnityEngine.XR.OpenXR.OpenXRSettings
   features:
   - {fileID: 1990637394265842446}
+  - {fileID: 3133275164176220229}
   - {fileID: 1514685253423457995}
   - {fileID: 5571491993383426346}
   - {fileID: -5954319397075920580}
@@ -231,7 +232,7 @@ MonoBehaviour:
   - {fileID: -8753032743701477862}
   - {fileID: -762166085478376381}
   customLoaderName: 
-  m_renderMode: 0
+  m_renderMode: 1
   m_latencyOptimization: 0
   m_autoColorSubmissionMode: 1
   m_colorSubmissionModes:
