@@ -2,27 +2,26 @@
 
 > Kitchen rendered via Gaussian Splats (WorldLabs `.spz` files).
 > 3 intent worlds are pre-baked — lighting, surfaces, and props are embedded in each splat.
-> Intent switching = toggling which `GaussianSplatRenderer` is active.
+> Intent switching = swapping the asset on a single `GaussianSplatRenderer` (not toggling 3 renderers — toggling SetActive on GPU resources crashes Unity).
 
 ---
 
 ## 1. Scene / Data Architecture
 
-**Scene hierarchy:**
+**Scene hierarchy (actual):**
 ```
 MainScene
 ├── OVRCameraRig
 │   └── OVRInteractionComprehensive
-├── SplatWorlds                        ← 3 renderers, one active at a time
-│   ├── SplatWorld_Calm               (GaussianSplatRenderer)
-│   ├── SplatWorld_Host               (GaussianSplatRenderer)
-│   └── SplatWorld_Fast               (GaussianSplatRenderer)
-├── Hotspots                           ← manually positioned, invisible colliders
-│   ├── HotspotCabinet
-│   ├── HotspotFridge
-│   └── HotspotLighting
-└── UI
-    └── ProductCardCanvas              ← world-space
+├── GazeHotspotDetector                ← root GameObject, raycasts from CenterEyeAnchor
+├── SplatPivot                         ← moved/rotated during alignment
+│   ├── SplatRenderer                  ← single GaussianSplatRenderer, asset swapped at runtime
+│   │   └── GSCutout                   ← GaussianCutout (Box), driven by BeforeAfterSlider
+│   └── Hotspots                       ← enabled by IntentManager after first intent pick
+│       ├── HotspotCabinet
+│       ├── HotspotFridge
+│       └── HotspotLighting
+└── ProductCardCanvas                  ← world-space, head-following
 ```
 
 **ScriptableObjects (3 types):**
@@ -30,17 +29,16 @@ MainScene
 ```
 IntentSO
 ├── id, displayName
-└── splatWorld : GaussianSplatRenderer   ← reference to its renderer
+└── splatAsset : GaussianSplatAsset    ← asset reference (splatWorld moved out of SO)
 
 HotspotSO
 ├── id, displayName
-├── worldAnchorOffset (Vector3)
 └── linkedProduct   → ProductSO
 
 ProductSO
 ├── id, brandName, productName
 ├── emotionalLine   (1 sentence)
-├── thumbnail       (Sprite)
+├── thumbnail       (Sprite, currently null)
 └── variants[]      { name, imagePath, price }
 ```
 
@@ -95,27 +93,32 @@ IntentManager
 
 ## 3. Hotspot Interaction System
 
-Each hotspot is an invisible trigger collider in world space, manually positioned to align with the splat's visual features (cabinet edge, fridge, lighting fixture). The OVR ray interactor works against the collider — not the splat geometry.
+Each hotspot is an invisible `SphereCollider` (r=0.15) in world space, manually positioned to align with the splat's visual features. Interaction is **gaze dwell only — no ray or hand interaction**.
 
-**`HotspotAnchor`** (MonoBehaviour on each hotspot GameObject):
+> Original plan used OVR ray interactor. Replaced because `RayInteractable` on hotspots conflicted with ISDK's candidate pool and broke all canvas ray interactions. Gaze bypasses ISDK entirely.
+
+**`GazeHotspotDetector`** (root GameObject in scene):
 ```
-HotspotAnchor
+GazeHotspotDetector
+├── dwellTime = 0.7s
+├── hotspotLayer (layer 8)
+└── Update()
+    ├── Raycast from CenterEyeAnchor, Hotspot layer only
+    ├── OnGazeEnter / OnGazeExit on target change
+    └── OnGazeSelect after 0.7s dwell → fires OnAnySelected static event
+```
+
+**`HotspotInteractable`** (MonoBehaviour on each hotspot GameObject):
+```
+HotspotInteractable
 ├── data : HotspotSO
-├── OnHovered()    ← pulse ring visual, scale up slightly
-├── OnUnhovered()  ← reset
-└── OnSelected()   → HotspotManager.Activate(this)
+├── OnGazeEnter()   ← scale up 1.3×
+├── OnGazeExit()    ← reset scale
+├── OnGazeDwell(t)  ← optional progress feedback
+└── OnGazeSelect()  → fires OnAnySelected(ProductSO) static event
 ```
 
-**`HotspotManager`** — coordinates which hotspot is active (only one at a time):
-```
-HotspotManager
-├── activeHotspot : HotspotAnchor
-└── Activate(HotspotAnchor)
-    ├── deactivates previous
-    └── fires OnHotspotActivated(HotspotSO) → ProductCardController
-```
-
-Hotspots are hidden at start, enabled by `IntentManager` once an intent is selected.
+Hotspots are hidden at start (`IntentManager.Awake()` disables them), enabled on first intent selection.
 
 > Phase 2 idea: use `GaussianCutout` (inverted) on hotspot hover to subtly dim
 > everything outside the hovered region — cheap, render-time only.
@@ -124,7 +127,7 @@ Hotspots are hidden at start, enabled by `IntentManager` once an intent is selec
 
 ## 4. Product Card UI Structure
 
-World-space canvas, parented to the `HotspotAnchor`, positioned to its right. Two states:
+World-space canvas (600×420px @ 0.001 scale), head-following (not parented to hotspot). Single compact state for Phase 1.
 
 **Compact card** (always shown first — enforces emotion-before-spec rule):
 ```
@@ -135,35 +138,22 @@ World-space canvas, parented to the `HotspotAnchor`, positioned to its right. Tw
 │  [thumb]  Nobilia Frame          │  ← brand + product name
 │           Cabinet Line          │
 │                                 │
-│         [ Explore options → ]   │  ← CTA button
+│  [Close]  [ Explore options → ] │
 └─────────────────────────────────┘
 ```
 
-**Expanded card** (slides in on CTA — optional, user-driven):
+**Expanded card** — Phase 2, not yet implemented (`OnExplore()` is a debug log stub).
+
+**`ProductCardUI`** (on ProductCardCanvas):
 ```
-┌─────────────────────────────────┐
-│  ← Back                         │
-│  Nobilia Frame                  │
-│  ───────────────                │
-│  [var1] [var2] [var3]           │  ← variant thumbnails
-│                                 │
-│  Soft-close hinges              │
-│  Width: 60cm                    │  ← minimal specs
-│                                 │
-│  From €1,200                    │
-└─────────────────────────────────┘
+ProductCardUI
+├── Subscribes to HotspotInteractable.OnAnySelected
+├── Show(ProductSO) — populates text/thumbnail, activates canvas
+├── Auto-hides after 5s
+└── Close button for instant dismiss
 ```
 
-**`ProductCardController`**:
-```
-ProductCardController
-├── ShowCompact(ProductSO)
-├── ShowExpanded()
-├── Hide()
-└── state : { Hidden, Compact, Expanded }
-```
-
-Transitions: fade + slide (~0.2s). No heavy animations in Phase 1.
+Position: 1.4m forward, 0.45m right, 0.05m up from `CenterEyeAnchor`. Always faces camera direction.
 
 ---
 
@@ -188,14 +178,25 @@ Assets/
     ├── Scripts/
     │   ├── Intent/
     │   │   ├── IntentSO.cs
-    │   │   └── IntentManager.cs
+    │   │   ├── IntentManager.cs
+    │   │   ├── IntentSelectorUI.cs
+    │   │   └── IntentDebugSwitcher.cs   ← remove before shipping
     │   ├── Hotspot/
     │   │   ├── HotspotSO.cs
-    │   │   ├── HotspotAnchor.cs
-    │   │   └── HotspotManager.cs
-    │   └── Product/
-    │       ├── ProductSO.cs
-    │       └── ProductCardController.cs
+    │   │   ├── HotspotInteractable.cs
+    │   │   ├── GazeHotspotDetector.cs
+    │   │   └── ProductCardUI.cs
+    │   ├── Product/
+    │   │   └── ProductSO.cs
+    │   ├── BeforeAfter/
+    │   │   └── BeforeAfterSlider.cs
+    │   ├── Startup/
+    │   │   ├── StartupController.cs
+    │   │   ├── AlignmentSphere.cs
+    │   │   ├── BillboardPanel.cs
+    │   │   └── SplatOpacitySlider.cs
+    │   └── UI/
+    │       └── HeadFollowCanvas.cs
     ├── Prefabs/
     │   ├── Hotspot_Prefab.prefab
     │   └── ProductCard_Prefab.prefab
@@ -243,6 +244,6 @@ Scripts/
 4. Intent selector UI
 5. Startup & alignment flow — `StartupController`, `BillboardPanel`, `AlignmentSphere` ← **NEXT**
 6. Before/after slider — `BeforeAfterController`, `SeamHandle`, `GaussianCutoutBox`
-7. `HotspotAnchor` + `HotspotManager` — manually position colliders, wire to OVR ray interactor
-8. `ProductCardController` — compact card only, hardcoded data first
+7. `GazeHotspotDetector` + `HotspotInteractable` — gaze dwell system, manually position colliders in editor ✓
+8. `ProductCardUI` — compact card, head-following, wired to `OnAnySelected` event ✓
 9. Wire data assets — swap hardcoded data for ScriptableObjects

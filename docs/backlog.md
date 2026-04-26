@@ -8,8 +8,8 @@
 - [x] Build intent selector UI (world-space, 3 buttons)
 - [x] Startup & world alignment flow (Start screen → grabbable pivot sphere → Confirm)
 - [x] Implement before/after slider (head-following UI slider, moves GSCutout local position)
-- [ ] Add hotspot interaction (manually position colliders, wire to OVR ray interactor) ← **YOU ARE HERE**
-- [ ] Build compact product card UI
+- [x] Add hotspot interaction (gaze dwell, 0.7s — replaced ray interactor approach; `GazeHotspotDetector` + `HotspotInteractable`)
+- [x] Build compact product card UI (head-following world-space canvas, auto-hides after 5s)
 
 ---
 
@@ -55,6 +55,14 @@
 - `IntentSO` holds `GaussianSplatAsset` reference (project asset, works in ScriptableObject)
 - `splatWorld` moved out of `IntentSO` into `IntentManager` (scene objects can't be referenced from ScriptableObjects)
 - Input uses new Unity Input System (`Keyboard.current`) not legacy `Input` class
+
+### Hotspot & Product Card
+- Hotspots use gaze dwell (not ray/hand) — `RayInteractable` conflicted with ISDK candidate pool and broke canvas interactions
+- `GazeHotspotDetector` raycasts from `CenterEyeAnchor` on Hotspot layer (layer 8); 0.7s dwell fires `OnGazeSelect`
+- `HotspotInteractable.OnAnySelected` static event decouples hotspots from the card
+- `ProductCardUI` head-follows at 1.4m forward, 0.45m right, 0.05m up; auto-hides after 5s
+- Hotspots enabled by `IntentManager` only after first intent selection
+- `IntentDebugSwitcher` (keyboard 1/2/3) is a temporary test tool — remove before shipping
 
 ### WorldLabs / Gaussian Splatting Setup
 - Package embedded locally at `Packages/com.worldlabs.gaussian-splatting/` (patched asmdef for Unity 6 compatibility)

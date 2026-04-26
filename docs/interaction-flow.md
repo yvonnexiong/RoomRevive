@@ -49,30 +49,45 @@ See `before-after-slider.md` for full design.
 
 ---
 
-## Step 3: Exploration
+## Step 3: Exploration — Gaze Hotspots
 
-Hotspots:
-- cabinet
-- fridge
-- lighting
+Three invisible hotspots activate after intent selection:
+
+| Hotspot | Product |
+|---|---|
+| Cabinet edge | Nobilia |
+| Fridge | Miele KFN 7734 E |
+| Lighting | Neuhaus |
+
+**Interaction: gaze dwell (eyes only, no hands)**
+- User looks at a hotspot sphere (r=0.15, Hotspot layer)
+- Sphere scales up 1.3× on gaze enter
+- After 0.7s of held gaze → `OnGazeSelect` fires → product card appears
+- No ray or hand interaction — gaze raycasts directly from `CenterEyeAnchor`
+
+This replaced an earlier ray/hand approach. `RayInteractable` on hotspots conflicted with ISDK's candidate pool and broke canvas ray interactions. Gaze bypasses ISDK entirely.
+
+See `GazeHotspotInteraction.md` for full technical detail.
 
 ---
 
 ## Step 4: Compact Card
 
-Appears on right side
+Appears upper-right of view (1.4m forward, 0.45m right, 0.05m up from eye).
 
 Structure:
-1. Meaning (one sentence)
-2. Product name
+1. Meaning (one emotional sentence)
+2. Brand + product name
 3. Thumbnail
-4. CTA
+4. "Explore options" CTA
+
+Auto-hides after 5s or on Close button tap.
 
 ---
 
 ## Step 5: Expanded View
 
-Optional:
+Optional (not yet implemented):
 - variants
 - specs
 - price

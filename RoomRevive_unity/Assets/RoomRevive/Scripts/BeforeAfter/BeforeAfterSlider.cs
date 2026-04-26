@@ -17,7 +17,7 @@ namespace RoomRevive
         [Header("Follow Settings")]
         [SerializeField] private float distance      = 1.5f;
         [SerializeField] private float rightOffset   = 0.4f;
-        [SerializeField] private float verticalOffset = -0.1f;
+        [SerializeField] private float verticalOffset = -0.35f;
 
         private Transform _cam;
 
