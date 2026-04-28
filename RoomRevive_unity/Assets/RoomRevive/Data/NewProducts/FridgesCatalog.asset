@@ -1,0 +1,187 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: FridgesCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::MetaRayFurnitureProductCatalog
+  products:
+  - id: 1
+    productName: Modern Fridge
+    subtitle: Premium four-door stainless fridge
+    badgeText: Modern
+    priceText: $1,299
+    productImage: {fileID: 21300000, guid: 3b24d6815320e8e45a7ce4557d01c16f, type: 3}
+    sourceImageUrl: 
+    calloutText: A modern stainless fridge was found for this kitchen. Open it to
+      compare storage zones, finish and fit.
+    shortDescription: A clean four-door fridge with brushed steel surfaces and a
+      high-end modern kitchen look.
+    description: A premium four-door fridge designed for open kitchens, loft apartments
+      and modern interiors. The brushed stainless finish reflects the room softly
+      while keeping a calm, professional look.
+    longDescription: A premium four-door fridge designed for open kitchens, loft
+      apartments and modern interiors. The brushed stainless finish reflects the
+      room softly while keeping a calm, professional look. Ideal for spaces that
+      mix industrial materials, warm wood, stone surfaces and black metal details.
+    widthText: 91 cm
+    heightText: 183 cm
+    depthText: 70 cm
+    weightText: 118 kg
+    features:
+    - Four-door flexible storage layout
+    - External touch display
+    - Brushed stainless steel finish
+    - Separate cooling zones
+    - Quiet inverter compressor
+    - Large family-size capacity
+    materialsText: Brushed stainless steel doors, graphite trim, black glass touch
+      panel, tempered glass shelves
+    finish: Brushed Steel / Graphite Trim
+    finishColors:
+    - {r: 0.72156864, g: 0.70980394, b: 0.6784314, a: 1}
+    - {r: 0.16470589, g: 0.16470589, b: 0.16470589, a: 1}
+    finishColorLabels:
+    - Brushed Steel
+    - Graphite Trim
+    storageText: 4 main doors, flexible fridge/freezer zones, wide interior shelves
+    includedParts:
+    - Fridge body
+    - Adjustable glass shelves
+    - Door bins
+    - Humidity drawer
+    - User guide
+    useCustomFallbackColor: 1
+    fallbackColor: {r: 0.72156864, g: 0.70980394, b: 0.6784314, a: 1}
+    onShown:
+      m_PersistentCalls:
+        m_Calls: []
+    onDiscovered:
+      m_PersistentCalls:
+        m_Calls: []
+    onDetailsUnlocked:
+      m_PersistentCalls:
+        m_Calls: []
+  - id: 2
+    productName: Nordic Tall Fridge
+    subtitle: Minimal bottom-freezer refrigerator
+    badgeText: Clean Fit
+    priceText: $899
+    productImage: {fileID: 21300000, guid: 7aad4b169f7d899479fc9f1c8bac2808, type: 3}
+    sourceImageUrl: 
+    calloutText: A slim Scandinavian-style fridge was found for this space. Open
+      it to inspect the height, freezer layout and quiet daily-use features.
+    shortDescription: A calm, minimal fridge with a tall vertical profile and soft
+      brushed metal finish.
+    description: A slim bottom-freezer refrigerator made for quiet, modern kitchens.
+      Its simple vertical shape works well beside dark cabinets, white counters and
+      soft natural daylight.
+    longDescription: A slim bottom-freezer refrigerator made for quiet, modern kitchens.
+      Its simple vertical shape works well beside dark cabinets, white counters and
+      soft natural daylight. The layout keeps fresh food at eye level and places
+      frozen storage in the lower section for a cleaner everyday workflow.
+    widthText: 60 cm
+    heightText: 190 cm
+    depthText: 66 cm
+    weightText: 72 kg
+    features:
+    - Bottom-freezer layout
+    - Minimal integrated handle
+    - Bright interior LED lighting
+    - Low-noise kitchen mode
+    - Reversible door setup
+    - Compact footprint for smaller kitchens
+    materialsText: Soft brushed steel front, integrated handle profile, white interior
+      liner, tempered glass shelves
+    finish: Soft Steel / Deep Cabinet Grey
+    finishColors:
+    - {r: 0.7607843, g: 0.7529412, b: 0.72156864, a: 1}
+    - {r: 0.14901961, g: 0.14901961, b: 0.12941177, a: 1}
+    finishColorLabels:
+    - Soft Steel
+    - Deep Cabinet Grey
+    storageText: 1 tall fridge section, 1 lower freezer section, adjustable shelves
+      and door bins
+    includedParts:
+    - Fridge body
+    - Glass shelves
+    - Freezer drawers
+    - Door bins
+    - User guide
+    useCustomFallbackColor: 1
+    fallbackColor: {r: 0.7607843, g: 0.7529412, b: 0.72156864, a: 1}
+    onShown:
+      m_PersistentCalls:
+        m_Calls: []
+    onDiscovered:
+      m_PersistentCalls:
+        m_Calls: []
+    onDetailsUnlocked:
+      m_PersistentCalls:
+        m_Calls: []
+  - id: 3
+    productName: French Door Fridge
+    subtitle: French-door fridge with dispenser
+    badgeText: Premium
+    priceText: $1,799
+    productImage: {fileID: 21300000, guid: cfa2e0c02a5c31c42950cb313472021e, type: 3}
+    sourceImageUrl: 
+    calloutText: A premium French-door fridge was found for this kitchen. Open it
+      to compare the dispenser, handle design and storage capacity.
+    shortDescription: A large French-door fridge with reflective stainless steel,
+      vertical handles and an integrated dispenser.
+    description: A premium French-door fridge designed for larger kitchens and high-end
+      interiors. The reflective stainless surface, tall handles and built-in water
+      dispenser create a polished professional look.
+    longDescription: A premium French-door fridge designed for larger kitchens and
+      high-end interiors. The reflective stainless surface, tall handles and built-in
+      water dispenser create a polished professional look. It is a strong fit for
+      dark cabinetry, marble backsplashes, copper lighting and spacious open-plan
+      kitchens.
+    widthText: 91 cm
+    heightText: 178 cm
+    depthText: 73 cm
+    weightText: 135 kg
+    features:
+    - French-door refrigerator layout
+    - Filtered water dispenser
+    - Tall vertical metal handles
+    - Fingerprint-resistant steel finish
+    - Twin cooling zones
+    - Large-capacity interior storage
+    materialsText: Fingerprint-resistant stainless steel, black dispenser inset,
+      aluminium handles, tempered glass shelves
+    finish: Mirror Steel / Black Inset
+    finishColors:
+    - {r: 0.7764706, g: 0.76862746, b: 0.7372549, a: 1}
+    - {r: 0.08235294, g: 0.08235294, b: 0.08235294, a: 1}
+    finishColorLabels:
+    - Mirror Steel
+    - Black Inset
+    storageText: 2 French doors, wide fridge compartment, large freezer storage,
+      dispenser area
+    includedParts:
+    - Fridge body
+    - Water filter
+    - Glass shelves
+    - Door bins
+    - Ice tray
+    - User guide
+    useCustomFallbackColor: 1
+    fallbackColor: {r: 0.7764706, g: 0.76862746, b: 0.7372549, a: 1}
+    onShown:
+      m_PersistentCalls:
+        m_Calls: []
+    onDiscovered:
+      m_PersistentCalls:
+        m_Calls: []
+    onDetailsUnlocked:
+      m_PersistentCalls:
+        m_Calls: []
