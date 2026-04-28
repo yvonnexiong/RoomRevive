@@ -51,7 +51,7 @@ See `before-after-slider.md` for full design.
 
 ## Step 3: Exploration — Gaze Hotspots
 
-Three invisible hotspots activate after intent selection:
+Three hotspots activate after intent selection:
 
 | Hotspot | Product |
 |---|---|
@@ -60,12 +60,12 @@ Three invisible hotspots activate after intent selection:
 | Lighting | Neuhaus |
 
 **Interaction: gaze dwell (eyes only, no hands)**
-- User looks at a hotspot sphere (r=0.15, Hotspot layer)
-- Sphere scales up 1.3× on gaze enter
-- After 0.7s of held gaze → `OnGazeSelect` fires → product card appears
+- A soft **GlowDot** grows from invisible as the user's gaze approaches within 2m of the hotspot center
+- Dot reaches full size when gaze enters the activation zone (SphereCollider r=0.5)
+- A **DwellRing** fades in simultaneously as a "locked on" indicator
+- After 0.7s held gaze → product card fades in
+- Both dot and ring face the user at all times (billboard)
 - No ray or hand interaction — gaze raycasts directly from `CenterEyeAnchor`
-
-This replaced an earlier ray/hand approach. `RayInteractable` on hotspots conflicted with ISDK's candidate pool and broke canvas ray interactions. Gaze bypasses ISDK entirely.
 
 See `GazeHotspotInteraction.md` for full technical detail.
 
@@ -81,7 +81,7 @@ Structure:
 3. Thumbnail
 4. "Explore options" CTA
 
-Auto-hides after 5s or on Close button tap.
+Auto-hides after 2s or on Close button tap.
 
 ---
 

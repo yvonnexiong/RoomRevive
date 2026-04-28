@@ -1,4 +1,6 @@
 # Gaze Hotspot Polish — Design & Implementation Plan
+> **Status: implemented.** See `GazeHotspotInteraction.md` for the final built state.
+> Notes below reflect original design intent; actual implementation differs in some details.
 
 ## Goal
 
