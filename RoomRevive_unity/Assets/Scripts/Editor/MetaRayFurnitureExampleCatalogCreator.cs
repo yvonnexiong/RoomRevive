@@ -1,12 +1,18 @@
-#if UNITY_EDITOR
 using System.Collections.Generic;
 using System.IO;
-using UnityEditor;
+using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public static class MetaRayFurnitureExampleCatalogCreator
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
+[ExecuteAlways]
+[DisallowMultipleComponent]
+public class MetaRayFurnitureExampleCatalogCreator : MonoBehaviour
 {
+#if UNITY_EDITOR
     private const string CatalogFolder = "Assets/RoomRevive/Data/NewProducts";
     private const string ImageFolder = "Assets/RoomRevive/Data/NewProducts/ProductImages";
     private const string CatalogAssetPath = CatalogFolder + "/FridgesCatalog.asset";
@@ -17,6 +23,241 @@ public static class MetaRayFurnitureExampleCatalogCreator
         ".jpg",
         ".jpeg"
     };
+
+    private bool queuedPathLog;
+
+    private void Reset()
+    {
+        QueueLogAttachedObjectAndParents("Reset");
+    }
+
+    private void OnEnable()
+    {
+        QueueLogAttachedObjectAndParents("OnEnable");
+    }
+
+    private void OnValidate()
+    {
+        QueueLogAttachedObjectAndParents("OnValidate");
+    }
+
+    [ContextMenu("XRCC/Log Object And Parents")]
+    private void LogObjectAndParentsFromContextMenu()
+    {
+        LogAttachedObjectAndParents("Context Menu");
+    }
+
+    private void QueueLogAttachedObjectAndParents(string reason)
+    {
+        if (queuedPathLog)
+        {
+            return;
+        }
+
+        queuedPathLog = true;
+
+        EditorApplication.delayCall += () =>
+        {
+            queuedPathLog = false;
+
+            if (this == null)
+            {
+                return;
+            }
+
+            LogAttachedObjectAndParents(reason);
+        };
+    }
+
+    private void LogAttachedObjectAndParents(string reason)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        sb.AppendLine($"<b>[MetaRayFurnitureExampleCatalogCreator]</b> This script is attached to a GameObject.");
+        sb.AppendLine($"Reason: {reason}");
+        sb.AppendLine();
+        sb.AppendLine($"GameObject: {gameObject.name}");
+        sb.AppendLine($"Full hierarchy path: {GetTransformPath(transform)}");
+        sb.AppendLine();
+
+        if (gameObject.scene.IsValid())
+        {
+            sb.AppendLine($"Scene name: {gameObject.scene.name}");
+            sb.AppendLine($"Scene path: {gameObject.scene.path}");
+        }
+        else
+        {
+            sb.AppendLine("Scene: Not part of a normal open scene.");
+        }
+
+        sb.AppendLine();
+
+        string prefabAssetPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(gameObject);
+        if (!string.IsNullOrWhiteSpace(prefabAssetPath))
+        {
+            sb.AppendLine($"Prefab asset path: {prefabAssetPath}");
+        }
+
+        string directAssetPath = AssetDatabase.GetAssetPath(gameObject);
+        if (!string.IsNullOrWhiteSpace(directAssetPath))
+        {
+            sb.AppendLine($"Direct asset path: {directAssetPath}");
+        }
+
+        sb.AppendLine();
+        sb.AppendLine("Object and parents, child to root:");
+
+        Transform current = transform;
+        int depth = 0;
+
+        while (current != null)
+        {
+            sb.AppendLine($"{depth}: {current.name}");
+            current = current.parent;
+            depth++;
+        }
+
+        Debug.Log(sb.ToString(), gameObject);
+
+        Selection.activeGameObject = gameObject;
+        EditorGUIUtility.PingObject(gameObject);
+    }
+
+    private static string GetTransformPath(Transform target)
+    {
+        if (target == null)
+        {
+            return "<null>";
+        }
+
+        List<string> names = new List<string>();
+        Transform current = target;
+
+        while (current != null)
+        {
+            names.Add(current.name);
+            current = current.parent;
+        }
+
+        names.Reverse();
+        return string.Join("/", names);
+    }
+
+    [MenuItem("XRCC/Furniture/Find Attached MetaRayFurnitureExampleCatalogCreator In Loaded Objects")]
+    public static void FindAttachedInstancesInLoadedObjects()
+    {
+        MetaRayFurnitureExampleCatalogCreator[] instances =
+            Resources.FindObjectsOfTypeAll<MetaRayFurnitureExampleCatalogCreator>();
+
+        if (instances == null || instances.Length == 0)
+        {
+            Debug.LogWarning("[MetaRayFurnitureExampleCatalogCreator] No loaded instances found. It may be inside a prefab/scene that is not currently open.");
+            return;
+        }
+
+        Debug.Log($"[MetaRayFurnitureExampleCatalogCreator] Found {instances.Length} loaded instance(s).");
+
+        foreach (MetaRayFurnitureExampleCatalogCreator instance in instances)
+        {
+            if (instance == null)
+            {
+                continue;
+            }
+
+            instance.LogAttachedObjectAndParents("Manual finder");
+        }
+    }
+
+    [MenuItem("XRCC/Furniture/Find References To MetaRayFurnitureExampleCatalogCreator GUID")]
+    public static void FindReferencesToThisScriptGuid()
+    {
+        string[] scriptGuids = AssetDatabase.FindAssets("MetaRayFurnitureExampleCatalogCreator t:MonoScript");
+
+        if (scriptGuids == null || scriptGuids.Length == 0)
+        {
+            Debug.LogError("[MetaRayFurnitureExampleCatalogCreator] Could not find this script as a MonoScript asset.");
+            return;
+        }
+
+        int totalMatches = 0;
+
+        foreach (string scriptGuid in scriptGuids)
+        {
+            string scriptPath = AssetDatabase.GUIDToAssetPath(scriptGuid);
+
+            if (!scriptPath.EndsWith("MetaRayFurnitureExampleCatalogCreator.cs"))
+            {
+                continue;
+            }
+
+            Debug.Log($"[MetaRayFurnitureExampleCatalogCreator] Searching for GUID references:\nGUID: {scriptGuid}\nScript: {scriptPath}");
+
+            string[] allFiles = Directory.GetFiles(Application.dataPath, "*.*", SearchOption.AllDirectories);
+
+            foreach (string fullPath in allFiles)
+            {
+                string extension = Path.GetExtension(fullPath).ToLowerInvariant();
+
+                if (extension != ".unity" && extension != ".prefab" && extension != ".asset")
+                {
+                    continue;
+                }
+
+                string fileText;
+
+                try
+                {
+                    fileText = File.ReadAllText(fullPath);
+                }
+                catch
+                {
+                    continue;
+                }
+
+                if (!fileText.Contains(scriptGuid))
+                {
+                    continue;
+                }
+
+                string assetPath = FullPathToAssetPath(fullPath);
+                Object asset = AssetDatabase.LoadAssetAtPath<Object>(assetPath);
+
+                totalMatches++;
+
+                Debug.LogWarning(
+                    $"<b>[MetaRayFurnitureExampleCatalogCreator]</b> Found reference to this script GUID in:\n{assetPath}",
+                    asset
+                );
+
+                if (asset != null)
+                {
+                    EditorGUIUtility.PingObject(asset);
+                }
+            }
+        }
+
+        if (totalMatches == 0)
+        {
+            Debug.LogWarning("[MetaRayFurnitureExampleCatalogCreator] No .unity, .prefab, or .asset files contained this script GUID.");
+        }
+        else
+        {
+            Debug.LogWarning($"[MetaRayFurnitureExampleCatalogCreator] Total GUID references found: {totalMatches}");
+        }
+    }
+
+    private static string FullPathToAssetPath(string fullPath)
+    {
+        string normalizedFullPath = fullPath.Replace("\\", "/");
+        string normalizedDataPath = Application.dataPath.Replace("\\", "/");
+
+        if (normalizedFullPath.StartsWith(normalizedDataPath))
+        {
+            return "Assets" + normalizedFullPath.Substring(normalizedDataPath.Length);
+        }
+
+        return normalizedFullPath;
+    }
 
     [MenuItem("XRCC/Furniture/Create Fridges Catalog")]
     public static void CreateExampleProductCatalog()
@@ -414,7 +655,6 @@ public static class MetaRayFurnitureExampleCatalogCreator
             importer.spriteImportMode = SpriteImportMode.Single;
             importer.alphaIsTransparency = false;
             importer.mipmapEnabled = false;
-            importer.mipmapEnabled = false;
             importer.sRGBTexture = true;
             importer.SaveAndReimport();
         }
@@ -465,5 +705,5 @@ public static class MetaRayFurnitureExampleCatalogCreator
 
         return Color.white;
     }
-}
 #endif
+}
