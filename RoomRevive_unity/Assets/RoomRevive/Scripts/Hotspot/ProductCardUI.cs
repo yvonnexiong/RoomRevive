@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -19,13 +20,19 @@ namespace RoomRevive
         [SerializeField] private float verticalOffset = 0.05f;
 
         [Header("Auto Hide")]
-        [SerializeField] private float autoHideDelay = 5f;
+        [SerializeField] private float autoHideDelay = 2f;
 
         private Transform _cam;
         private float _autoHideTimer;
+        private CanvasGroup _canvasGroup;
+        private Coroutine _fadeCoroutine;
 
         void Awake()
         {
+            _canvasGroup = GetComponent<CanvasGroup>();
+            if (_canvasGroup == null)
+                _canvasGroup = gameObject.AddComponent<CanvasGroup>();
+
             HotspotInteractable.OnAnySelected += Show;
         }
 
@@ -40,12 +47,13 @@ namespace RoomRevive
             _cam = centerEye != null ? centerEye.transform : Camera.main?.transform;
 
             if (closeButton != null)
-                closeButton.onClick.AddListener(() => gameObject.SetActive(false));
+                closeButton.onClick.AddListener(HideWithFade);
 
             if (exploreButton != null)
                 exploreButton.onClick.AddListener(OnExplore);
 
-            gameObject.SetActive(false);
+            // Hide via CanvasGroup — keep GameObject always active so coroutines work
+            SetVisible(false);
         }
 
         void Update()
@@ -54,7 +62,7 @@ namespace RoomRevive
             {
                 _autoHideTimer -= Time.deltaTime;
                 if (_autoHideTimer <= 0f)
-                    gameObject.SetActive(false);
+                    HideWithFade();
             }
         }
 
@@ -81,7 +89,51 @@ namespace RoomRevive
             }
 
             _autoHideTimer = autoHideDelay;
-            gameObject.SetActive(true);
+
+            if (_fadeCoroutine != null) StopCoroutine(_fadeCoroutine);
+            _fadeCoroutine = StartCoroutine(FadeIn());
+        }
+
+        void HideWithFade()
+        {
+            _autoHideTimer = 0f;
+            if (_fadeCoroutine != null) StopCoroutine(_fadeCoroutine);
+            _fadeCoroutine = StartCoroutine(FadeOut());
+        }
+
+        void SetVisible(bool visible)
+        {
+            _canvasGroup.alpha = visible ? 1f : 0f;
+            _canvasGroup.interactable = visible;
+            _canvasGroup.blocksRaycasts = visible;
+        }
+
+        private IEnumerator FadeIn()
+        {
+            _canvasGroup.interactable = true;
+            _canvasGroup.blocksRaycasts = true;
+            float startAlpha = _canvasGroup.alpha;
+            float t = 0f;
+            while (t < 1f)
+            {
+                t += Time.deltaTime / 0.2f;
+                _canvasGroup.alpha = Mathf.Lerp(startAlpha, 1f, Mathf.Clamp01(t));
+                yield return null;
+            }
+            _canvasGroup.alpha = 1f;
+        }
+
+        private IEnumerator FadeOut()
+        {
+            float startAlpha = _canvasGroup.alpha;
+            float t = 0f;
+            while (t < 1f)
+            {
+                t += Time.deltaTime / 0.2f;
+                _canvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, Mathf.Clamp01(t));
+                yield return null;
+            }
+            SetVisible(false);
         }
 
         void OnExplore()

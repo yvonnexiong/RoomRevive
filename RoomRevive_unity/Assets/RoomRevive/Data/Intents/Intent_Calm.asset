@@ -15,3 +15,5 @@ MonoBehaviour:
   id: calm
   displayName: Calm & Unwind
   splatAsset: {fileID: 11400000, guid: 8b8bdeccba9cacd4695ca4dd7310e415, type: 2}
+  hotspotColor: {r: 0.961, g: 0.647, b: 0.137, a: 1}
+  hotspotPulseSpeed: 3

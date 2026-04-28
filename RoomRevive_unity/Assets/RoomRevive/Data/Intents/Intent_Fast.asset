@@ -15,3 +15,5 @@ MonoBehaviour:
   id: fast
   displayName: Fast & Focused
   splatAsset: {fileID: 11400000, guid: 230c53155a8632f40bd0c0fce383dbae, type: 2}
+  hotspotColor: {r: 0.31, g: 0.765, b: 0.969, a: 1}
+  hotspotPulseSpeed: 1.5
