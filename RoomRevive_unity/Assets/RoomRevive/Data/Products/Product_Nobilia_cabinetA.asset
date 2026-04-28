@@ -10,11 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 41f3d8dd09484d641b25cd5fe16d30ec, type: 3}
-  m_Name: Product_Miele
+  m_Name: Product_Nobilia_cabinetA
   m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductSO
-  id: miele_fridge
-  brandName: Miele
-  productName: KFN 7734 E Fridge
-  emotionalLine: "Effortlessly fresh \u2014 engineered for how you live."
-  thumbnail: {fileID: 21300000, guid: 0c140914adeed1c4e9c3bc1f8ca52e1e, type: 3}
+  id: nobilia_cabinet
+  brandName: Nobilia
+  productName: Riva Cabinet A
+  emotionalLine: Clean lines that let your kitchen breathe.
+  shortDescription: Sage + cream, oak top
+  thumbnail: {fileID: 21300000, guid: 46e9920a4c4858c42a94df812ce99fb1, type: 3}
   variants: []

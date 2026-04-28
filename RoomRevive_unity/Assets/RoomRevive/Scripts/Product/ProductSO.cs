@@ -9,6 +9,7 @@ namespace RoomRevive
         public string brandName;
         public string productName;
         [TextArea] public string emotionalLine;
+        [TextArea] public string shortDescription;
         public Sprite thumbnail;
         public ProductVariant[] variants;
     }
@@ -18,6 +19,7 @@ namespace RoomRevive
     {
         public string name;
         public Sprite image;
+        [TextArea] public string description;
         public string price;
     }
 }

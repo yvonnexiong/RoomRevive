@@ -26,6 +26,7 @@ namespace RoomRevive
         private float _autoHideTimer;
         private CanvasGroup _canvasGroup;
         private Coroutine _fadeCoroutine;
+        private ProductSO _currentProduct;
 
         void Awake()
         {
@@ -78,6 +79,7 @@ namespace RoomRevive
 
         void Show(ProductSO product)
         {
+            _currentProduct = product;
             if (brandNameText != null)   brandNameText.text   = product.brandName;
             if (productNameText != null) productNameText.text = product.productName;
             if (emotionalLineText != null) emotionalLineText.text = product.emotionalLine;
@@ -138,7 +140,8 @@ namespace RoomRevive
 
         void OnExplore()
         {
-            Debug.Log("[ProductCard] Explore tapped — expanded view not yet implemented.");
+            HideWithFade();
+            VariantCarouselUI.OnShowRequested?.Invoke(_currentProduct);
         }
     }
 }

@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductSO
   id: nobilia_cabinet
   brandName: Nobilia
-  productName: Riva Cabinet
+  productName: Riva Cabinet C
   emotionalLine: Clean lines that let your kitchen breathe.
-  thumbnail: {fileID: 0}
+  shortDescription: Cream + grey, marble island
+  thumbnail: {fileID: 21300000, guid: a3575a6100f80d44ca5a8a2956f6554a, type: 3}
   variants: []
