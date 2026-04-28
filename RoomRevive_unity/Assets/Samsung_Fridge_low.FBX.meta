@@ -3,7 +3,12 @@ guid: 7a493a1c856e384458806abf34793962
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Samsung_Fridge
+    second: {fileID: 2100000, guid: 1a876d07f387ccd41b601bdb3e9b10cb, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

@@ -8,10 +8,11 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: SimpleLit
-  m_Shader: {fileID: 4800000, guid: f2e8677bac33bbf4eb43f0f1289803a7, type: 3}
+  m_Shader: {fileID: 4800000, guid: 3a4384a97ee36b54cb7114ba12a91159, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _SURFACE_TYPE_TRANSPARENT
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -20,6 +21,8 @@ Material:
   stringTagMap: {}
   disabledShaderPasses:
   - MOTIONVECTORS
+  - DepthOnly
+  - SHADOWCASTER
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
@@ -126,17 +129,22 @@ Material:
     - _BUILTIN_ZWriteControl: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
+    - _BlendOp: 0
     - _BumpScale: 1
     - _CastShadows: 1
+    - _ClearCoatMask: 0
+    - _ClearCoatSmoothness: 0
     - _Cull: 0
     - _Cutoff: 0.5
+    - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
-    - _DstBlendAlpha: 0
+    - _DstBlendAlpha: 10
     - _EnvironmentReflections: 1
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossinessSource: 0
+    - _GlossyReflections: 0
     - _Metallic: 0.767
     - _Mode: 0
     - _OcclusionStrength: 1
@@ -145,6 +153,7 @@ Material:
     - _QueueOffset: -7
     - _ReceiveShadows: 1
     - _ReflectionSource: 0
+    - _SampleGI: 0
     - _Shininess: 0.5
     - _Smoothness: 0.571
     - _SmoothnessSource: 1
@@ -158,7 +167,7 @@ Material:
     - _WorkflowMode: 1
     - _XRMotionVectorsPass: 1
     - _ZTest: 4
-    - _ZWrite: 1
+    - _ZWrite: 0
     - _ZWriteControl: 0
     - alphaCutoff: 0.5
     - baseColorTexture_texCoord: 0
@@ -173,8 +182,8 @@ Material:
     - roughnessFactor: 1
     - transmissionFactor: 0
     m_Colors:
-    - _BaseColor: {r: 0.8553459, g: 0.8553459, b: 0.8553459, a: 0.5}
-    - _Color: {r: 0.5, g: 0.5, b: 0.5, a: 0.5}
+    - _BaseColor: {r: 0.8553459, g: 0.8553459, b: 0.8553459, a: 0}
+    - _Color: {r: 0.8553459, g: 0.8553459, b: 0.8553459, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.5, g: 0.5, b: 0.5, a: 0.5}
     - baseColorFactor: {r: 1, g: 1, b: 1, a: 1}

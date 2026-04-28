@@ -27,6 +27,7 @@ using UnityEditor;
 /// - A working Meta Interaction SDK rig with HandRayInteractor / RayInteractor + selector.
 /// - Meta XR Interaction SDK installed.
 /// - A SplatManager in the scene, or assign one manually.
+/// - RoundedUISpriteUtility.cs in the project.
 /// </summary>
 [ExecuteAlways]
 [DisallowMultipleComponent]
@@ -43,6 +44,26 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         FastRoom,
         HostRoom
     }
+
+    public enum IntentSelection
+    {
+        CalmRoom = 0,
+        FastRoom = 1,
+        HostRoom = 2
+    }
+
+    [Header("Intent Enum Selection")]
+    [Tooltip("This enum is the main inspector selection. Changing it in the editor updates the selected card in OnValidate.")]
+    public IntentSelection selectedIntent = IntentSelection.CalmRoom;
+
+    [Tooltip("When enabled, selectedIntent controls the selected card and startCardIndex.")]
+    public bool useIntentEnumSelection = true;
+
+    [Tooltip("When enabled, selecting cards at runtime also updates selectedIntent in the Inspector.")]
+    public bool syncIntentEnumWhenSelectingCards = true;
+
+    [Tooltip("When enabled, changing selectedIntent in edit mode also calls the matching SplatManager room method.")]
+    public bool previewSplatManagerInEditorFromSelectedIntent = true;
 
     [Header("Splat Manager Hook")]
     public SplatManager splatManager;
@@ -100,6 +121,19 @@ public class MetaRayIntentCardMenu : MonoBehaviour
     [Range(0.90f, 1.15f)] public float hoverScale = 1.00f;
     [Range(1.00f, 1.25f)] public float selectedScale = 1.08f;
     public float scaleLerpSpeed = 14f;
+
+    [Header("Rounded Corners")]
+    public bool useGeneratedRoundedCorners = true;
+
+    [Tooltip("Clips card image, overlay, label and checkmark into a rounded rectangle.")]
+    public bool clipCardContentToRoundedCorners = true;
+
+    [Range(1, 64)] public int headerCornerRadius = 22;
+    [Range(1, 64)] public int cardBorderCornerRadius = 28;
+    [Range(1, 64)] public int cardContentCornerRadius = 24;
+    [Range(1, 64)] public int labelPanelCornerRadius = 18;
+    [Range(1, 64)] public int checkmarkCornerRadius = 32;
+    [Range(1, 64)] public int nextButtonCornerRadius = 24;
 
     [Header("Card Colors")]
     public Color cardFallbackColorA = new Color(0.13f, 0.20f, 0.24f, 1f);
@@ -178,6 +212,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
     {
         GrabRequiredComponents();
         TryAutoFindSplatManager();
+        SyncStartIndexFromIntentEnum();
         ConfigureCanvas();
     }
 
@@ -185,6 +220,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
     {
         GrabRequiredComponents();
         TryAutoFindSplatManager();
+        SyncStartIndexFromIntentEnum();
         ConfigureCanvas();
     }
 
@@ -193,13 +229,16 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         if (!UApplication.isPlaying) return;
 
         TryAutoFindSplatManager();
+        SyncStartIndexFromIntentEnum();
 
         RebuildMenu();
         SubscribeRayState();
 
-        if (selectCardOnStart && IsValidCardIndex(startCardIndex))
+        int startIndex = GetStartSelectionIndex();
+
+        if (selectCardOnStart && IsValidCardIndex(startIndex))
         {
-            ApplySelection(startCardIndex, callSplatManagerForStartSelection);
+            ApplySelection(startIndex, callSplatManagerForStartSelection);
         }
     }
 
@@ -226,8 +265,13 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         if (UApplication.isPlaying) return;
 
         TryAutoFindSplatManager();
+        SyncStartIndexFromIntentEnum();
 
-        if (!autoRebuildInEditor) return;
+        if (!autoRebuildInEditor)
+        {
+            ApplyIntentEnumSelectionInEditor(previewSplatManagerInEditorFromSelectedIntent);
+            return;
+        }
 
         QueueEditorRebuild();
     }
@@ -246,6 +290,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
             if (UApplication.isPlaying) return;
 
             RebuildMenu();
+            ApplyIntentEnumSelectionInEditor(previewSplatManagerInEditorFromSelectedIntent);
         };
     }
 #endif
@@ -257,6 +302,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
 
         GrabRequiredComponents();
         TryAutoFindSplatManager();
+        SyncStartIndexFromIntentEnum();
         ConfigureCanvas();
         EnsurePointableCanvas();
         EnsureEventSystemAndPointableModule();
@@ -277,6 +323,11 @@ public class MetaRayIntentCardMenu : MonoBehaviour
 
         RefreshVisuals(true);
 
+        if (!UApplication.isPlaying)
+        {
+            ApplyIntentEnumSelectionVisualOnlyInEditor();
+        }
+
         if (UApplication.isPlaying)
         {
             SubscribeRayState();
@@ -291,6 +342,23 @@ public class MetaRayIntentCardMenu : MonoBehaviour
     public void SelectCard(int index)
     {
         ApplySelection(index, true);
+    }
+
+    public void SetIntent(IntentSelection intent)
+    {
+        selectedIntent = intent;
+        SyncStartIndexFromIntentEnum();
+
+        int index = GetStartSelectionIndex();
+
+        if (UApplication.isPlaying)
+        {
+            ApplySelection(index, true);
+        }
+        else
+        {
+            ApplyIntentEnumSelectionInEditor(previewSplatManagerInEditorFromSelectedIntent);
+        }
     }
 
     public void SetHoveredCard(int index, bool isHovered)
@@ -352,17 +420,17 @@ public class MetaRayIntentCardMenu : MonoBehaviour
 
     public void SelectCalmRoomCard()
     {
-        SelectCard(0);
+        SetIntent(IntentSelection.CalmRoom);
     }
 
     public void SelectFastRoomCard()
     {
-        SelectCard(2);
+        SetIntent(IntentSelection.FastRoom);
     }
 
     public void SelectHostRoomCard()
     {
-        SelectCard(1);
+        SetIntent(IntentSelection.HostRoom);
     }
 
     private void TryAutoFindSplatManager()
@@ -371,6 +439,89 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         if (splatManager != null) return;
 
         splatManager = FindAny<SplatManager>();
+    }
+
+    private void SyncStartIndexFromIntentEnum()
+    {
+        if (!useIntentEnumSelection) return;
+
+        startCardIndex = IntentToCardIndex(selectedIntent);
+    }
+
+    private int GetStartSelectionIndex()
+    {
+        if (useIntentEnumSelection)
+        {
+            return IntentToCardIndex(selectedIntent);
+        }
+
+        return startCardIndex;
+    }
+
+    private int IntentToCardIndex(IntentSelection intent)
+    {
+        return (int)intent;
+    }
+
+    private void SyncIntentEnumFromCardIndex(int index)
+    {
+        if (!syncIntentEnumWhenSelectingCards) return;
+
+        switch (index)
+        {
+            case 0:
+                selectedIntent = IntentSelection.CalmRoom;
+                break;
+
+            case 1:
+                selectedIntent = IntentSelection.FastRoom;
+                break;
+
+            case 2:
+                selectedIntent = IntentSelection.HostRoom;
+                break;
+        }
+
+        startCardIndex = index;
+    }
+
+    private void ApplyIntentEnumSelectionVisualOnlyInEditor()
+    {
+        if (UApplication.isPlaying) return;
+        if (!useIntentEnumSelection) return;
+
+        int index = GetStartSelectionIndex();
+
+        if (!IsValidCardIndex(index)) return;
+
+        _selectedIndex = index;
+        _hoveredIndex = -1;
+
+        RefreshVisuals(true);
+    }
+
+    private void ApplyIntentEnumSelectionInEditor(bool invokeSplatManager)
+    {
+        if (UApplication.isPlaying) return;
+        if (!useIntentEnumSelection) return;
+
+        int index = GetStartSelectionIndex();
+
+        if (!IsValidCardIndex(index)) return;
+
+        _selectedIndex = index;
+        _hoveredIndex = -1;
+
+        RefreshVisuals(true);
+
+        if (invokeSplatManager)
+        {
+            InvokeSplatManagerForCard(index);
+        }
+
+#if UNITY_EDITOR
+        EditorUtility.SetDirty(this);
+#endif
     }
 
     private void InvokeSplatManagerForCard(int index)
@@ -436,10 +587,10 @@ public class MetaRayIntentCardMenu : MonoBehaviour
                 return SplatCardAction.CalmRoom;
 
             case 1:
-                return SplatCardAction.HostRoom;
+                return SplatCardAction.FastRoom;
 
             case 2:
-                return SplatCardAction.FastRoom;
+                return SplatCardAction.HostRoom;
 
             default:
                 return SplatCardAction.None;
@@ -559,103 +710,12 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         _canvasRayInteractable = AddOrGet<RayInteractable>(_raySurfaceRoot);
         _canvasRayInteractable.InjectAllRayInteractable(clippedPlaneSurface);
 
+        if (_pointableCanvas != null)
+        {
+            _canvasRayInteractable.InjectOptionalPointableElement(_pointableCanvas);
+        }
+
         _canvasRayInteractable.InjectOptionalSelectSurface(planeSurface);
-    }
-
-    private static void TryConfigureRectTransformBoundsClipperDriver(
-        RectTransformBoundsClipperDriver driver,
-        BoundsClipper boundsClipper)
-    {
-        if (driver == null || boundsClipper == null) return;
-
-        RectTransform rectTransform = driver.GetComponent<RectTransform>();
-        Type driverType = typeof(RectTransformBoundsClipperDriver);
-
-        MethodInfo[] methods = driverType.GetMethods(
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
-        );
-
-        foreach (MethodInfo method in methods)
-        {
-            if (!method.Name.StartsWith("Inject", StringComparison.Ordinal)) continue;
-
-            ParameterInfo[] parameters = method.GetParameters();
-            object[] args = new object[parameters.Length];
-            bool canUseMethod = true;
-
-            for (int i = 0; i < parameters.Length; i++)
-            {
-                Type p = parameters[i].ParameterType;
-
-                if (p.IsAssignableFrom(typeof(BoundsClipper)))
-                {
-                    args[i] = boundsClipper;
-                }
-                else if (p.IsAssignableFrom(typeof(RectTransform)))
-                {
-                    args[i] = rectTransform;
-                }
-                else if (p.IsAssignableFrom(typeof(Transform)))
-                {
-                    args[i] = rectTransform;
-                }
-                else
-                {
-                    canUseMethod = false;
-                    break;
-                }
-            }
-
-            if (!canUseMethod) continue;
-
-            try
-            {
-                method.Invoke(driver, args);
-                break;
-            }
-            catch
-            {
-                // Version-specific SDK differences are handled by field fallback below.
-            }
-        }
-
-        SetFieldIfExists(driver, "_boundsClipper", boundsClipper);
-        SetFieldIfExists(driver, "_rectTransform", rectTransform);
-
-        MethodInfo resizeMethod = driverType.GetMethod(
-            "Resize",
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
-        );
-
-        try
-        {
-            resizeMethod?.Invoke(driver, null);
-        }
-        catch
-        {
-            // Non-fatal.
-        }
-    }
-
-    private static void SetFieldIfExists(object target, string fieldName, object value)
-    {
-        if (target == null) return;
-
-        FieldInfo field = target.GetType().GetField(
-            fieldName,
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
-        );
-
-        if (field == null) return;
-
-        try
-        {
-            field.SetValue(target, value);
-        }
-        catch
-        {
-            // Ignore version-specific field restrictions.
-        }
     }
 
     private void BuildHeader(Transform parent)
@@ -670,7 +730,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         rt.sizeDelta = new Vector2(0f, headerHeight);
 
         UIImage bg = header.AddComponent<UIImage>();
-        bg.color = headerBgColor;
+        ApplyRoundedImage(bg, headerBgColor, headerCornerRadius);
         bg.raycastTarget = false;
 
         TextMeshProUGUI text = AddTMP("HeaderText", header.transform);
@@ -749,7 +809,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         ui.visual.localScale = Vector3.one * normalScale;
 
         ui.borderImage = ui.visual.gameObject.AddComponent<UIImage>();
-        ui.borderImage.color = borderNormal;
+        ApplyRoundedImage(ui.borderImage, borderNormal, cardBorderCornerRadius);
         ui.borderImage.raycastTarget = false;
 
         ui.shadow = ui.visual.gameObject.AddComponent<Shadow>();
@@ -758,6 +818,16 @@ public class MetaRayIntentCardMenu : MonoBehaviour
 
         GameObject content = MakeUIObject("Content", ui.visual);
         StretchInset(content, borderThickness);
+
+        if (clipCardContentToRoundedCorners)
+        {
+            UIImage maskImage = content.AddComponent<UIImage>();
+            ApplyRoundedImage(maskImage, Color.white, cardContentCornerRadius);
+            maskImage.raycastTarget = false;
+
+            Mask mask = content.AddComponent<Mask>();
+            mask.showMaskGraphic = false;
+        }
 
         GameObject bgGO = MakeUIObject("Background", content.transform);
         StretchFull(bgGO);
@@ -774,6 +844,8 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         }
         else
         {
+            ui.backgroundImage.sprite = null;
+            ui.backgroundImage.type = UIImage.Type.Simple;
             ui.backgroundImage.color = GetFallbackBackgroundColor(index);
         }
 
@@ -797,7 +869,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         labelRT.sizeDelta = new Vector2(0f, cardHeight * 0.36f);
 
         ui.labelImage = label.AddComponent<UIImage>();
-        ui.labelImage.color = labelNormal;
+        ApplyRoundedImage(ui.labelImage, labelNormal, labelPanelCornerRadius);
         ui.labelImage.raycastTarget = false;
 
         VerticalLayoutGroup vlg = label.AddComponent<VerticalLayoutGroup>();
@@ -840,7 +912,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         ckRT.sizeDelta = new Vector2(30f, 30f);
 
         ui.checkCircleImage = ui.checkmarkRoot.AddComponent<UIImage>();
-        ui.checkCircleImage.color = Color.white;
+        ApplyRoundedImage(ui.checkCircleImage, Color.white, checkmarkCornerRadius);
         ui.checkCircleImage.raycastTarget = false;
 
         TextMeshProUGUI checkText = AddTMP("Check", ui.checkmarkRoot.transform);
@@ -869,7 +941,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         rt.sizeDelta = new Vector2(210f, 54f);
 
         UIImage image = go.AddComponent<UIImage>();
-        image.color = nextButtonColor;
+        ApplyRoundedImage(image, nextButtonColor, nextButtonCornerRadius);
         image.raycastTarget = true;
 
         Button button = go.AddComponent<Button>();
@@ -903,6 +975,8 @@ public class MetaRayIntentCardMenu : MonoBehaviour
 
         bool changed = _selectedIndex != index;
         _selectedIndex = index;
+
+        SyncIntentEnumFromCardIndex(index);
 
         RefreshVisuals(false);
 
@@ -1052,17 +1126,17 @@ public class MetaRayIntentCardMenu : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
-            SelectCard(0);
+            SetIntent(IntentSelection.CalmRoom);
         }
 
         if (Input.GetKeyDown(KeyCode.Alpha2))
         {
-            SelectCard(1);
+            SetIntent(IntentSelection.FastRoom);
         }
 
         if (Input.GetKeyDown(KeyCode.Alpha3))
         {
-            SelectCard(2);
+            SetIntent(IntentSelection.HostRoom);
         }
 
         if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
@@ -1104,9 +1178,9 @@ public class MetaRayIntentCardMenu : MonoBehaviour
 
         switch (index)
         {
-            case 0: return "Calm & Unwind";
-            case 1: return "Host & Gather";
-            case 2: return "Fast & Focused";
+            case 0: return "Calm Room";
+            case 1: return "Fast Room";
+            case 2: return "Host Room";
             default: return $"Room {index + 1}";
         }
     }
@@ -1123,13 +1197,13 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         switch (index)
         {
             case 0:
-                return "Quiet, warm, and restorative for end-of-day decompression.";
+                return "A quiet, soft and focused room mood.";
 
             case 1:
-                return "Warm, social, and inviting for shared moments.";
+                return "A more energetic and dynamic room mood.";
 
             case 2:
-                return "Efficient, structured, and purposeful for quick cooking.";
+                return "A warm room mood for guests and shared moments.";
 
             default:
                 return "Select this room mood.";
@@ -1195,6 +1269,11 @@ public class MetaRayIntentCardMenu : MonoBehaviour
     {
         GameObject go = new GameObject(objectName, typeof(RectTransform));
         go.transform.SetParent(parent, false);
+
+        if (parent != null)
+        {
+            go.layer = parent.gameObject.layer;
+        }
 
         TextMeshProUGUI tmp = go.AddComponent<TextMeshProUGUI>();
         tmp.enableAutoSizing = false;
@@ -1278,6 +1357,118 @@ public class MetaRayIntentCardMenu : MonoBehaviour
 #else
         return UnityEngine.Object.FindObjectOfType<T>();
 #endif
+    }
+
+    private void ApplyRoundedImage(UIImage image, Color color, int radius)
+    {
+        if (image == null) return;
+
+        if (useGeneratedRoundedCorners)
+        {
+            RoundedUISpriteUtility.ApplyRoundedCorners(image, color, Mathf.Clamp(radius, 1, 64));
+        }
+        else
+        {
+            image.sprite = null;
+            image.type = UIImage.Type.Simple;
+            image.color = color;
+        }
+    }
+
+    private static void TryConfigureRectTransformBoundsClipperDriver(
+        RectTransformBoundsClipperDriver driver,
+        BoundsClipper boundsClipper)
+    {
+        if (driver == null || boundsClipper == null) return;
+
+        RectTransform rectTransform = driver.GetComponent<RectTransform>();
+        Type driverType = typeof(RectTransformBoundsClipperDriver);
+
+        MethodInfo[] methods = driverType.GetMethods(
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
+        );
+
+        foreach (MethodInfo method in methods)
+        {
+            if (!method.Name.StartsWith("Inject", StringComparison.Ordinal)) continue;
+
+            ParameterInfo[] parameters = method.GetParameters();
+            object[] args = new object[parameters.Length];
+            bool canUseMethod = true;
+
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                Type p = parameters[i].ParameterType;
+
+                if (p.IsAssignableFrom(typeof(BoundsClipper)))
+                {
+                    args[i] = boundsClipper;
+                }
+                else if (p.IsAssignableFrom(typeof(RectTransform)))
+                {
+                    args[i] = rectTransform;
+                }
+                else if (p.IsAssignableFrom(typeof(Transform)))
+                {
+                    args[i] = rectTransform;
+                }
+                else
+                {
+                    canUseMethod = false;
+                    break;
+                }
+            }
+
+            if (!canUseMethod) continue;
+
+            try
+            {
+                method.Invoke(driver, args);
+                break;
+            }
+            catch
+            {
+                // Version-specific SDK differences are handled by field fallback below.
+            }
+        }
+
+        SetFieldIfExists(driver, "_boundsClipper", boundsClipper);
+        SetFieldIfExists(driver, "_rectTransform", rectTransform);
+
+        MethodInfo resizeMethod = driverType.GetMethod(
+            "Resize",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
+        );
+
+        try
+        {
+            resizeMethod?.Invoke(driver, null);
+        }
+        catch
+        {
+            // Non-fatal.
+        }
+    }
+
+    private static void SetFieldIfExists(object target, string fieldName, object value)
+    {
+        if (target == null) return;
+
+        FieldInfo field = target.GetType().GetField(
+            fieldName,
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
+        );
+
+        if (field == null) return;
+
+        try
+        {
+            field.SetValue(target, value);
+        }
+        catch
+        {
+            // Ignore version-specific field restrictions.
+        }
     }
 }
 

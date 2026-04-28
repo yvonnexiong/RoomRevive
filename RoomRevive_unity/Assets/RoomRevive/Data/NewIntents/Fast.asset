@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Fast
   m_EditorClassIdentifier: Assembly-CSharp::MetaRayIntentCardData
   title: Fast & Focused
-  subtitle: Efficient, structured, and purposeful for quick cooking.
+  subtitle: Short description.
   cardImage: {fileID: 21300000, guid: d092a8883769cb344b816973cd51856d, type: 3}
-  splatAction: 3
+  splatAction: 0
   useCustomFallbackColor: 0
   fallbackColor: {r: 0.14, g: 0.17, b: 0.24, a: 1}
   onSelected:

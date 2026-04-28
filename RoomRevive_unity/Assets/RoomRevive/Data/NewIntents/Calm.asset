@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Calm
   m_EditorClassIdentifier: Assembly-CSharp::MetaRayIntentCardData
   title: Calm & Unwind
-  subtitle: Quiet, warm, and restorative for end-of-day decompression.
+  subtitle: Short description.
   cardImage: {fileID: 21300000, guid: 6de2c0b2b39fadd4ebdd65ac621a6fb7, type: 3}
-  splatAction: 2
+  splatAction: 0
   useCustomFallbackColor: 0
   fallbackColor: {r: 0.14, g: 0.17, b: 0.24, a: 1}
   onSelected:
