@@ -64,6 +64,7 @@
     <Compile Include="Assets\TutorialInfo\Scripts\Editor\ReadmeEditor.cs" />
     <Compile Include="Assets\Scripts\Editor\XRCCMissingScriptFinder.cs" />
     <Compile Include="Assets\Scripts\Editor\MetaRayFurnitureExampleCatalogCreator.cs" />
+    <Compile Include="Assets\Scripts\Editor\CabinetVariantsCatalogCreator.cs" />
     <Compile Include="Assets\Scripts\Editor\XRCCBadScriptReferenceFinder.cs" />
     <Compile Include="Assets\Scripts\Editor\FridgeControllerEditor.cs" />
   </ItemGroup>
@@ -1420,8 +1421,8 @@
       <HintPath>Library\ScriptAssemblies\Unity.VisualScripting.Flow.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Unity.XR.Hands">
-      <HintPath>Library\ScriptAssemblies\Unity.XR.Hands.dll</HintPath>
+    <Reference Include="Unity.Mobile.AndroidLogcat.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.Mobile.AndroidLogcat.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.TextMeshPro.Editor">
@@ -1436,8 +1437,8 @@
       <HintPath>Library\ScriptAssemblies\Meta.Wit.Composer.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Unity.Mobile.AndroidLogcat.Editor">
-      <HintPath>Library\ScriptAssemblies\Unity.Mobile.AndroidLogcat.Editor.dll</HintPath>
+    <Reference Include="Unity.XR.Hands">
+      <HintPath>Library\ScriptAssemblies\Unity.XR.Hands.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.XR.LegacyInputHelpers">

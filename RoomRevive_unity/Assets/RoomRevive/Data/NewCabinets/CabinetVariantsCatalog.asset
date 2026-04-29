@@ -1,0 +1,209 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: CabinetVariantsCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::MetaRayFurnitureProductCatalog
+  products:
+  - id: 101
+    brandText: Nobilia
+    productName: Warm Walnut Cabinets
+    subtitle: Full-height walnut kitchen with dark stone
+    badgeText: Natural Warmth
+    priceText: $8,900
+    productImage: {fileID: 0}
+    sourceImageUrl: 
+    calloutText: A warm walnut cabinet style was found for this kitchen. The layout
+      keeps the original room proportions while applying a rich wood finish and darker
+      stone surfaces.
+    shortDescription: A premium walnut cabinet system with full-height panels, warm
+      grain and a dark stone backsplash.
+    description: A rich cabinet concept built around natural walnut, vertical wood
+      grain and deep stone contrast. It gives the kitchen a calm, grounded and high-end
+      interior feeling.
+    longDescription: A rich cabinet concept built around natural walnut, vertical
+      wood grain and deep stone contrast. It gives the kitchen a calm, grounded and
+      high-end interior feeling while preserving the scanned kitchen dimensions.
+      The products shown are presented as a cabinet style package that matches the
+      concrete size and layout of the existing kitchen area.
+    widthText: Room matched
+    heightText: Floor to ceiling
+    depthText: 60 cm base / 35 cm wall
+    weightText: Project based
+    features:
+    - Full-height cabinet fronts
+    - Continuous vertical walnut grain
+    - Dark stone backsplash and worktop
+    - Integrated handle-free look
+    - Warm natural material expression
+    - Designed to fit the scanned cabinet volume
+    materialsText: Walnut veneer fronts, dark stone-effect countertop, dark stone
+      backsplash, matte black shadow gaps, soft-close fittings
+    finish: Warm Walnut / Dark Stone
+    finishColors:
+    - {r: 0.5411765, g: 0.33333334, b: 0.18039216, a: 1}
+    - {r: 0.24705882, g: 0.27450982, b: 0.25882354, a: 1}
+    - {r: 0.17254902, g: 0.12941177, b: 0.09803922, a: 1}
+    finishColorLabels:
+    - Warm Walnut
+    - Dark Stone
+    - Deep Shadow Trim
+    storageText: Tall integrated cabinet wall, upper storage, base cabinets, open
+      shelf zone and island front panels
+    includedParts:
+    - Tall cabinet fronts
+    - Upper cabinet fronts
+    - Base cabinet fronts
+    - Island front panels
+    - Stone-effect backsplash
+    - Stone-effect countertop
+    - Open shelf detail
+    - Soft-close hinge and drawer hardware
+    useCustomFallbackColor: 1
+    fallbackColor: {r: 0.5411765, g: 0.33333334, b: 0.18039216, a: 1}
+    onShown:
+      m_PersistentCalls:
+        m_Calls: []
+    onDiscovered:
+      m_PersistentCalls:
+        m_Calls: []
+    onDetailsUnlocked:
+      m_PersistentCalls:
+        m_Calls: []
+  - id: 102
+    brandText: Nobilia
+    productName: Soft Cream Stone Cabinets
+    subtitle: Cream upper cabinets with grey lower fronts
+    badgeText: Minimal Calm
+    priceText: $7,400
+    productImage: {fileID: 0}
+    sourceImageUrl: 
+    calloutText: A soft cream and stone cabinet style was found for this kitchen.
+      It keeps the same kitchen footprint while creating a brighter, quieter and
+      more minimal expression.
+    shortDescription: A light modern cabinet system with cream upper fronts, grey
+      base units and white marble-effect surfaces.
+    description: A calm and minimal kitchen concept with soft cream cabinetry, muted
+      grey base cabinets and white stone surfaces. The style makes the space feel
+      brighter and more open.
+    longDescription: A calm and minimal kitchen concept with soft cream cabinetry,
+      muted grey base cabinets and white stone surfaces. The style makes the space
+      feel brighter and more open while preserving the exact cabinet zones from the
+      scanned kitchen. The products shown are selected to match the concrete size
+      of the existing kitchen and demonstrate a realistic replacement direction.
+    widthText: Room matched
+    heightText: Floor to ceiling
+    depthText: 60 cm base / 35 cm wall
+    weightText: Project based
+    features:
+    - Soft cream full-height fronts
+    - Muted grey lower cabinets
+    - White marble-effect backsplash
+    - Integrated clean-line cabinet seams
+    - Bright minimal Scandinavian expression
+    - Designed to fit the existing cabinet layout
+    materialsText: Matte cream laminate fronts, muted grey painted fronts, white
+      marble-effect countertop, white stone backsplash, brushed metal details
+    finish: Soft Cream / Stone Grey / White Marble
+    finishColors:
+    - {r: 0.8666667, g: 0.84313726, b: 0.7607843, a: 1}
+    - {r: 0.5568628, g: 0.57254905, b: 0.5647059, a: 1}
+    - {r: 0.94509804, g: 0.93333334, b: 0.9019608, a: 1}
+    finishColorLabels:
+    - Soft Cream
+    - Stone Grey
+    - White Marble
+    storageText: Tall hidden storage, upper display shelf, base drawers, sink area
+      cabinets and island cladding
+    includedParts:
+    - Tall cabinet fronts
+    - Upper cabinet fronts
+    - Base cabinet fronts
+    - Island cladding panels
+    - White stone-effect backsplash
+    - White stone-effect countertop
+    - Integrated shelf detail
+    - Soft-close hinge and drawer hardware
+    useCustomFallbackColor: 1
+    fallbackColor: {r: 0.8666667, g: 0.84313726, b: 0.7607843, a: 1}
+    onShown:
+      m_PersistentCalls:
+        m_Calls: []
+    onDiscovered:
+      m_PersistentCalls:
+        m_Calls: []
+    onDetailsUnlocked:
+      m_PersistentCalls:
+        m_Calls: []
+  - id: 103
+    brandText: Nobilia
+    productName: Sage Oak Cabinets
+    subtitle: Soft sage lower cabinets with oak details
+    badgeText: Scandi Fresh
+    priceText: $7,900
+    productImage: {fileID: 0}
+    sourceImageUrl: 
+    calloutText: A sage and oak cabinet style was found for this kitchen. It preserves
+      the current kitchen proportions while adding a lighter, warmer and more playful
+      Scandinavian finish.
+    shortDescription: A soft sage cabinet system with cream upper fronts, oak shelving
+      and a natural wood countertop.
+    description: A fresh Scandinavian cabinet concept combining soft sage green,
+      warm oak and light cream surfaces. The design feels calm, natural and welcoming.
+    longDescription: A fresh Scandinavian cabinet concept combining soft sage green,
+      warm oak and light cream surfaces. The design feels calm, natural and welcoming
+      while keeping the same cabinet scale and kitchen geometry. The products shown
+      are matched to the concrete size of the existing kitchen and visualized as
+      a realistic replacement package.
+    widthText: Room matched
+    heightText: Floor to ceiling
+    depthText: 60 cm base / 35 cm wall
+    weightText: Project based
+    features:
+    - Soft sage green lower cabinets
+    - Cream upper cabinet fronts
+    - Warm oak shelves and countertop
+    - Light speckled backsplash surface
+    - Minimal handles and calm panel rhythm
+    - Designed around the scanned cabinet footprint
+    materialsText: Matte sage painted fronts, cream laminate fronts, oak veneer shelves,
+      oak countertop, speckled stone-effect backsplash
+    finish: Soft Sage / Cream / Natural Oak
+    finishColors:
+    - {r: 0.61960787, g: 0.6784314, b: 0.6039216, a: 1}
+    - {r: 0.8627451, g: 0.8352941, b: 0.74509805, a: 1}
+    - {r: 0.72156864, g: 0.5372549, b: 0.32156864, a: 1}
+    finishColorLabels:
+    - Soft Sage
+    - Warm Cream
+    - Natural Oak
+    storageText: Tall storage wall, upper open shelves, sage base drawers, island
+      panels and fitted cabinet fronts
+    includedParts:
+    - Tall cabinet fronts
+    - Upper cabinet fronts
+    - Sage base cabinet fronts
+    - Island side panels
+    - Oak open shelves
+    - Oak countertop
+    - Speckled backsplash panels
+    - Soft-close hinge and drawer hardware
+    useCustomFallbackColor: 1
+    fallbackColor: {r: 0.61960787, g: 0.6784314, b: 0.6039216, a: 1}
+    onShown:
+      m_PersistentCalls:
+        m_Calls: []
+    onDiscovered:
+      m_PersistentCalls:
+        m_Calls: []
+    onDetailsUnlocked:
+      m_PersistentCalls:
+        m_Calls: []

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -6,8 +6,9 @@ using UnityEditor;
 #endif
 
 /// <summary>
-/// Plays atmosphere music and transition SFX for each splat intent / room.
-/// Called by SplatManager.
+/// Plays startup music, atmosphere music, and transition SFX for each splat intent / room.
+/// Startup music is intended for the first scene load before any room/intent trigger is active.
+/// Room atmosphere music is started by SplatManager or MetaRayIntentCardMenu.
 /// </summary>
 public class AudioManager : MonoBehaviour
 {
@@ -19,11 +20,21 @@ public class AudioManager : MonoBehaviour
     public bool dontDestroyOnLoad = false;
 
     [Header("Audio Sources")]
-    [Tooltip("AudioSource used for looping atmosphere music.")]
+    [Tooltip("AudioSource used for looping startup music and looping atmosphere music.")]
     public AudioSource musicSource;
 
     [Tooltip("AudioSource used for one-shot transition sounds.")]
     public AudioSource sfxSource;
+
+    [Header("Start Music")]
+    [Tooltip("Music that plays when the scene first loads before any room/intent trigger takes over.")]
+    public AudioClip startMusic;
+
+    [Tooltip("If true, StartMusic plays automatically when this AudioManager starts in play mode.")]
+    public bool playStartMusicOnSceneLoad = true;
+
+    [Tooltip("If true, StartMusic loops until a room atmosphere replaces it.")]
+    public bool loopStartMusic = true;
 
     [Header("Atmosphere Music Clips")]
     public AudioClip calmRoomAtmosphere;
@@ -43,7 +54,7 @@ public class AudioManager : MonoBehaviour
     [Tooltip("If true, atmosphere tracks loop.")]
     public bool loopAtmosphereMusic = true;
 
-    [Tooltip("Crossfade duration when changing between atmosphere tracks.")]
+    [Tooltip("Crossfade duration when changing between startup music and room atmosphere tracks.")]
     [Min(0f)]
     public float musicFadeDuration = 0.8f;
 
@@ -55,6 +66,7 @@ public class AudioManager : MonoBehaviour
 
     private Coroutine _fadeRoutine;
     private SplatManager.SplatRoom _currentMusicRoom = SplatManager.SplatRoom.None;
+    private bool _isPlayingStartMusic;
 
     // ─────────────────────────────────────────────────────────────
     // Singleton
@@ -89,6 +101,17 @@ public class AudioManager : MonoBehaviour
     {
         RegisterSingleton();
         EnsureAudioSources();
+    }
+
+    private void Start()
+    {
+        if (!Application.isPlaying)
+            return;
+
+        EnsureAudioSources();
+
+        if (playStartMusicOnSceneLoad)
+            PlayStartMusic();
     }
 
     private void OnDestroy()
@@ -128,8 +151,34 @@ public class AudioManager : MonoBehaviour
     }
 
     // ─────────────────────────────────────────────────────────────
-    // Public API called by SplatManager
+    // Public API
     // ─────────────────────────────────────────────────────────────
+
+    public void PlayStartMusic()
+    {
+        EnsureAudioSources();
+
+        if (startMusic == null)
+        {
+            if (debugLogs)
+                Debug.LogWarning("<b>[AudioManager]</b> No StartMusic clip assigned.", this);
+
+            return;
+        }
+
+        if (doNotRestartSameMusic &&
+            _isPlayingStartMusic &&
+            musicSource.clip == startMusic &&
+            musicSource.isPlaying)
+        {
+            return;
+        }
+
+        _currentMusicRoom = SplatManager.SplatRoom.None;
+        _isPlayingStartMusic = true;
+
+        PlayMusicClip(startMusic, loopStartMusic, "StartMusic");
+    }
 
     public void PlayAtmosphereForRoom(SplatManager.SplatRoom room)
     {
@@ -146,6 +195,7 @@ public class AudioManager : MonoBehaviour
         }
 
         if (doNotRestartSameMusic &&
+            !_isPlayingStartMusic &&
             _currentMusicRoom == room &&
             musicSource.clip == targetClip &&
             musicSource.isPlaying)
@@ -154,24 +204,9 @@ public class AudioManager : MonoBehaviour
         }
 
         _currentMusicRoom = room;
+        _isPlayingStartMusic = false;
 
-        if (_fadeRoutine != null)
-            StopCoroutine(_fadeRoutine);
-
-        if (musicFadeDuration <= 0f || !Application.isPlaying)
-        {
-            musicSource.clip = targetClip;
-            musicSource.volume = musicVolume;
-            musicSource.loop = loopAtmosphereMusic;
-            musicSource.Play();
-
-            if (debugLogs)
-                Debug.Log($"<color=orange><b>[AudioManager]</b></color> Playing atmosphere for {room}: {targetClip.name}", this);
-
-            return;
-        }
-
-        _fadeRoutine = StartCoroutine(FadeToNewMusic(targetClip, room));
+        PlayMusicClip(targetClip, loopAtmosphereMusic, $"atmosphere for {room}");
     }
 
     public void PlayRoomChangeSfx()
@@ -205,9 +240,10 @@ public class AudioManager : MonoBehaviour
         musicSource.Stop();
         musicSource.clip = null;
         _currentMusicRoom = SplatManager.SplatRoom.None;
+        _isPlayingStartMusic = false;
 
         if (debugLogs)
-            Debug.Log("<b>[AudioManager]</b> Stopped atmosphere music.", this);
+            Debug.Log("<b>[AudioManager]</b> Stopped music.", this);
     }
 
     public void StopAllAudio()
@@ -224,6 +260,30 @@ public class AudioManager : MonoBehaviour
     // ─────────────────────────────────────────────────────────────
     // Helpers
     // ─────────────────────────────────────────────────────────────
+
+    private void PlayMusicClip(AudioClip targetClip, bool loop, string debugLabel)
+    {
+        if (targetClip == null)
+            return;
+
+        if (_fadeRoutine != null)
+            StopCoroutine(_fadeRoutine);
+
+        if (musicFadeDuration <= 0f || !Application.isPlaying)
+        {
+            musicSource.clip = targetClip;
+            musicSource.volume = musicVolume;
+            musicSource.loop = loop;
+            musicSource.Play();
+
+            if (debugLogs)
+                Debug.Log($"<color=orange><b>[AudioManager]</b></color> Playing {debugLabel}: {targetClip.name}", this);
+
+            return;
+        }
+
+        _fadeRoutine = StartCoroutine(FadeToNewMusic(targetClip, loop, debugLabel));
+    }
 
     private AudioClip GetAtmosphereClipForRoom(SplatManager.SplatRoom room)
     {
@@ -243,7 +303,7 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    private IEnumerator FadeToNewMusic(AudioClip targetClip, SplatManager.SplatRoom room)
+    private IEnumerator FadeToNewMusic(AudioClip targetClip, bool loop, string debugLabel)
     {
         float startVolume = musicSource.volume;
         float fadeOutDuration = musicSource.isPlaying ? musicFadeDuration * 0.5f : 0f;
@@ -263,7 +323,7 @@ public class AudioManager : MonoBehaviour
 
         musicSource.Stop();
         musicSource.clip = targetClip;
-        musicSource.loop = loopAtmosphereMusic;
+        musicSource.loop = loop;
         musicSource.volume = 0f;
         musicSource.Play();
 
@@ -282,7 +342,7 @@ public class AudioManager : MonoBehaviour
         _fadeRoutine = null;
 
         if (debugLogs)
-            Debug.Log($"<color=orange><b>[AudioManager]</b></color> Playing atmosphere for {room}: {targetClip.name}", this);
+            Debug.Log($"<color=orange><b>[AudioManager]</b></color> Playing {debugLabel}: {targetClip.name}", this);
     }
 
     private void EnsureAudioSources()

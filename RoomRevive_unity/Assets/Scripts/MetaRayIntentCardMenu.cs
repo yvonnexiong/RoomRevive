@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using TMPro;
@@ -20,14 +20,10 @@ using UnityEditor;
 /// Drop this on an empty GameObject.
 /// It generates a world-space Meta Interaction SDK ray-interactable card menu.
 ///
-/// Cards are referenced through ScriptableObjects:
-///     MetaRayIntentCardData
-///
-/// Required in scene:
-/// - A working Meta Interaction SDK rig with HandRayInteractor / RayInteractor + selector.
-/// - Meta XR Interaction SDK installed.
-/// - A SplatManager in the scene, or assign one manually.
-/// - RoundedUISpriteUtility.cs in the project.
+/// UPDATED AUDIO FLOW:
+/// - AudioManager can play StartMusic when the scene first loads.
+/// - When this Intent UI is enabled in play mode, it asks AudioManager to play the music for selectedIntent.
+/// - When a room card is selected, it also asks AudioManager to play the matching room atmosphere.
 /// </summary>
 [ExecuteAlways]
 [DisallowMultipleComponent]
@@ -53,17 +49,16 @@ public class MetaRayIntentCardMenu : MonoBehaviour
     }
 
     [Header("Intent Enum Selection")]
-    [Tooltip("This enum is the main inspector selection. Changing it in the editor updates the selected card in OnValidate.")]
     public IntentSelection selectedIntent = IntentSelection.CalmRoom;
-
-    [Tooltip("When enabled, selectedIntent controls the selected card and startCardIndex.")]
     public bool useIntentEnumSelection = true;
-
-    [Tooltip("When enabled, selecting cards at runtime also updates selectedIntent in the Inspector.")]
     public bool syncIntentEnumWhenSelectingCards = true;
-
-    [Tooltip("When enabled, changing selectedIntent in edit mode also calls the matching SplatManager room method.")]
     public bool previewSplatManagerInEditorFromSelectedIntent = true;
+
+    [Header("Host Room Only Objects")]
+    public GameObject productUI;
+    public GameObject fridgesGO;
+    public bool onlyShowProductUIAndFridgesInHostRoom = true;
+    public bool updateHostRoomObjectsInEditor = true;
 
     [Header("Splat Manager Hook")]
     public SplatManager splatManager;
@@ -72,26 +67,33 @@ public class MetaRayIntentCardMenu : MonoBehaviour
     public bool callSplatManagerOnConfirm = false;
     public bool reapplySameSplatIfClickedAgain = false;
 
+    [Header("Audio Manager Hook")]
+    [Tooltip("Optional. If empty, the script will auto-find AudioManager.")]
+    public AudioManager audioManager;
+
+    [Tooltip("When enabled, this script will auto-find AudioManager.")]
+    public bool autoFindAudioManager = true;
+
+    [Tooltip("When this Intent UI is enabled in play mode, it starts the room music for the current selectedIntent.")]
+    public bool playRoomMusicWhenIntentUIIsEnabled = true;
+
+    [Tooltip("When a card is selected, play the matching room atmosphere music.")]
+    public bool playRoomMusicOnSelect = true;
+
+    [Tooltip("When true, choosing the same selected card again can re-apply the music. AudioManager can still avoid restarting the same clip.")]
+    public bool reapplySameMusicIfClickedAgain = false;
+
     [Header("Start Selection")]
     public bool selectCardOnStart = true;
-
-    [Range(0, 7)]
-    public int startCardIndex = 0;
-
+    [Range(0, 7)] public int startCardIndex = 0;
     public bool callSplatManagerForStartSelection = true;
 
     [Header("Card Data")]
-    [Tooltip("Drag MetaRayIntentCardData ScriptableObject assets here.")]
     public List<MetaRayIntentCardData> cards = new List<MetaRayIntentCardData>();
+    [Range(1, 8)] public int fallbackCardCount = 3;
 
-    [Range(1, 8)]
-    public int fallbackCardCount = 3;
-
-    [Serializable]
-    public class IntentCardEvent : UnityEvent<int, MetaRayIntentCardData> { }
-
-    [Serializable]
-    public class SplatActionEvent : UnityEvent<SplatCardAction> { }
+    [Serializable] public class IntentCardEvent : UnityEvent<int, MetaRayIntentCardData> { }
+    [Serializable] public class SplatActionEvent : UnityEvent<SplatCardAction> { }
 
     [Header("Events")]
     public IntentCardEvent onSelectionChanged = new IntentCardEvent();
@@ -104,6 +106,21 @@ public class MetaRayIntentCardMenu : MonoBehaviour
     public bool autoCreateEventSystem = true;
     public bool autoRebuildInEditor = true;
     public PlaneSurface.NormalFacing raySurfaceFacing = PlaneSurface.NormalFacing.Backward;
+
+    [Header("Ray / Pointer Select")]
+    public bool addButtonComponentToCards = true;
+    public bool selectCardOnPointerDown = true;
+    public bool selectCardOnPointerClick = true;
+    public bool enableNextButton = true;
+
+    [Header("Keyboard Simulation")]
+    public bool keyboardDebug = true;
+    public bool arrowKeysWrapAround = true;
+    public bool arrowKeysInvokeSelection = true;
+    public KeyCode previousCardKey = KeyCode.LeftArrow;
+    public KeyCode nextCardKey = KeyCode.RightArrow;
+    public KeyCode confirmKey = KeyCode.Return;
+    public KeyCode confirmKeyAlt = KeyCode.KeypadEnter;
 
     [Header("Layout")]
     public float cardWidth = 260f;
@@ -124,10 +141,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
 
     [Header("Rounded Corners")]
     public bool useGeneratedRoundedCorners = true;
-
-    [Tooltip("Clips card image, overlay, label and checkmark into a rounded rectangle.")]
     public bool clipCardContentToRoundedCorners = true;
-
     [Range(1, 64)] public int headerCornerRadius = 22;
     [Range(1, 64)] public int cardBorderCornerRadius = 28;
     [Range(1, 64)] public int cardContentCornerRadius = 24;
@@ -139,18 +153,13 @@ public class MetaRayIntentCardMenu : MonoBehaviour
     public Color cardFallbackColorA = new Color(0.13f, 0.20f, 0.24f, 1f);
     public Color cardFallbackColorB = new Color(0.24f, 0.13f, 0.18f, 1f);
     public Color cardFallbackColorC = new Color(0.24f, 0.18f, 0.11f, 1f);
-
     public Color borderNormal = new Color(0.08f, 0.11f, 0.18f, 1f);
     public Color borderHover = new Color(0.55f, 0.75f, 1f, 1f);
     public Color borderSelected = new Color(1f, 1f, 1f, 0.95f);
-
-    [Range(1f, 12f)]
-    public float borderThickness = 4f;
-
+    [Range(1f, 12f)] public float borderThickness = 4f;
     public Color labelNormal = new Color(0.08f, 0.10f, 0.16f, 0.72f);
     public Color labelHover = new Color(0.13f, 0.18f, 0.26f, 0.82f);
     public Color labelSelected = new Color(1f, 1f, 1f, 0.25f);
-
     public Color overlayColor = new Color(0f, 0f, 0f, 0.58f);
     public Color headerBgColor = new Color(0f, 0f, 0f, 0.36f);
     public Color nextButtonColor = new Color(1f, 1f, 1f, 0.9f);
@@ -158,7 +167,6 @@ public class MetaRayIntentCardMenu : MonoBehaviour
     [Header("Typography")]
     public string headerText = "Choose room mood";
     public string nextButtonText = "Next";
-
     public float headerFontSize = 30f;
     public float titleFontSize = 19f;
     public float subtitleFontSize = 12f;
@@ -166,7 +174,6 @@ public class MetaRayIntentCardMenu : MonoBehaviour
 
     [Header("Debug")]
     public bool debugLogs = true;
-    public bool keyboardDebug = true;
 
     [SerializeField, HideInInspector] private GameObject _generatedRoot;
     [SerializeField, HideInInspector] private GameObject _raySurfaceRoot;
@@ -179,10 +186,8 @@ public class MetaRayIntentCardMenu : MonoBehaviour
     private RectTransform _rectTransform;
 
     private readonly List<CardRuntimeUI> _runtimeCards = new List<CardRuntimeUI>();
-
     private int _selectedIndex = -1;
     private int _hoveredIndex = -1;
-
     private bool _subscribedToRayState;
 
 #if UNITY_EDITOR
@@ -196,6 +201,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         public GameObject root;
         public RectTransform visual;
         public UIImage hitImage;
+        public Button button;
         public UIImage borderImage;
         public UIImage backgroundImage;
         public UIImage overlayImage;
@@ -212,16 +218,34 @@ public class MetaRayIntentCardMenu : MonoBehaviour
     {
         GrabRequiredComponents();
         TryAutoFindSplatManager();
+        TryAutoFindAudioManager();
         SyncStartIndexFromIntentEnum();
         ConfigureCanvas();
+        ApplyHostRoomObjectVisibility();
     }
 
     private void Awake()
     {
         GrabRequiredComponents();
         TryAutoFindSplatManager();
+        TryAutoFindAudioManager();
         SyncStartIndexFromIntentEnum();
         ConfigureCanvas();
+        ApplyHostRoomObjectVisibility();
+    }
+
+    private void OnEnable()
+    {
+        GrabRequiredComponents();
+        TryAutoFindSplatManager();
+        TryAutoFindAudioManager();
+        SyncStartIndexFromIntentEnum();
+        ApplyHostRoomObjectVisibility();
+
+        if (UApplication.isPlaying && playRoomMusicWhenIntentUIIsEnabled)
+        {
+            PlayAudioForCurrentIntent();
+        }
     }
 
     private void Start()
@@ -229,7 +253,9 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         if (!UApplication.isPlaying) return;
 
         TryAutoFindSplatManager();
+        TryAutoFindAudioManager();
         SyncStartIndexFromIntentEnum();
+        ApplyHostRoomObjectVisibility();
 
         RebuildMenu();
         SubscribeRayState();
@@ -240,6 +266,12 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         {
             ApplySelection(startIndex, callSplatManagerForStartSelection);
         }
+        else
+        {
+            ApplyHostRoomObjectVisibility();
+            if (playRoomMusicWhenIntentUIIsEnabled)
+                PlayAudioForCurrentIntent();
+        }
     }
 
     private void Update()
@@ -249,9 +281,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         AnimateScales();
 
         if (keyboardDebug)
-        {
             HandleKeyboardDebug();
-        }
     }
 
     private void OnDisable()
@@ -265,7 +295,11 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         if (UApplication.isPlaying) return;
 
         TryAutoFindSplatManager();
+        TryAutoFindAudioManager();
         SyncStartIndexFromIntentEnum();
+
+        if (updateHostRoomObjectsInEditor)
+            ApplyHostRoomObjectVisibility();
 
         if (!autoRebuildInEditor)
         {
@@ -291,6 +325,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
 
             RebuildMenu();
             ApplyIntentEnumSelectionInEditor(previewSplatManagerInEditorFromSelectedIntent);
+            ApplyHostRoomObjectVisibility();
         };
     }
 #endif
@@ -302,6 +337,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
 
         GrabRequiredComponents();
         TryAutoFindSplatManager();
+        TryAutoFindAudioManager();
         SyncStartIndexFromIntentEnum();
         ConfigureCanvas();
         EnsurePointableCanvas();
@@ -324,58 +360,46 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         RefreshVisuals(true);
 
         if (!UApplication.isPlaying)
-        {
             ApplyIntentEnumSelectionVisualOnlyInEditor();
-        }
+
+        ApplyHostRoomObjectVisibility();
 
         if (UApplication.isPlaying)
-        {
             SubscribeRayState();
-        }
 
         if (debugLogs)
-        {
             UDebug.Log($"<b>[MetaRayIntentCardMenu]</b> Built {_runtimeCards.Count} ray-interactable card(s).");
-        }
     }
 
-    public void SelectCard(int index)
-    {
-        ApplySelection(index, true);
-    }
+    public void SelectCard(int index) => ApplySelection(index, true);
+    public void SelectPreviousCard() => SelectRelativeCard(-1, arrowKeysInvokeSelection);
+    public void SelectNextCard() => SelectRelativeCard(1, arrowKeysInvokeSelection);
 
     public void SetIntent(IntentSelection intent)
     {
         selectedIntent = intent;
         SyncStartIndexFromIntentEnum();
+        ApplyHostRoomObjectVisibility();
 
         int index = GetStartSelectionIndex();
 
         if (UApplication.isPlaying)
-        {
             ApplySelection(index, true);
-        }
         else
-        {
             ApplyIntentEnumSelectionInEditor(previewSplatManagerInEditorFromSelectedIntent);
-        }
+    }
+
+    public void PlayAudioForCurrentIntent()
+    {
+        PlayAudioForCard(GetStartSelectionIndex());
     }
 
     public void SetHoveredCard(int index, bool isHovered)
     {
         if (isHovered)
-        {
             _hoveredIndex = index;
-
-            if (debugLogs && IsValidCardIndex(index))
-            {
-                UDebug.Log($"<color=#89CFF0><b>[MetaRayIntentCardMenu]</b></color> Hover card {index}: {GetTitle(index)}");
-            }
-        }
         else if (_hoveredIndex == index)
-        {
             _hoveredIndex = -1;
-        }
 
         RefreshVisuals(false);
     }
@@ -385,83 +409,82 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         if (!IsValidCardIndex(_selectedIndex))
         {
             if (debugLogs)
-            {
                 UDebug.LogWarning("[MetaRayIntentCardMenu] Nothing selected. Hover/pinch-select a card first.");
-            }
-
             return;
         }
 
         MetaRayIntentCardData data = GetData(_selectedIndex);
 
-        if (debugLogs)
-        {
-            UDebug.Log($"<color=lime><b>[MetaRayIntentCardMenu]</b></color> Confirmed card {_selectedIndex}: {GetTitle(_selectedIndex)}");
-        }
-
         if (callSplatManagerOnConfirm)
-        {
             InvokeSplatManagerForCard(_selectedIndex);
-        }
 
-        if (data != null)
-        {
-            data.onConfirmed?.Invoke();
-        }
-
+        data?.onConfirmed?.Invoke();
         onConfirmed?.Invoke(_selectedIndex, data);
+
+        if (debugLogs)
+            UDebug.Log($"<color=lime><b>[MetaRayIntentCardMenu]</b></color> Confirmed card {_selectedIndex}: {GetTitle(_selectedIndex)}");
     }
 
     public void InvokeSelectedSplatRoom()
     {
-        if (!IsValidCardIndex(_selectedIndex)) return;
-        InvokeSplatManagerForCard(_selectedIndex);
+        if (IsValidCardIndex(_selectedIndex))
+            InvokeSplatManagerForCard(_selectedIndex);
     }
 
-    public void SelectCalmRoomCard()
-    {
-        SetIntent(IntentSelection.CalmRoom);
-    }
+    public void SelectCalmRoomCard() => SetIntent(IntentSelection.CalmRoom);
+    public void SelectFastRoomCard() => SetIntent(IntentSelection.FastRoom);
+    public void SelectHostRoomCard() => SetIntent(IntentSelection.HostRoom);
 
-    public void SelectFastRoomCard()
+    private void SelectRelativeCard(int direction, bool invokeEvents)
     {
-        SetIntent(IntentSelection.FastRoom);
-    }
+        int count = _runtimeCards.Count;
+        if (count <= 0) return;
 
-    public void SelectHostRoomCard()
-    {
-        SetIntent(IntentSelection.HostRoom);
+        int current = IsValidCardIndex(_selectedIndex)
+            ? _selectedIndex
+            : Mathf.Clamp(GetStartSelectionIndex(), 0, count - 1);
+
+        int next = current + direction;
+
+        if (arrowKeysWrapAround)
+        {
+            if (next < 0) next = count - 1;
+            else if (next >= count) next = 0;
+        }
+        else
+        {
+            next = Mathf.Clamp(next, 0, count - 1);
+        }
+
+        ApplySelection(next, invokeEvents);
     }
 
     private void TryAutoFindSplatManager()
     {
-        if (!autoFindSplatManager) return;
-        if (splatManager != null) return;
-
+        if (!autoFindSplatManager || splatManager != null) return;
         splatManager = FindAny<SplatManager>();
+    }
+
+    private void TryAutoFindAudioManager()
+    {
+        if (!autoFindAudioManager || audioManager != null) return;
+        audioManager = AudioManager.GetOrFindInstance();
+        if (audioManager == null)
+            audioManager = FindAny<AudioManager>();
     }
 
     private void SyncStartIndexFromIntentEnum()
     {
-        if (!useIntentEnumSelection) return;
-
-        startCardIndex = IntentToCardIndex(selectedIntent);
+        if (useIntentEnumSelection)
+            startCardIndex = IntentToCardIndex(selectedIntent);
     }
 
     private int GetStartSelectionIndex()
     {
-        if (useIntentEnumSelection)
-        {
-            return IntentToCardIndex(selectedIntent);
-        }
-
-        return startCardIndex;
+        return useIntentEnumSelection ? IntentToCardIndex(selectedIntent) : startCardIndex;
     }
 
-    private int IntentToCardIndex(IntentSelection intent)
-    {
-        return (int)intent;
-    }
+    private int IntentToCardIndex(IntentSelection intent) => (int)intent;
 
     private void SyncIntentEnumFromCardIndex(int index)
     {
@@ -469,17 +492,9 @@ public class MetaRayIntentCardMenu : MonoBehaviour
 
         switch (index)
         {
-            case 0:
-                selectedIntent = IntentSelection.CalmRoom;
-                break;
-
-            case 1:
-                selectedIntent = IntentSelection.FastRoom;
-                break;
-
-            case 2:
-                selectedIntent = IntentSelection.HostRoom;
-                break;
+            case 0: selectedIntent = IntentSelection.CalmRoom; break;
+            case 1: selectedIntent = IntentSelection.FastRoom; break;
+            case 2: selectedIntent = IntentSelection.HostRoom; break;
         }
 
         startCardIndex = index;
@@ -487,40 +502,66 @@ public class MetaRayIntentCardMenu : MonoBehaviour
 
     private void ApplyIntentEnumSelectionVisualOnlyInEditor()
     {
-        if (UApplication.isPlaying) return;
-        if (!useIntentEnumSelection) return;
+        if (UApplication.isPlaying || !useIntentEnumSelection) return;
 
         int index = GetStartSelectionIndex();
-
-        if (!IsValidCardIndex(index)) return;
-
         _selectedIndex = index;
         _hoveredIndex = -1;
+        ApplyHostRoomObjectVisibility();
 
-        RefreshVisuals(true);
+        if (IsValidCardIndex(index))
+            RefreshVisuals(true);
     }
 
     private void ApplyIntentEnumSelectionInEditor(bool invokeSplatManager)
     {
-        if (UApplication.isPlaying) return;
-        if (!useIntentEnumSelection) return;
+        if (UApplication.isPlaying || !useIntentEnumSelection) return;
 
         int index = GetStartSelectionIndex();
-
-        if (!IsValidCardIndex(index)) return;
-
         _selectedIndex = index;
         _hoveredIndex = -1;
+        ApplyHostRoomObjectVisibility();
 
-        RefreshVisuals(true);
+        if (IsValidCardIndex(index))
+            RefreshVisuals(true);
 
-        if (invokeSplatManager)
-        {
+        if (invokeSplatManager && IsValidCardIndex(index))
             InvokeSplatManagerForCard(index);
-        }
 
 #if UNITY_EDITOR
         EditorUtility.SetDirty(this);
+#endif
+    }
+
+    private void ApplyHostRoomObjectVisibility()
+    {
+        if (!onlyShowProductUIAndFridgesInHostRoom) return;
+
+        bool shouldBeActive = ShouldHostRoomObjectsBeActive();
+        SetActiveIfNeeded(productUI, shouldBeActive);
+        SetActiveIfNeeded(fridgesGO, shouldBeActive);
+    }
+
+    private bool ShouldHostRoomObjectsBeActive()
+    {
+        if (useIntentEnumSelection)
+            return selectedIntent == IntentSelection.HostRoom;
+
+        if (_selectedIndex >= 0)
+            return _selectedIndex == IntentToCardIndex(IntentSelection.HostRoom);
+
+        return startCardIndex == IntentToCardIndex(IntentSelection.HostRoom);
+    }
+
+    private static void SetActiveIfNeeded(GameObject target, bool active)
+    {
+        if (target == null || target.activeSelf == active) return;
+
+        target.SetActive(active);
+
+#if UNITY_EDITOR
+        if (!UApplication.isPlaying)
+            EditorUtility.SetDirty(target);
 #endif
     }
 
@@ -531,17 +572,12 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         if (action == SplatCardAction.None || action == SplatCardAction.AutoByIndex)
         {
             if (debugLogs)
-            {
                 UDebug.LogWarning($"[MetaRayIntentCardMenu] Card {index} has no valid SplatManager action.");
-            }
-
             return;
         }
 
         if (splatManager == null)
-        {
             TryAutoFindSplatManager();
-        }
 
         if (splatManager == null)
         {
@@ -551,24 +587,50 @@ public class MetaRayIntentCardMenu : MonoBehaviour
 
         switch (action)
         {
-            case SplatCardAction.CalmRoom:
-                splatManager.SetCalmRoom();
-                break;
-
-            case SplatCardAction.FastRoom:
-                splatManager.SetFastRoom();
-                break;
-
-            case SplatCardAction.HostRoom:
-                splatManager.SetHostRoom();
-                break;
+            case SplatCardAction.CalmRoom: splatManager.SetCalmRoom(); break;
+            case SplatCardAction.FastRoom: splatManager.SetFastRoom(); break;
+            case SplatCardAction.HostRoom: splatManager.SetHostRoom(); break;
         }
 
         onSplatActionInvoked?.Invoke(action);
 
         if (debugLogs)
-        {
             UDebug.Log($"<color=lime><b>[MetaRayIntentCardMenu]</b></color> Invoked SplatManager action: {action}");
+    }
+
+    private void PlayAudioForCard(int index)
+    {
+        if (!playRoomMusicOnSelect && UApplication.isPlaying)
+            return;
+
+        if (audioManager == null)
+            TryAutoFindAudioManager();
+
+        if (audioManager == null)
+        {
+            if (debugLogs)
+                UDebug.LogWarning("[MetaRayIntentCardMenu] No AudioManager assigned or found. Room music not changed.", this);
+            return;
+        }
+
+        SplatManager.SplatRoom room = GetSplatRoomForCard(index);
+
+        if (room == SplatManager.SplatRoom.None)
+            return;
+
+        audioManager.PlayAtmosphereForRoom(room);
+    }
+
+    private SplatManager.SplatRoom GetSplatRoomForCard(int index)
+    {
+        SplatCardAction action = GetSplatAction(index);
+
+        switch (action)
+        {
+            case SplatCardAction.CalmRoom: return SplatManager.SplatRoom.CalmRoom;
+            case SplatCardAction.FastRoom: return SplatManager.SplatRoom.FastRoom;
+            case SplatCardAction.HostRoom: return SplatManager.SplatRoom.HostRoom;
+            default: return SplatManager.SplatRoom.None;
         }
     }
 
@@ -577,23 +639,14 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         MetaRayIntentCardData data = GetData(index);
 
         if (data != null && data.splatAction != SplatCardAction.AutoByIndex)
-        {
             return data.splatAction;
-        }
 
         switch (index)
         {
-            case 0:
-                return SplatCardAction.CalmRoom;
-
-            case 1:
-                return SplatCardAction.FastRoom;
-
-            case 2:
-                return SplatCardAction.HostRoom;
-
-            default:
-                return SplatCardAction.None;
+            case 0: return SplatCardAction.CalmRoom;
+            case 1: return SplatCardAction.FastRoom;
+            case 2: return SplatCardAction.HostRoom;
+            default: return SplatCardAction.None;
         }
     }
 
@@ -610,7 +663,6 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         if (_canvas == null) return;
 
         int count = GetCardCount();
-
         float totalCardWidth = count * cardWidth + Mathf.Max(0, count - 1) * cardSpacing;
         float totalWidth = totalCardWidth + canvasPadX * 2f;
         float totalHeight = cardHeight + canvasPadY;
@@ -645,14 +697,10 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         _pointableCanvas = GetComponent<PointableCanvas>();
 
         if (_pointableCanvas == null)
-        {
             _pointableCanvas = gameObject.AddComponent<PointableCanvas>();
-        }
 
         if (_canvas != null)
-        {
             _pointableCanvas.InjectAllPointableCanvas(_canvas);
-        }
     }
 
     private void EnsureEventSystemAndPointableModule()
@@ -667,9 +715,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
             eventSystem = eventSystemGO.AddComponent<EventSystem>();
 
             if (debugLogs)
-            {
                 UDebug.Log("<b>[MetaRayIntentCardMenu]</b> Created EventSystem.");
-            }
         }
 
         PointableCanvasModule module = eventSystem.GetComponent<PointableCanvasModule>();
@@ -679,9 +725,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
             module = eventSystem.gameObject.AddComponent<PointableCanvasModule>();
 
             if (debugLogs)
-            {
                 UDebug.Log("<b>[MetaRayIntentCardMenu]</b> Added PointableCanvasModule to EventSystem.");
-            }
         }
     }
 
@@ -702,18 +746,13 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         TryConfigureRectTransformBoundsClipperDriver(clipperDriver, boundsClipper);
 
         ClippedPlaneSurface clippedPlaneSurface = AddOrGet<ClippedPlaneSurface>(_raySurfaceRoot);
-        clippedPlaneSurface.InjectAllClippedPlaneSurface(
-            planeSurface,
-            new List<IBoundsClipper> { boundsClipper }
-        );
+        clippedPlaneSurface.InjectAllClippedPlaneSurface(planeSurface, new List<IBoundsClipper> { boundsClipper });
 
         _canvasRayInteractable = AddOrGet<RayInteractable>(_raySurfaceRoot);
         _canvasRayInteractable.InjectAllRayInteractable(clippedPlaneSurface);
 
         if (_pointableCanvas != null)
-        {
             _canvasRayInteractable.InjectOptionalPointableElement(_pointableCanvas);
-        }
 
         _canvasRayInteractable.InjectOptionalSelectSurface(planeSurface);
     }
@@ -735,7 +774,6 @@ public class MetaRayIntentCardMenu : MonoBehaviour
 
         TextMeshProUGUI text = AddTMP("HeaderText", header.transform);
         StretchFull(text.gameObject);
-
         text.text = headerText;
         text.fontSize = headerFontSize;
         text.color = Color.white;
@@ -768,9 +806,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         hlg.childForceExpandHeight = false;
 
         for (int i = 0; i < count; i++)
-        {
             BuildCard(row.transform, i);
-        }
     }
 
     private void BuildCard(Transform parent, int index)
@@ -796,6 +832,18 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         ui.hitImage = ui.root.AddComponent<UIImage>();
         ui.hitImage.color = new Color(1f, 1f, 1f, 0.001f);
         ui.hitImage.raycastTarget = true;
+
+        if (addButtonComponentToCards)
+        {
+            ui.button = ui.root.AddComponent<Button>();
+            ui.button.targetGraphic = ui.hitImage;
+            ui.button.transition = Selectable.Transition.None;
+            ui.button.navigation = new Navigation { mode = Navigation.Mode.None };
+
+            int capturedIndex = index;
+            ui.button.onClick.RemoveAllListeners();
+            ui.button.onClick.AddListener(() => SelectCard(capturedIndex));
+        }
 
         MetaRayIntentCardHitbox hitbox = ui.root.AddComponent<MetaRayIntentCardHitbox>();
         hitbox.Initialize(this, index);
@@ -925,7 +973,6 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         checkText.raycastTarget = false;
 
         ui.checkmarkRoot.SetActive(false);
-
         _runtimeCards.Add(ui);
     }
 
@@ -948,6 +995,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         button.targetGraphic = image;
         button.transition = Selectable.Transition.ColorTint;
         button.navigation = new Navigation { mode = Navigation.Mode.None };
+        button.interactable = enableNextButton;
 
         ColorBlock colors = button.colors;
         colors.normalColor = nextButtonColor;
@@ -977,33 +1025,26 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         _selectedIndex = index;
 
         SyncIntentEnumFromCardIndex(index);
-
+        ApplyHostRoomObjectVisibility();
         RefreshVisuals(false);
 
         if (debugLogs)
-        {
             UDebug.Log($"<color=yellow><b>[MetaRayIntentCardMenu]</b></color> Selected card {index}: {GetTitle(index)}");
-        }
 
         if (!invokeEvents) return;
 
-        if (!changed && !reapplySameSplatIfClickedAgain)
-        {
+        if (!changed && !reapplySameSplatIfClickedAgain && !reapplySameMusicIfClickedAgain)
             return;
-        }
 
         MetaRayIntentCardData data = GetData(index);
 
-        if (callSplatManagerOnSelect)
-        {
+        if (callSplatManagerOnSelect && (changed || reapplySameSplatIfClickedAgain))
             InvokeSplatManagerForCard(index);
-        }
 
-        if (data != null)
-        {
-            data.onSelected?.Invoke();
-        }
+        if (playRoomMusicOnSelect && (changed || reapplySameMusicIfClickedAgain))
+            PlayAudioForCard(index);
 
+        data?.onSelected?.Invoke();
         onSelectionChanged?.Invoke(index, data);
     }
 
@@ -1023,39 +1064,22 @@ public class MetaRayIntentCardMenu : MonoBehaviour
             if (instant || !UApplication.isPlaying)
             {
                 if (ui.visual != null)
-                {
                     ui.visual.localScale = Vector3.one * targetScale;
-                }
             }
 
             if (ui.borderImage != null)
-            {
                 ui.borderImage.color = selected ? borderSelected : hovered ? borderHover : borderNormal;
-            }
 
             if (ui.labelImage != null)
-            {
                 ui.labelImage.color = selected ? labelSelected : hovered ? labelHover : labelNormal;
-            }
 
             if (ui.checkmarkRoot != null)
-            {
                 ui.checkmarkRoot.SetActive(selected);
-            }
 
             if (ui.shadow != null)
             {
-                ui.shadow.effectDistance = selected
-                    ? new Vector2(0f, -16f)
-                    : hovered
-                        ? new Vector2(0f, -12f)
-                        : new Vector2(0f, -8f);
-
-                ui.shadow.effectColor = selected
-                    ? new Color(0f, 0f, 0f, 0.55f)
-                    : hovered
-                        ? new Color(0f, 0f, 0f, 0.45f)
-                        : new Color(0f, 0f, 0f, 0.30f);
+                ui.shadow.effectDistance = selected ? new Vector2(0f, -16f) : hovered ? new Vector2(0f, -12f) : new Vector2(0f, -8f);
+                ui.shadow.effectColor = selected ? new Color(0f, 0f, 0f, 0.55f) : hovered ? new Color(0f, 0f, 0f, 0.45f) : new Color(0f, 0f, 0f, 0.30f);
             }
         }
     }
@@ -1069,29 +1093,20 @@ public class MetaRayIntentCardMenu : MonoBehaviour
 
             Vector3 current = ui.visual.localScale;
             Vector3 target = Vector3.one * ui.targetScale;
-
-            ui.visual.localScale = Vector3.Lerp(
-                current,
-                target,
-                Time.deltaTime * scaleLerpSpeed
-            );
+            ui.visual.localScale = Vector3.Lerp(current, target, Time.deltaTime * scaleLerpSpeed);
         }
     }
 
     private void SubscribeRayState()
     {
-        if (_canvasRayInteractable == null) return;
-        if (_subscribedToRayState) return;
-
+        if (_canvasRayInteractable == null || _subscribedToRayState) return;
         _canvasRayInteractable.WhenStateChanged += HandleCanvasRayStateChanged;
         _subscribedToRayState = true;
     }
 
     private void UnsubscribeRayState()
     {
-        if (_canvasRayInteractable == null) return;
-        if (!_subscribedToRayState) return;
-
+        if (_canvasRayInteractable == null || !_subscribedToRayState) return;
         _canvasRayInteractable.WhenStateChanged -= HandleCanvasRayStateChanged;
         _subscribedToRayState = false;
     }
@@ -1101,64 +1116,30 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         if (!debugLogs) return;
 
         if (args.NewState == InteractableState.Hover && args.PreviousState == InteractableState.Normal)
-        {
             UDebug.Log("<color=#89CFF0><b>[MetaRayIntentCardMenu]</b></color> HandRayInteractor is hovering the menu canvas.");
-        }
         else if (args.NewState == InteractableState.Select)
-        {
             UDebug.Log("<color=yellow><b>[MetaRayIntentCardMenu]</b></color> HandRayInteractor selected on the menu canvas.");
-        }
     }
 
     private void HandleKeyboardDebug()
     {
-        if (Input.GetKeyDown(KeyCode.LeftArrow))
-        {
-            int next = _selectedIndex < 0 ? 0 : Mathf.Max(0, _selectedIndex - 1);
-            SelectCard(next);
-        }
-
-        if (Input.GetKeyDown(KeyCode.RightArrow))
-        {
-            int next = _selectedIndex < 0 ? 0 : Mathf.Min(_runtimeCards.Count - 1, _selectedIndex + 1);
-            SelectCard(next);
-        }
-
-        if (Input.GetKeyDown(KeyCode.Alpha1))
-        {
-            SetIntent(IntentSelection.CalmRoom);
-        }
-
-        if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            SetIntent(IntentSelection.FastRoom);
-        }
-
-        if (Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            SetIntent(IntentSelection.HostRoom);
-        }
-
-        if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
-        {
-            ConfirmSelection();
-        }
+        if (Input.GetKeyDown(previousCardKey)) SelectPreviousCard();
+        if (Input.GetKeyDown(nextCardKey)) SelectNextCard();
+        if (Input.GetKeyDown(KeyCode.Alpha1)) SetIntent(IntentSelection.CalmRoom);
+        if (Input.GetKeyDown(KeyCode.Alpha2)) SetIntent(IntentSelection.FastRoom);
+        if (Input.GetKeyDown(KeyCode.Alpha3)) SetIntent(IntentSelection.HostRoom);
+        if (Input.GetKeyDown(confirmKey) || Input.GetKeyDown(confirmKeyAlt)) ConfirmSelection();
     }
 
     private int GetCardCount()
     {
         if (cards != null && cards.Count > 0)
-        {
             return cards.Count;
-        }
 
         return Mathf.Max(1, fallbackCardCount);
     }
 
-    private bool IsValidCardIndex(int index)
-    {
-        return index >= 0 && index < _runtimeCards.Count;
-    }
+    private bool IsValidCardIndex(int index) => index >= 0 && index < _runtimeCards.Count;
 
     private MetaRayIntentCardData GetData(int index)
     {
@@ -1172,9 +1153,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         MetaRayIntentCardData data = GetData(index);
 
         if (data != null && !string.IsNullOrWhiteSpace(data.title))
-        {
             return data.title;
-        }
 
         switch (index)
         {
@@ -1190,23 +1169,14 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         MetaRayIntentCardData data = GetData(index);
 
         if (data != null && !string.IsNullOrWhiteSpace(data.subtitle))
-        {
             return data.subtitle;
-        }
 
         switch (index)
         {
-            case 0:
-                return "A quiet, soft and focused room mood.";
-
-            case 1:
-                return "A more energetic and dynamic room mood.";
-
-            case 2:
-                return "A warm room mood for guests and shared moments.";
-
-            default:
-                return "Select this room mood.";
+            case 0: return "A quiet, soft and focused room mood.";
+            case 1: return "A more energetic and dynamic room mood.";
+            case 2: return "A warm room mood for guests and shared moments.";
+            default: return "Select this room mood.";
         }
     }
 
@@ -1215,9 +1185,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         MetaRayIntentCardData data = GetData(index);
 
         if (data != null && data.useCustomFallbackColor)
-        {
             return data.fallbackColor;
-        }
 
         switch (index % 3)
         {
@@ -1250,11 +1218,8 @@ public class MetaRayIntentCardMenu : MonoBehaviour
     private void DestroyChildByName(string childName)
     {
         Transform child = transform.Find(childName);
-
         if (child != null)
-        {
             DestroySmart(child.gameObject);
-        }
     }
 
     private GameObject MakeUIObject(string objectName, Transform parent)
@@ -1271,9 +1236,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         go.transform.SetParent(parent, false);
 
         if (parent != null)
-        {
             go.layer = parent.gameObject.layer;
-        }
 
         TextMeshProUGUI tmp = go.AddComponent<TextMeshProUGUI>();
         tmp.enableAutoSizing = false;
@@ -1303,9 +1266,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         LayoutElement le = go.GetComponent<LayoutElement>();
 
         if (le == null)
-        {
             le = go.AddComponent<LayoutElement>();
-        }
 
         le.minHeight = height;
         le.preferredHeight = height;
@@ -1317,9 +1278,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         T component = go.GetComponent<T>();
 
         if (component == null)
-        {
             component = go.AddComponent<T>();
-        }
 
         return component;
     }
@@ -1329,13 +1288,9 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         if (go == null) return;
 
         if (UApplication.isPlaying)
-        {
             Destroy(go);
-        }
         else
-        {
             DestroyImmediate(go);
-        }
     }
 
     private static string CleanName(string input)
@@ -1343,9 +1298,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         if (string.IsNullOrWhiteSpace(input)) return "Untitled";
 
         foreach (char invalid in System.IO.Path.GetInvalidFileNameChars())
-        {
             input = input.Replace(invalid, '_');
-        }
 
         return input.Replace(" ", "_");
     }
@@ -1375,18 +1328,14 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         }
     }
 
-    private static void TryConfigureRectTransformBoundsClipperDriver(
-        RectTransformBoundsClipperDriver driver,
-        BoundsClipper boundsClipper)
+    private static void TryConfigureRectTransformBoundsClipperDriver(RectTransformBoundsClipperDriver driver, BoundsClipper boundsClipper)
     {
         if (driver == null || boundsClipper == null) return;
 
         RectTransform rectTransform = driver.GetComponent<RectTransform>();
         Type driverType = typeof(RectTransformBoundsClipperDriver);
 
-        MethodInfo[] methods = driverType.GetMethods(
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
-        );
+        MethodInfo[] methods = driverType.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
         foreach (MethodInfo method in methods)
         {
@@ -1401,17 +1350,11 @@ public class MetaRayIntentCardMenu : MonoBehaviour
                 Type p = parameters[i].ParameterType;
 
                 if (p.IsAssignableFrom(typeof(BoundsClipper)))
-                {
                     args[i] = boundsClipper;
-                }
                 else if (p.IsAssignableFrom(typeof(RectTransform)))
-                {
                     args[i] = rectTransform;
-                }
                 else if (p.IsAssignableFrom(typeof(Transform)))
-                {
                     args[i] = rectTransform;
-                }
                 else
                 {
                     canUseMethod = false;
@@ -1435,10 +1378,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         SetFieldIfExists(driver, "_boundsClipper", boundsClipper);
         SetFieldIfExists(driver, "_rectTransform", rectTransform);
 
-        MethodInfo resizeMethod = driverType.GetMethod(
-            "Resize",
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
-        );
+        MethodInfo resizeMethod = driverType.GetMethod("Resize", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
         try
         {
@@ -1454,10 +1394,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
     {
         if (target == null) return;
 
-        FieldInfo field = target.GetType().GetField(
-            fieldName,
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
-        );
+        FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
         if (field == null) return;
 
@@ -1506,12 +1443,16 @@ public class MetaRayIntentCardHitbox : MonoBehaviour,
     public void OnPointerDown(PointerEventData eventData)
     {
         if (menu == null) return;
-        menu.SelectCard(cardIndex);
+
+        if (menu.selectCardOnPointerDown)
+            menu.SelectCard(cardIndex);
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
         if (menu == null) return;
-        menu.SelectCard(cardIndex);
+
+        if (menu.selectCardOnPointerClick)
+            menu.SelectCard(cardIndex);
     }
 }
