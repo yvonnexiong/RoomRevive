@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: CabinetVariantsCatalog
+  m_Name: CabinetsCatalog
   m_EditorClassIdentifier: Assembly-CSharp::MetaRayFurnitureProductCatalog
   products:
   - id: 101
@@ -19,7 +19,7 @@ MonoBehaviour:
     subtitle: Full-height walnut kitchen with dark stone
     badgeText: Natural Warmth
     priceText: $8,900
-    productImage: {fileID: 0}
+    productImage: {fileID: 21300000, guid: d94cbe11dabddfe4ebd189cc377773a3, type: 3}
     sourceImageUrl: 
     calloutText: A warm walnut cabinet style was found for this kitchen. The layout
       keeps the original room proportions while applying a rich wood finish and darker
@@ -84,7 +84,7 @@ MonoBehaviour:
     subtitle: Cream upper cabinets with grey lower fronts
     badgeText: Minimal Calm
     priceText: $7,400
-    productImage: {fileID: 0}
+    productImage: {fileID: 21300000, guid: a5c34db9ef811644f92a7c0b8159bd1f, type: 3}
     sourceImageUrl: 
     calloutText: A soft cream and stone cabinet style was found for this kitchen.
       It keeps the same kitchen footprint while creating a brighter, quieter and
@@ -149,7 +149,7 @@ MonoBehaviour:
     subtitle: Soft sage lower cabinets with oak details
     badgeText: Scandi Fresh
     priceText: $7,900
-    productImage: {fileID: 0}
+    productImage: {fileID: 21300000, guid: 8ed77dac31f9aa34491f028cab534598, type: 3}
     sourceImageUrl: 
     calloutText: A sage and oak cabinet style was found for this kitchen. It preserves
       the current kitchen proportions while adding a lighter, warmer and more playful

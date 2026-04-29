@@ -3427,7 +3427,7 @@ public class MetaRayFurnitureProductVariant
 
     [Header("Events")]
     public UnityEvent onShown;
-    public UnityEvent onDiscovered;
+    public UnityEvent onDiscovered;         
     public UnityEvent onDetailsUnlocked;
 }
 
@@ -3440,7 +3440,7 @@ public class MetaRayFurnitureCardHitbox : MonoBehaviour,
 
     public void Initialize(MetaRayFurnitureBrowser owner)
     {
-        browser = owner;
+        browser = owner;    
     }
 
     public void OnPointerEnter(PointerEventData eventData)

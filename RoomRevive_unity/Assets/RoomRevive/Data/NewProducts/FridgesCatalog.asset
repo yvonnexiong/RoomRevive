@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MetaRayFurnitureProductCatalog
   products:
   - id: 1
+    brandText: Nobilia
     productName: Modern Fridge
     subtitle: Premium four-door stainless fridge
     badgeText: Modern
@@ -70,6 +71,7 @@ MonoBehaviour:
       m_PersistentCalls:
         m_Calls: []
   - id: 2
+    brandText: Nobilia
     productName: Nordic Tall Fridge
     subtitle: Minimal bottom-freezer refrigerator
     badgeText: Clean Fit
@@ -127,6 +129,7 @@ MonoBehaviour:
       m_PersistentCalls:
         m_Calls: []
   - id: 3
+    brandText: Nobilia
     productName: Aurora French Door Fridge
     subtitle: French-door fridge with dispenser
     badgeText: Premium
