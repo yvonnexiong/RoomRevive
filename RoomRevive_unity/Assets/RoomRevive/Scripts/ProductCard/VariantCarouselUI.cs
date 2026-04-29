@@ -96,6 +96,7 @@ namespace RoomRevive
         TMP_Text       _imgPlaceholder;
         TMP_Text       _brand, _pname, _desc;
         List<UIImage>  _dots = new List<UIImage>();
+        Texture2D      _gradientTex;
 
 #if UNITY_EDITOR
         bool _rebuildQueued;
@@ -301,9 +302,11 @@ namespace RoomRevive
             cRT.sizeDelta = new Vector2(cardWidth, cardH);
             cRT.anchoredPosition = Vector2.zero;
             var cardImg = card.AddComponent<UIImage>();
-            cardImg.color = CardBg;
-            cardImg.raycastTarget = false;
-            Round(cardImg, radiusCard);
+            cardImg.color          = Color.white;
+            cardImg.raycastTarget  = false;
+            cardImg.sprite         = GradientRoundedSprite(cardWidth, cardH);
+            cardImg.type           = Image.Type.Simple;
+            cardImg.preserveAspect = false;
 
             float y = -cardPad;
 
@@ -489,6 +492,12 @@ namespace RoomRevive
 
         void Clear()
         {
+            if (_gradientTex != null)
+            {
+                if (Application.isPlaying) Destroy(_gradientTex);
+                else DestroyImmediate(_gradientTex);
+                _gradientTex = null;
+            }
             if (_root != null) { Destroy2(_root); _root = null; }
             var found = transform.Find("Generated_VariantCarousel");
             if (found != null) Destroy2(found.gameObject);
@@ -557,6 +566,61 @@ namespace RoomRevive
             tex.Apply();
             return Sprite.Create(tex, new Rect(0, 0, size, size), Vector2.one * 0.5f,
                 100f, 0, SpriteMeshType.FullRect, new Vector4(r, r, r, r));
+        }
+
+        // Bakes CSS radial-gradient(ellipse at 35% 25%, #D4D9E5 0%, #B5BCD0 65%, #9CA4BC 100%)
+        // plus rounded corner alpha into a single texture matching the card's aspect ratio.
+        Sprite GradientRoundedSprite(float cardW, float cardH)
+        {
+            int texH = 256;
+            int texW = Mathf.Max(1, Mathf.RoundToInt(texH * cardW / cardH));
+            float rPx = radiusCard / cardH * texH;
+
+            var c0 = new Color(0.831f, 0.851f, 0.898f); // #D4D9E5  0%
+            var c1 = new Color(0.710f, 0.737f, 0.816f); // #B5BCD0 65%
+            var c2 = new Color(0.612f, 0.643f, 0.737f); // #9CA4BC 100%
+
+            // CSS center: 35% left, 25% top → Unity UV (y bottom-up): cy = 0.75
+            const float cx = 0.35f, cyCSS = 0.25f;
+            float cy = 1f - cyCSS;
+            // farthest-corner ellipse radii
+            float rx = Mathf.Max(cx, 1f - cx);       // 0.65
+            float ry = Mathf.Max(cyCSS, 1f - cyCSS); // 0.75
+
+            var tex = new Texture2D(texW, texH, TextureFormat.RGBA32, false);
+            tex.filterMode = FilterMode.Bilinear;
+            tex.wrapMode   = TextureWrapMode.Clamp;
+            var pixels = new Color32[texW * texH];
+
+            for (int y = 0; y < texH; y++)
+            for (int x = 0; x < texW; x++)
+            {
+                float u = (x + 0.5f) / texW;
+                float v = (y + 0.5f) / texH;
+
+                float du = (u - cx) / rx;
+                float dv = (v - cy) / ry;
+                float t  = Mathf.Sqrt(du * du + dv * dv);
+
+                Color col = t <= 0.65f
+                    ? Color.Lerp(c0, c1, t / 0.65f)
+                    : Color.Lerp(c1, c2, Mathf.Clamp01((t - 0.65f) / 0.35f));
+
+                float px = x + 0.5f, py = y + 0.5f;
+                float ex = Mathf.Max(rPx - px, px - (texW - rPx), 0f);
+                float ey = Mathf.Max(rPx - py, py - (texH - rPx), 0f);
+                float a  = Mathf.Clamp01(rPx - Mathf.Sqrt(ex * ex + ey * ey) + 0.5f);
+
+                pixels[y * texW + x] = new Color32(
+                    (byte)(col.r * 255 + 0.5f),
+                    (byte)(col.g * 255 + 0.5f),
+                    (byte)(col.b * 255 + 0.5f),
+                    (byte)(a    * 255 + 0.5f));
+            }
+            tex.SetPixels32(pixels);
+            tex.Apply();
+            _gradientTex = tex;
+            return Sprite.Create(tex, new Rect(0, 0, texW, texH), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect);
         }
 
         static void Destroy2(GameObject go)
