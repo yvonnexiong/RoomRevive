@@ -12,6 +12,13 @@ namespace RoomRevive
         [TextArea] public string shortDescription;
         public Sprite thumbnail;
         public ProductVariant[] variants;
+
+        [Header("Details Panel")]
+        public DimensionSpec[] dimensions;
+        [TextArea] public string materials;
+        public string[] features;
+        [TextArea] public string storage;
+        public string fromPrice;
     }
 
     [System.Serializable]
@@ -21,5 +28,13 @@ namespace RoomRevive
         public Sprite image;
         [TextArea] public string description;
         public string price;
+        public Color swatchColor = new Color(0.8f, 0.8f, 0.8f);
+    }
+
+    [System.Serializable]
+    public class DimensionSpec
+    {
+        public string label;
+        public string value;
     }
 }
