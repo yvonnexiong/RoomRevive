@@ -61,6 +61,7 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.3.14f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\RoomRevive\Scripts\UI\FaceCamera.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Hotspot\ProductCardUI.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\BeforeAfter\BeforeAfterSlider.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Intent\IntentSO.cs" />
@@ -73,8 +74,11 @@
     <Compile Include="Assets\Scripts\IntersectionRevealSphereEffect.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Startup\BillboardPanel.cs" />
     <Compile Include="Assets\Scripts\FridgeController.cs" />
+    <Compile Include="Assets\Scripts\AssignMaterialToChildren.cs" />
+    <Compile Include="Assets\Scripts\FaceCameraAdvanced.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\ProductCard\MetaRayProductCardMenu.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Product\ProductSO.cs" />
+    <Compile Include="Assets\Scripts\MetaRayBeforeAfterSliderUI.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Hotspot\GazeHotspotDetector.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Startup\StartupController.cs" />
     <Compile Include="Assets\Scripts\XRCCSphereSurfaceIntersectionEffect.cs" />
@@ -109,6 +113,7 @@
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Mobile.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF SSD.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Surface-Mobile.shader" />
+    <None Include="Assets\RoomRevive\Shader\YinanSpriteSphereIntersectionURP.shader" />
     <None Include="Assets\XRCC\GeneratedShaders\XRCC_CyaniluxStyleForcefieldURP.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\SDFFunctions.hlsl" />
     <None Include="Assets\Shaders\XRCC_InvisibleDepthWriterURP.shader" />
@@ -120,9 +125,11 @@
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile SSD.shader" />
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Leading Characters.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Properties.cginc" />
+    <None Include="Assets\RoomRevive\Shader\IntersectionRevealSphereURP.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Surface.cginc" />
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Following Characters.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Masking.shader" />
+    <None Include="Assets\Resources\WorldLabs\worldlabs_env.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF Overlay.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap-Mobile.shader" />
     <None Include="Assets\TextMesh Pro\Fonts\LiberationSans - OFL.txt" />
@@ -1379,8 +1386,8 @@
       <HintPath>Library\ScriptAssemblies\Unity.VisualScripting.Flow.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Unity.XR.Hands">
-      <HintPath>Library\ScriptAssemblies\Unity.XR.Hands.dll</HintPath>
+    <Reference Include="Unity.Mobile.AndroidLogcat.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.Mobile.AndroidLogcat.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.TextMeshPro.Editor">
@@ -1395,8 +1402,8 @@
       <HintPath>Library\ScriptAssemblies\Meta.Wit.Composer.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Unity.Mobile.AndroidLogcat.Editor">
-      <HintPath>Library\ScriptAssemblies\Unity.Mobile.AndroidLogcat.Editor.dll</HintPath>
+    <Reference Include="Unity.XR.Hands">
+      <HintPath>Library\ScriptAssemblies\Unity.XR.Hands.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.XR.LegacyInputHelpers">

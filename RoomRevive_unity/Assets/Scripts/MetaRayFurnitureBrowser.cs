@@ -32,11 +32,57 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         Details
     }
 
+    public enum FurnitureBrowserTargetMode
+    {
+        Fridges,
+        Cabinets,
+        Lights
+    }
+
+    public enum FaceCameraUpdateModeValue
+    {
+        Update,
+        LateUpdate,
+        FixedUpdate
+    }
+
     [Serializable]
     public class ProductVariantEvent : UnityEvent<int, MetaRayFurnitureProductVariant> { }
 
     [Header("Product Catalog ScriptableObject")]
     public MetaRayFurnitureProductCatalog productCatalog;
+
+    [Header("Target Mode")]
+    [Tooltip("Fridges = toggles local fridge/product GameObjects. Cabinets = changes cabinet Gaussian splats through SplatManager. Lights = UI prefab preset for light-changing UI.")]
+    public FurnitureBrowserTargetMode targetMode = FurnitureBrowserTargetMode.Fridges;
+
+#if UNITY_EDITOR
+    [Header("Editor Prefab Export")]
+    [Tooltip("Turn this on, then Unity will create/update one prefab per Target Mode in OnValidate. It turns itself off after exporting.")]
+    public bool createTargetModeUIPrefabsNow = false;
+
+    [Tooltip("Folder where the generated UI prefabs are saved.")]
+    public string uiPrefabFolderPath = "Assets/UIPrefabs";
+
+    [Tooltip("Prefab name prefix. Final names become Prefix_Fridges, Prefix_Cabinets, Prefix_Lights.")]
+    public string uiPrefabNamePrefix = "MetaRayFurnitureBrowser";
+
+    [Tooltip("If true, each prefab is rebuilt before saving so the generated UI children are included in the prefab.")]
+    public bool includeGeneratedUIInPrefabs = true;
+
+    [Tooltip("If true, the prefab root keeps the same local position, rotation, and scale as this object.")]
+    public bool keepScenePlacementInGeneratedPrefabs = true;
+#endif
+
+    [Header("Root Placement / Inspector Movement")]
+    [Tooltip("Keep this true if you want to move, rotate, and scale this GameObject normally in the Inspector. The generated UI is rebuilt as children only.")]
+    public bool keepRootTransformEditable = true;
+
+    [Tooltip("Legacy behavior. If true AND Keep Root Transform Editable is false, World Scale is applied to this GameObject every rebuild/validate.")]
+    public bool autoApplyWorldScaleToRoot = false;
+
+    [Tooltip("Extra safety: caches the root transform before rebuilding children and restores it after the rebuild.")]
+    public bool preserveRootTransformDuringRebuild = true;
 
     [Header("UI State")]
     [Tooltip("Controls which UI is visible. Enter advances Discover -> Product -> Details -> Product.")]
@@ -49,15 +95,89 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     [Range(0, 50)]
     public int startProductIndex = 0;
 
-    [Header("Variant GameObjects")]
-    [Tooltip("Enabled when product variant index 0 is active.")]
+    [Header("Fridge Variant GameObjects")]
+    [Tooltip("Fridges mode only. Enabled when product variant index 0 is active.")]
     public GameObject variant0GameObject;
 
-    [Tooltip("Enabled when product variant index 1 is active.")]
+    [Tooltip("Fridges mode only. Enabled when product variant index 1 is active.")]
     public GameObject variant1GameObject;
 
-    [Tooltip("Enabled when product variant index 2 is active.")]
+    [Tooltip("Fridges mode only. Enabled when product variant index 2 is active.")]
     public GameObject variant2GameObject;
+
+    [Tooltip("If true, all fridge/product GameObjects are hidden while the UI is in Discover mode.")]
+    public bool hideVariantGameObjectsInDiscover = true;
+
+    [Tooltip("If true, pressing Discover always starts at product element 0.")]
+    public bool forceFirstVariantWhenDiscovering = true;
+
+    [Header("Cabinet SplatManager Mode")]
+    [Tooltip("Used only when Target Mode is Cabinets.")]
+    public SplatManager splatManager;
+
+    [Tooltip("Automatically finds SplatManager.Instance or a SplatManager in the scene.")]
+    public bool autoFindSplatManager = true;
+
+    [Tooltip("If true, fridge/product GameObject references are disabled when Target Mode is Cabinets.")]
+    public bool disableFridgeVariantGameObjectsInCabinetMode = true;
+
+    [Tooltip("If true, cabinet splats can be applied in Play Mode.")]
+    public bool applyCabinetSplatInPlayMode = true;
+
+    [Tooltip("If true, cabinet splats can be previewed in Edit Mode / OnValidate.")]
+    public bool applyCabinetSplatInEditMode = true;
+
+    [Tooltip("If false, the cabinet splat is not changed while UI State is Discover.")]
+    public bool applyCabinetSplatWhileInDiscover = false;
+
+    [Tooltip("Product index 0. Cabinet A.")]
+    public SplatManager.SplatRoom cabinetVariant0SplatRoom = SplatManager.SplatRoom.HostKitchenNewCabinetA;
+
+    [Tooltip("Product index 1. Cabinet B.")]
+    public SplatManager.SplatRoom cabinetVariant1SplatRoom = SplatManager.SplatRoom.HostKitchenNewCabinetB;
+
+    [Tooltip("Product index 2. Cabinet C. This is the base Host gaussian splat.")]
+    public SplatManager.SplatRoom cabinetVariant2SplatRoom = SplatManager.SplatRoom.HostRoom;
+
+    [Tooltip("Used in the details dimensions card when Target Mode is Fridges.")]
+    public string fridgeFourthDimensionLabel = "WEIGHT";
+
+    [Tooltip("Used in the details dimensions card when Target Mode is Cabinets.")]
+    public string cabinetFourthDimensionLabel = "ISLAND";
+
+    [Header("Auto Face Camera Advanced")]
+    [Tooltip("Automatically adds and configures FaceCameraAdvanced on this UI GameObject if that script exists in the project.")]
+    public bool autoAddFaceCameraAdvanced = true;
+
+    [Tooltip("Target Camera value for FaceCameraAdvanced. Assign CenterEyeAnchor here.")]
+    public Camera faceCameraTargetCamera;
+
+    [Tooltip("FaceCameraAdvanced: Use Main Camera If Empty.")]
+    public bool faceCameraUseMainCameraIfEmpty = true;
+
+    [Tooltip("FaceCameraAdvanced: Invert Direction.")]
+    public bool faceCameraInvertDirection = false;
+
+    [Tooltip("FaceCameraAdvanced: Lock X Rotation.")]
+    public bool faceCameraLockXRotation = true;
+
+    [Tooltip("FaceCameraAdvanced: Lock Y Rotation.")]
+    public bool faceCameraLockYRotation = false;
+
+    [Tooltip("FaceCameraAdvanced: Lock Z Rotation.")]
+    public bool faceCameraLockZRotation = false;
+
+    [Tooltip("FaceCameraAdvanced: Locked Euler Angles.")]
+    public Vector3 faceCameraLockedEulerAngles = Vector3.zero;
+
+    [Tooltip("FaceCameraAdvanced: Update Mode.")]
+    public FaceCameraUpdateModeValue faceCameraUpdateMode = FaceCameraUpdateModeValue.LateUpdate;
+
+    [Tooltip("FaceCameraAdvanced: Update In Edit Mode. Keep false while placing/moving the UI in the editor.")]
+    public bool faceCameraUpdateInEditMode = false;
+
+    [Tooltip("Print a warning if the FaceCameraAdvanced script is not found.")]
+    public bool warnIfFaceCameraAdvancedMissing = true;
 
     [Header("OnValidate / Editor Preview")]
     public bool rebuildOnValidate = true;
@@ -65,7 +185,12 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     [Header("Interaction")]
     public bool cardClickUnlocksDetails = true;
     public bool resetDetailsWhenChangingProduct = true;
-    public bool wrapAroundProducts = true;
+
+    [Tooltip("If false, product navigation stops at first/last product.")]
+    public bool wrapAroundProducts = false;
+
+    [Tooltip("Element 0 = only Next visible. Middle elements = both visible. Last element = only Previous visible.")]
+    public bool hideUnavailableArrowButtons = true;
 
     [Header("Keyboard Debug Add-on")]
     public bool keyboardDebug = true;
@@ -80,6 +205,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     public ProductVariantEvent onDetailsUnlocked = new ProductVariantEvent();
 
     [Header("World Space Canvas")]
+    [Tooltip("Legacy scale value. It is only applied automatically when Keep Root Transform Editable is false and Auto Apply World Scale To Root is true. Otherwise, scale this GameObject directly in the Inspector.")]
     public float worldScale = 0.001f;
     public Camera eventCamera;
     public bool autoCreateEventSystem = true;
@@ -121,46 +247,52 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     public Vector3 detailsCardScale = new Vector3(1f, 1f, 1f);
 
     [Header("Clean Details UI Layout")]
-    public float detailsHeaderHeight = 112f;
+    public float detailsHeaderHeight = 174f;
     public float detailsBodyPaddingX = 28f;
     public float detailsBodyPaddingY = 24f;
     public float detailsBodySectionSpacing = 24f;
     public float detailsSectionTitleHeight = 24f;
     public float detailsSectionTitleGap = 10f;
 
-    public float detailsDimensionsSectionHeight = 112f;
+    public float detailsDimensionsSectionHeight = 116f;
     public float detailsDimensionCardHeight = 72f;
-    public float detailsDimensionCardSpacing = 10f;
+    public float detailsDimensionCardSpacing = 8f;
 
-    public float detailsMaterialsSectionHeight = 86f;
-    public float detailsMaterialsTextHeight = 50f;
+    public float detailsMaterialsSectionHeight = 88f;
+    public float detailsMaterialsTextHeight = 52f;
 
     public float detailsFeatureLineHeight = 24f;
 
-    public float detailsFinishSectionHeight = 120f;
-    public float detailsFinishSwatchHeight = 82f;
+    public float detailsFinishSectionHeight = 138f;
+    public float detailsFinishSwatchHeight = 94f;
     public float detailsFinishSwatchSpacing = 12f;
 
-    public float detailsStorageSectionHeight = 76f;
-    public float detailsStorageTextHeight = 34f;
+    public float detailsStorageSectionHeight = 78f;
+    public float detailsStorageTextHeight = 36f;
 
-    [Header("Details UI Style")]
-    public Color detailsPanelColor = new Color(0.955f, 0.958f, 0.965f, 0.98f);
-    public Color detailsHeaderColor = new Color(1f, 1f, 1f, 0.52f);
-    public Color detailsMutedCardColor = new Color(1f, 1f, 1f, 0.50f);
-    public Color detailsHeaderTextColor = new Color(0.46f, 0.49f, 0.57f, 1f);
-    public Color detailsDividerColor = new Color(0.80f, 0.82f, 0.86f, 0.75f);
+    [Header("Details UI Style - HTML Card Inspired")]
+    public Color detailsPanelColor = new Color32(0xB5, 0xBC, 0xD0, 0xFF);
+    public Color detailsHeaderColor = new Color(1f, 1f, 1f, 0f);
+    public Color detailsMutedCardColor = new Color(1f, 1f, 1f, 0.35f);
+    public Color detailsHeaderTextColor = new Color32(0x6B, 0x73, 0x88, 0xFF);
+    public Color detailsDividerColor = new Color(0.23f, 0.25f, 0.33f, 0.15f);
+
+    public Color detailsDarkBlueTextColor = new Color32(0x3A, 0x40, 0x55, 0xFF);
+    public Color detailsIconButtonColor = new Color(0.23f, 0.25f, 0.33f, 0.10f);
+    public Color detailsIconColor = new Color32(0x3A, 0x40, 0x55, 0xFF);
+    public Color detailsCTAColor = new Color32(0x3A, 0x40, 0x55, 0xFF);
+    public Color detailsCTATextColor = new Color32(0xE6, 0xE9, 0xF0, 0xFF);
 
     public Sprite detailsPanelSprite;
     public Sprite detailsHeaderSprite;
     public Sprite detailsMutedCardSprite;
 
     [Header("Finish Swatch Style")]
-    [Tooltip("Used for FinishSwatch_0, FinishSwatch_1, etc. Hex: #726E6E")]
+    [Tooltip("Used for old FinishSwatch cards if you switch back to card style. Hex: #726E6E")]
     public Color finishSwatchBackgroundColor = new Color32(0x72, 0x6E, 0x6E, 0xFF);
 
-    [Tooltip("Label color inside the darker finish swatch cards.")]
-    public Color finishSwatchLabelColor = new Color(1f, 1f, 1f, 0.92f);
+    [Tooltip("Label color inside finish swatch labels.")]
+    public Color finishSwatchLabelColor = new Color32(0x6B, 0x73, 0x88, 0xFF);
 
     [Tooltip("Optional override sprite for the finish swatch background cards.")]
     public Sprite finishSwatchBackgroundSprite;
@@ -175,9 +307,15 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
     [Header("Arrow Buttons")]
     public float arrowButtonSize = 62f;
-    public float nextArrowSizeMultiplier = 2f;
+
+    [Tooltip("Scale applied to PreviousButton RectTransform. 2 = 2x bigger.")]
+    public float previousButtonScale = 2f;
+
+    [Tooltip("Scale applied to NextButton RectTransform. 2 = 2x bigger.")]
+    public float nextButtonScale = 2f;
+
     public float previousArrowFontSize = 34f;
-    public float nextArrowFontSize = 68f;
+    public float nextArrowFontSize = 34f;
 
     [Tooltip("Actual anchored position of PreviousButton. Applied in Build, Update, and OnValidate.")]
     public Vector2 previousButtonAnchoredPosition = new Vector2(18f, 0f);
@@ -187,7 +325,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
     [Header("Finish Color Chips")]
     public Vector3 finishColorChipScale = new Vector3(0.2f, 0.2f, 0.2f);
-    public float detailsFinishDotSize = 32f;
+    public float detailsFinishDotSize = 56f;
 
     [Header("Rounded Corners")]
     public bool useGeneratedRoundedCorners = true;
@@ -199,10 +337,10 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     [Range(1, 64)] public int imageAreaCornerRadius = 26;
     [Range(1, 64)] public int pillCornerRadius = 18;
     [Range(1, 64)] public int buttonCornerRadius = 20;
-    [Range(1, 64)] public int detailsPanelCornerRadius = 36;
+    [Range(1, 64)] public int detailsPanelCornerRadius = 28;
     [Range(1, 64)] public int detailsHeaderCornerRadius = 28;
-    [Range(1, 64)] public int detailsMutedCardCornerRadius = 18;
-    [Range(1, 64)] public int colorDotCornerRadius = 64;
+    [Range(1, 64)] public int detailsMutedCardCornerRadius = 14;
+    [Range(1, 64)] public int colorDotCornerRadius = 12;
 
     [Header("Animation")]
     public float transitionDuration = 0.22f;
@@ -239,6 +377,12 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     public string detailsButtonText = "See details";
     public string hideDetailsButtonText = "Hide details";
     public string defaultBadgeText = "Room fit";
+
+    [Tooltip("CTA label at the bottom of the redesigned details card.")]
+    public string detailsCTAButtonText = "Place in this kitchen";
+
+    [Tooltip("Small label above price in the redesigned details card.")]
+    public string detailsPriceEyebrowText = "From";
 
     public float eyebrowFontSize = 15f;
     public float titleFontSize = 32f;
@@ -283,16 +427,51 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
 #if UNITY_EDITOR
     private bool _editorRebuildQueued;
+    private bool _editorPrefabExportQueued;
+    private bool _editorIsExportingPrefabs;
 #endif
+
+    private bool _suppressExternalTargetApply;
+
+    private struct RootTransformSnapshot
+    {
+        public Vector3 localPosition;
+        public Quaternion localRotation;
+        public Vector3 localScale;
+    }
+
+    private RootTransformSnapshot CaptureRootTransform()
+    {
+        return new RootTransformSnapshot
+        {
+            localPosition = transform.localPosition,
+            localRotation = transform.localRotation,
+            localScale = transform.localScale
+        };
+    }
+
+    private void RestoreRootTransform(RootTransformSnapshot snapshot)
+    {
+        if (!keepRootTransformEditable) return;
+        if (!preserveRootTransformDuringRebuild) return;
+
+        transform.localPosition = snapshot.localPosition;
+        transform.localRotation = snapshot.localRotation;
+        transform.localScale = snapshot.localScale;
+    }
 
     private void Reset()
     {
+        RootTransformSnapshot snapshot = CaptureRootTransform();
+
         GrabRequiredComponents();
         ClampInspectorValues();
         TryAutoAssignDefaultSprites();
         ConfigureCanvas();
         ApplyInitialProductIndex();
+        EnsureFaceCameraAdvanced();
         ApplyVariantGameObjects();
+        RestoreRootTransform(snapshot);
 
 #if UNITY_EDITOR
         if (!UApplication.isPlaying)
@@ -304,10 +483,13 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
     private void Awake()
     {
+        RootTransformSnapshot snapshot = CaptureRootTransform();
+
         GrabRequiredComponents();
         ClampInspectorValues();
         TryAutoAssignDefaultSprites();
         ConfigureCanvas();
+        EnsureFaceCameraAdvanced();
 
         if (!UApplication.isPlaying)
         {
@@ -315,6 +497,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         }
 
         ApplyVariantGameObjects();
+        RestoreRootTransform(snapshot);
     }
 
     private void Start()
@@ -322,6 +505,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         if (!UApplication.isPlaying) return;
 
         ApplyInitialProductIndex();
+        EnsureFaceCameraAdvanced();
         ApplyVariantGameObjects();
         RebuildBrowser(false, 1);
         SubscribeRayState();
@@ -360,6 +544,8 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 #if UNITY_EDITOR
     private void OnValidate()
     {
+        RootTransformSnapshot snapshot = CaptureRootTransform();
+
         GrabRequiredComponents();
         ClampInspectorValues();
         TryAutoAssignDefaultSprites();
@@ -367,6 +553,14 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         ApplyInitialProductIndex();
         ApplyVariantGameObjects();
         ApplyArrowButtonTransforms();
+        RestoreRootTransform(snapshot);
+
+        if (createTargetModeUIPrefabsNow)
+        {
+            createTargetModeUIPrefabsNow = false;
+            QueueTargetModeUIPrefabExport();
+            EditorUtility.SetDirty(this);
+        }
 
         if (!rebuildOnValidate) return;
 
@@ -388,15 +582,19 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
             if (UApplication.isPlaying) return;
             if (!rebuildOnValidate) return;
 
+            RootTransformSnapshot snapshot = CaptureRootTransform();
+
             GrabRequiredComponents();
             ClampInspectorValues();
             TryAutoAssignDefaultSprites();
             ConfigureCanvas();
             ApplyInitialProductIndex();
+            EnsureFaceCameraAdvanced();
             ApplyVariantGameObjects();
 
             RebuildBrowser(false, 1);
             ApplyArrowButtonTransforms();
+            RestoreRootTransform(snapshot);
 
             EditorUtility.SetDirty(this);
         };
@@ -407,6 +605,20 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     public void RebuildBrowser()
     {
         RebuildBrowser(false, 1);
+    }
+
+#if UNITY_EDITOR
+    [ContextMenu("Create/Update Target Mode UI Prefabs")]
+    public void CreateOrUpdateTargetModeUIPrefabsFromContextMenu()
+    {
+        QueueTargetModeUIPrefabExport();
+    }
+#endif
+
+    [ContextMenu("Apply World Scale To Root Transform")]
+    public void ApplyWorldScaleToRootTransformFromContextMenu()
+    {
+        transform.localScale = Vector3.one * Mathf.Max(0.0001f, worldScale);
     }
 
     public void PressPrimaryAction()
@@ -433,6 +645,11 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         {
             WarnMissingCatalog();
             return;
+        }
+
+        if (forceFirstVariantWhenDiscovering)
+        {
+            _currentIndex = 0;
         }
 
         uiState = FurnitureBrowserUIState.Product;
@@ -511,6 +728,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         if (index == _currentIndex && uiState != FurnitureBrowserUIState.Discover)
         {
             ApplyVariantGameObjects();
+            ApplyArrowButtonTransforms();
             return;
         }
 
@@ -620,15 +838,141 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
     private void ApplyVariantGameObjects()
     {
-        int activeVariantIndex = GetActiveVariantGameObjectIndex();
+        if (_suppressExternalTargetApply)
+        {
+            return;
+        }
 
-        SetVariantGameObjectActive(variant0GameObject, activeVariantIndex == 0);
-        SetVariantGameObjectActive(variant1GameObject, activeVariantIndex == 1);
-        SetVariantGameObjectActive(variant2GameObject, activeVariantIndex == 2);
+        switch (targetMode)
+        {
+            case FurnitureBrowserTargetMode.Cabinets:
+                if (disableFridgeVariantGameObjectsInCabinetMode)
+                {
+                    SetVariantGameObjectActive(variant0GameObject, false);
+                    SetVariantGameObjectActive(variant1GameObject, false);
+                    SetVariantGameObjectActive(variant2GameObject, false);
+                }
+
+                ApplyCabinetSplatSelection();
+                return;
+
+            case FurnitureBrowserTargetMode.Lights:
+                SetVariantGameObjectActive(variant0GameObject, false);
+                SetVariantGameObjectActive(variant1GameObject, false);
+                SetVariantGameObjectActive(variant2GameObject, false);
+                return;
+
+            case FurnitureBrowserTargetMode.Fridges:
+            default:
+                int activeVariantIndex = GetActiveVariantGameObjectIndex();
+
+                SetVariantGameObjectActive(variant0GameObject, activeVariantIndex == 0);
+                SetVariantGameObjectActive(variant1GameObject, activeVariantIndex == 1);
+                SetVariantGameObjectActive(variant2GameObject, activeVariantIndex == 2);
+                return;
+        }
+    }
+
+    private void ApplyCabinetSplatSelection()
+    {
+        if (targetMode != FurnitureBrowserTargetMode.Cabinets)
+        {
+            return;
+        }
+
+        if (UApplication.isPlaying && !applyCabinetSplatInPlayMode)
+        {
+            return;
+        }
+
+        if (!UApplication.isPlaying && !applyCabinetSplatInEditMode)
+        {
+            return;
+        }
+
+        if (uiState == FurnitureBrowserUIState.Discover && !applyCabinetSplatWhileInDiscover)
+        {
+            return;
+        }
+
+        if (GetProductCount() <= 0)
+        {
+            return;
+        }
+
+        SplatManager manager = ResolveSplatManager();
+
+        if (manager == null)
+        {
+            if (debugLogs)
+            {
+                UDebug.LogWarning("[MetaRayFurnitureBrowser] Target Mode is Cabinets, but no SplatManager was found or assigned.", this);
+            }
+
+            return;
+        }
+
+        SplatManager.SplatRoom targetRoom = GetCabinetSplatRoomForIndex(_currentIndex);
+
+        if (targetRoom == SplatManager.SplatRoom.None)
+        {
+            return;
+        }
+
+        if (manager.CurrentRoom == targetRoom)
+        {
+            return;
+        }
+
+        manager.SetRoom(targetRoom);
+
+        if (debugLogs)
+        {
+            UDebug.Log($"<color=#A3FF9B><b>[MetaRayFurnitureBrowser]</b></color> Cabinet variant {_currentIndex} applied SplatRoom: {targetRoom}", this);
+        }
+    }
+
+    private SplatManager ResolveSplatManager()
+    {
+        if (splatManager != null)
+        {
+            return splatManager;
+        }
+
+        if (!autoFindSplatManager)
+        {
+            return null;
+        }
+
+        splatManager = SplatManager.GetOrFindInstance();
+        return splatManager;
+    }
+
+    private SplatManager.SplatRoom GetCabinetSplatRoomForIndex(int index)
+    {
+        switch (index)
+        {
+            case 0:
+                return cabinetVariant0SplatRoom;
+
+            case 1:
+                return cabinetVariant1SplatRoom;
+
+            case 2:
+                return cabinetVariant2SplatRoom;
+
+            default:
+                return SplatManager.SplatRoom.None;
+        }
     }
 
     private int GetActiveVariantGameObjectIndex()
     {
+        if (hideVariantGameObjectsInDiscover && uiState == FurnitureBrowserUIState.Discover)
+        {
+            return -1;
+        }
+
         if (GetProductCount() <= 0)
         {
             return -1;
@@ -662,14 +1006,203 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         }
     }
 
+    private void EnsureFaceCameraAdvanced()
+    {
+        if (!autoAddFaceCameraAdvanced) return;
+
+        Type faceCameraType = FindTypeByName("FaceCameraAdvanced");
+
+        if (faceCameraType == null)
+        {
+            if (warnIfFaceCameraAdvancedMissing && debugLogs)
+            {
+                UDebug.LogWarning("[MetaRayFurnitureBrowser] Could not find FaceCameraAdvanced script. Make sure FaceCameraAdvanced.cs exists in the project.");
+            }
+
+            return;
+        }
+
+        Component faceCameraComponent = GetComponent(faceCameraType);
+
+        if (faceCameraComponent == null)
+        {
+            faceCameraComponent = gameObject.AddComponent(faceCameraType);
+
+            if (debugLogs)
+            {
+                UDebug.Log("[MetaRayFurnitureBrowser] Added FaceCameraAdvanced to product UI.");
+            }
+        }
+
+        Camera resolvedCamera =
+            faceCameraTargetCamera != null
+                ? faceCameraTargetCamera
+                : eventCamera != null
+                    ? eventCamera
+                    : Camera.main;
+
+        SetMemberIfExists(faceCameraComponent, "targetCamera", resolvedCamera);
+        SetMemberIfExists(faceCameraComponent, "TargetCamera", resolvedCamera);
+
+        SetMemberIfExists(faceCameraComponent, "useMainCameraIfEmpty", faceCameraUseMainCameraIfEmpty);
+        SetMemberIfExists(faceCameraComponent, "UseMainCameraIfEmpty", faceCameraUseMainCameraIfEmpty);
+
+        SetMemberIfExists(faceCameraComponent, "invertDirection", faceCameraInvertDirection);
+        SetMemberIfExists(faceCameraComponent, "InvertDirection", faceCameraInvertDirection);
+
+        SetMemberIfExists(faceCameraComponent, "lockXRotation", faceCameraLockXRotation);
+        SetMemberIfExists(faceCameraComponent, "LockXRotation", faceCameraLockXRotation);
+
+        SetMemberIfExists(faceCameraComponent, "lockYRotation", faceCameraLockYRotation);
+        SetMemberIfExists(faceCameraComponent, "LockYRotation", faceCameraLockYRotation);
+
+        SetMemberIfExists(faceCameraComponent, "lockZRotation", faceCameraLockZRotation);
+        SetMemberIfExists(faceCameraComponent, "LockZRotation", faceCameraLockZRotation);
+
+        SetMemberIfExists(faceCameraComponent, "lockedEulerAngles", faceCameraLockedEulerAngles);
+        SetMemberIfExists(faceCameraComponent, "LockedEulerAngles", faceCameraLockedEulerAngles);
+
+        SetEnumMemberIfExists(faceCameraComponent, "updateMode", faceCameraUpdateMode.ToString());
+        SetEnumMemberIfExists(faceCameraComponent, "UpdateMode", faceCameraUpdateMode.ToString());
+
+        SetMemberIfExists(faceCameraComponent, "updateInEditMode", faceCameraUpdateInEditMode);
+        SetMemberIfExists(faceCameraComponent, "UpdateInEditMode", faceCameraUpdateInEditMode);
+    }
+
+    private static Type FindTypeByName(string typeName)
+    {
+        Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+        for (int i = 0; i < assemblies.Length; i++)
+        {
+            Type[] types;
+
+            try
+            {
+                types = assemblies[i].GetTypes();
+            }
+            catch
+            {
+                continue;
+            }
+
+            for (int j = 0; j < types.Length; j++)
+            {
+                if (types[j].Name == typeName || types[j].FullName == typeName)
+                {
+                    return types[j];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static void SetMemberIfExists(Component target, string memberName, object value)
+    {
+        if (target == null) return;
+
+        Type type = target.GetType();
+
+        FieldInfo field = type.GetField(
+            memberName,
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
+        );
+
+        if (field != null)
+        {
+            try
+            {
+                if (value == null || field.FieldType.IsAssignableFrom(value.GetType()))
+                {
+                    field.SetValue(target, value);
+                }
+            }
+            catch
+            {
+            }
+
+            return;
+        }
+
+        PropertyInfo property = type.GetProperty(
+            memberName,
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
+        );
+
+        if (property == null) return;
+        if (!property.CanWrite) return;
+
+        try
+        {
+            if (value == null || property.PropertyType.IsAssignableFrom(value.GetType()))
+            {
+                property.SetValue(target, value);
+            }
+        }
+        catch
+        {
+        }
+    }
+
+    private static void SetEnumMemberIfExists(Component target, string memberName, string enumValueName)
+    {
+        if (target == null) return;
+
+        Type type = target.GetType();
+
+        FieldInfo field = type.GetField(
+            memberName,
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
+        );
+
+        if (field != null && field.FieldType.IsEnum)
+        {
+            try
+            {
+                object value = Enum.Parse(field.FieldType, enumValueName, true);
+                field.SetValue(target, value);
+            }
+            catch
+            {
+            }
+
+            return;
+        }
+
+        PropertyInfo property = type.GetProperty(
+            memberName,
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
+        );
+
+        if (property == null) return;
+        if (!property.CanWrite) return;
+        if (!property.PropertyType.IsEnum) return;
+
+        try
+        {
+            object value = Enum.Parse(property.PropertyType, enumValueName, true);
+            property.SetValue(target, value);
+        }
+        catch
+        {
+        }
+    }
+
     private float GetResolvedDetailsHeight()
     {
         return Mathf.Max(detailsHeight, GetCleanDetailsPanelHeight());
     }
 
+    private float GetResolvedDetailsHeaderHeight()
+    {
+        return Mathf.Max(detailsHeaderHeight, 164f);
+    }
+
     private float GetCleanDetailsPanelHeight()
     {
         float featuresHeight = GetCleanFeaturesSectionHeight();
+        float headerHeight = GetResolvedDetailsHeaderHeight();
 
         float bodyHeight =
             detailsBodyPaddingY * 2f +
@@ -678,9 +1211,11 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
             featuresHeight +
             detailsFinishSectionHeight +
             detailsStorageSectionHeight +
-            detailsBodySectionSpacing * 4f;
+            82f +
+            58f +
+            detailsBodySectionSpacing * 6f;
 
-        return detailsHeaderHeight + bodyHeight;
+        return headerHeight + bodyHeight;
     }
 
     private float GetCleanFeaturesSectionHeight()
@@ -721,7 +1256,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         detailsGap = Mathf.Max(0f, detailsGap);
         detailsHeight = Mathf.Max(420f, detailsHeight);
 
-        detailsHeaderHeight = Mathf.Max(72f, detailsHeaderHeight);
+        detailsHeaderHeight = Mathf.Max(120f, detailsHeaderHeight);
         detailsBodyPaddingX = Mathf.Max(0f, detailsBodyPaddingX);
         detailsBodyPaddingY = Mathf.Max(0f, detailsBodyPaddingY);
         detailsBodySectionSpacing = Mathf.Max(0f, detailsBodySectionSpacing);
@@ -750,7 +1285,8 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         calloutPreviewSize = Mathf.Max(40f, calloutPreviewSize);
 
         arrowButtonSize = Mathf.Max(24f, arrowButtonSize);
-        nextArrowSizeMultiplier = Mathf.Max(1f, nextArrowSizeMultiplier);
+        previousButtonScale = Mathf.Max(0.01f, previousButtonScale);
+        nextButtonScale = Mathf.Max(0.01f, nextButtonScale);
         previousArrowFontSize = Mathf.Max(8f, previousArrowFontSize);
         nextArrowFontSize = Mathf.Max(8f, nextArrowFontSize);
 
@@ -805,7 +1341,10 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         _canvas.renderMode = RenderMode.WorldSpace;
         _canvas.worldCamera = eventCamera != null ? eventCamera : Camera.main;
 
-        transform.localScale = Vector3.one * worldScale;
+        if (!keepRootTransformEditable && autoApplyWorldScaleToRoot)
+        {
+            transform.localScale = Vector3.one * worldScale;
+        }
 
         if (_rectTransform != null)
         {
@@ -874,12 +1413,15 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
     private void RebuildBrowser(bool animateProduct, int direction)
     {
+        RootTransformSnapshot snapshot = CaptureRootTransform();
+
         UnsubscribeRayState();
 
         GrabRequiredComponents();
         ClampInspectorValues();
         TryAutoAssignDefaultSprites();
         ConfigureCanvas();
+        EnsureFaceCameraAdvanced();
         EnsurePointableCanvas();
         EnsureEventSystemAndPointableModule();
         ApplyVariantGameObjects();
@@ -917,6 +1459,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         }
 
         ApplyArrowButtonTransforms();
+        RestoreRootTransform(snapshot);
 
         if (UApplication.isPlaying)
         {
@@ -925,7 +1468,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
         if (debugLogs)
         {
-            UDebug.Log($"<b>[MetaRayFurnitureBrowser]</b> Built UI. Product index: {_currentIndex}, State: {uiState}");
+            UDebug.Log($"<b>[MetaRayFurnitureBrowser]</b> Built UI. Product index: {_currentIndex}, State: {uiState}, Target Mode: {targetMode}");
         }
     }
 
@@ -1321,7 +1864,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         _nextButtonRect.anchorMin = new Vector2(1f, 0.5f);
         _nextButtonRect.anchorMax = new Vector2(1f, 0.5f);
         _nextButtonRect.pivot = new Vector2(1f, 0.5f);
-        _nextButtonRect.sizeDelta = new Vector2(arrowButtonSize * nextArrowSizeMultiplier, arrowButtonSize * nextArrowSizeMultiplier);
+        _nextButtonRect.sizeDelta = new Vector2(arrowButtonSize, arrowButtonSize);
 
         ApplyArrowButtonTransforms();
     }
@@ -1332,15 +1875,41 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         {
             _previousButtonRect.anchoredPosition = previousButtonAnchoredPosition;
             _previousButtonRect.sizeDelta = new Vector2(arrowButtonSize, arrowButtonSize);
+            _previousButtonRect.localScale = Vector3.one * previousButtonScale;
         }
 
         if (_nextButtonRect != null)
         {
             _nextButtonRect.anchoredPosition = nextButtonAnchoredPosition;
-            _nextButtonRect.sizeDelta = new Vector2(
-                arrowButtonSize * nextArrowSizeMultiplier,
-                arrowButtonSize * nextArrowSizeMultiplier
-            );
+            _nextButtonRect.sizeDelta = new Vector2(arrowButtonSize, arrowButtonSize);
+            _nextButtonRect.localScale = Vector3.one * nextButtonScale;
+        }
+
+        ApplyArrowButtonVisibility();
+    }
+
+    private void ApplyArrowButtonVisibility()
+    {
+        if (!hideUnavailableArrowButtons)
+        {
+            if (_previousButtonRect != null) _previousButtonRect.gameObject.SetActive(true);
+            if (_nextButtonRect != null) _nextButtonRect.gameObject.SetActive(true);
+            return;
+        }
+
+        int count = GetProductCount();
+
+        bool showPrevious = count > 1 && _currentIndex > 0;
+        bool showNext = count > 1 && _currentIndex < count - 1;
+
+        if (_previousButtonRect != null)
+        {
+            _previousButtonRect.gameObject.SetActive(showPrevious);
+        }
+
+        if (_nextButtonRect != null)
+        {
+            _nextButtonRect.gameObject.SetActive(showNext);
         }
     }
 
@@ -1472,7 +2041,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     {
         float panelHeight = GetResolvedDetailsHeight();
 
-        GameObject panel = MakeUIObject("ProductDetails", parent);
+        GameObject panel = MakeUIObject("ProductDetails_HTMLCard", parent);
         RectTransform panelRT = panel.GetComponent<RectTransform>();
         panelRT.anchorMin = new Vector2(0.5f, 1f);
         panelRT.anchorMax = new Vector2(0.5f, 1f);
@@ -1491,7 +2060,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         shadow.effectColor = new Color(0f, 0f, 0f, 0.16f);
 
         VerticalLayoutGroup panelLayout = panel.AddComponent<VerticalLayoutGroup>();
-        panelLayout.padding = new RectOffset(0, 0, 0, 0);
+        panelLayout.padding = new RectOffset(28, 28, 28, 28);
         panelLayout.spacing = 0f;
         panelLayout.childAlignment = TextAnchor.UpperLeft;
         panelLayout.childControlWidth = true;
@@ -1507,54 +2076,144 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
     private void BuildDetailsHeader(Transform parent)
     {
-        GameObject header = MakeLayoutChild("DetailsHeader", parent, detailsHeaderHeight);
-        UIImage headerBg = header.AddComponent<UIImage>();
-        ApplyRoundedImageOrSprite(headerBg, detailsHeaderColor, detailsHeaderCornerRadius, detailsHeaderSprite);
-        headerBg.raycastTarget = false;
+        GameObject header = MakeLayoutChild("DetailsHeader_HTML", parent, GetResolvedDetailsHeaderHeight());
 
         VerticalLayoutGroup layout = header.AddComponent<VerticalLayoutGroup>();
-        layout.padding = new RectOffset(28, 28, 20, 16);
-        layout.spacing = 6f;
+        layout.padding = new RectOffset(0, 0, 0, 0);
+        layout.spacing = 0f;
         layout.childAlignment = TextAnchor.UpperLeft;
         layout.childControlWidth = true;
         layout.childControlHeight = true;
         layout.childForceExpandWidth = true;
         layout.childForceExpandHeight = false;
 
-        TextMeshProUGUI eyebrow = AddTMP("Eyebrow", header.transform);
-        eyebrow.text = "PRODUCT DETAILS";
-        eyebrow.fontSize = 12f;
-        eyebrow.fontStyle = FontStyles.Bold;
-        eyebrow.characterSpacing = 8f;
-        eyebrow.color = detailsHeaderTextColor;
-        eyebrow.alignment = TextAlignmentOptions.Left;
-        eyebrow.enableWordWrapping = false;
-        eyebrow.overflowMode = TextOverflowModes.Ellipsis;
-        SetPreferredHeight(eyebrow.gameObject, 24f);
+        GameObject topBar = MakeLayoutChild("TopIconRow", header.transform, 66f);
 
-        TextMeshProUGUI name = AddTMP("ProductName", header.transform);
+        HorizontalLayoutGroup topLayout = topBar.AddComponent<HorizontalLayoutGroup>();
+        topLayout.padding = new RectOffset(0, 0, 0, 22);
+        topLayout.spacing = 0f;
+        topLayout.childAlignment = TextAnchor.UpperCenter;
+        topLayout.childControlWidth = false;
+        topLayout.childControlHeight = false;
+        topLayout.childForceExpandWidth = false;
+        topLayout.childForceExpandHeight = false;
+
+        BuildIconButton("BackButton", topBar.transform, "‹", CloseDetails);
+
+        GameObject spacer = MakeUIObject("Spacer", topBar.transform);
+        LayoutElement spacerLE = spacer.AddComponent<LayoutElement>();
+        spacerLE.flexibleWidth = 1f;
+        spacerLE.minHeight = 44f;
+        spacerLE.preferredHeight = 44f;
+
+        BuildIconButton("CloseButton", topBar.transform, "×", ResetToCallout);
+
+        GameObject titleBlock = MakeLayoutChild("TitleBlock", header.transform, 94f);
+
+        VerticalLayoutGroup titleLayout = titleBlock.AddComponent<VerticalLayoutGroup>();
+        titleLayout.padding = new RectOffset(4, 4, 0, 22);
+        titleLayout.spacing = 4f;
+        titleLayout.childAlignment = TextAnchor.UpperLeft;
+        titleLayout.childControlWidth = true;
+        titleLayout.childControlHeight = true;
+        titleLayout.childForceExpandWidth = true;
+        titleLayout.childForceExpandHeight = false;
+
+        TextMeshProUGUI brand = AddTMP("Brand", titleBlock.transform);
+        brand.text = GetBrandText(_currentIndex).ToUpperInvariant();
+        brand.fontSize = 11f;
+        brand.fontStyle = FontStyles.Normal;
+        brand.characterSpacing = 20f;
+        brand.color = detailsHeaderTextColor;
+        brand.alignment = TextAlignmentOptions.Left;
+        brand.enableWordWrapping = false;
+        brand.overflowMode = TextOverflowModes.Ellipsis;
+        SetPreferredHeight(brand.gameObject, 20f);
+
+        TextMeshProUGUI name = AddTMP("ProductName", titleBlock.transform);
         name.text = GetTitle(_currentIndex);
-        name.fontSize = detailTitleFontSize + 4f;
+        name.fontSize = 22f;
         name.fontStyle = FontStyles.Bold;
-        name.color = darkTextColor;
+        name.characterSpacing = -1f;
+        name.color = detailsDarkBlueTextColor;
         name.alignment = TextAlignmentOptions.Left;
         name.enableWordWrapping = false;
         name.overflowMode = TextOverflowModes.Ellipsis;
-        SetPreferredHeight(name.gameObject, 42f);
+        SetPreferredHeight(name.gameObject, 34f);
+
+        TextMeshProUGUI sub = AddTMP("ProductSubtitle", titleBlock.transform);
+        sub.text = GetSubtitle(_currentIndex);
+        sub.fontSize = 13f;
+        sub.fontStyle = FontStyles.Normal;
+        sub.color = detailsHeaderTextColor;
+        sub.alignment = TextAlignmentOptions.Left;
+        sub.enableWordWrapping = false;
+        sub.overflowMode = TextOverflowModes.Ellipsis;
+        SetPreferredHeight(sub.gameObject, 22f);
+
+        GameObject divider = MakeLayoutChild("HeaderDivider", header.transform, 1f);
+        UIImage dividerImage = divider.AddComponent<UIImage>();
+        dividerImage.color = detailsDividerColor;
+        dividerImage.raycastTarget = false;
+    }
+
+    private GameObject BuildIconButton(string objectName, Transform parent, string label, UnityAction onClick)
+    {
+        GameObject go = MakeUIObject(objectName, parent);
+
+        LayoutElement le = go.AddComponent<LayoutElement>();
+        le.minWidth = 44f;
+        le.preferredWidth = 44f;
+        le.minHeight = 44f;
+        le.preferredHeight = 44f;
+        le.flexibleWidth = 0f;
+        le.flexibleHeight = 0f;
+
+        RectTransform rt = go.GetComponent<RectTransform>();
+        rt.sizeDelta = new Vector2(44f, 44f);
+
+        UIImage image = go.AddComponent<UIImage>();
+        ApplyRoundedImage(image, detailsIconButtonColor, 64);
+        image.raycastTarget = true;
+
+        Button button = go.AddComponent<Button>();
+        button.targetGraphic = image;
+        button.transition = Selectable.Transition.ColorTint;
+        button.navigation = new Navigation { mode = Navigation.Mode.None };
+
+        ColorBlock colors = button.colors;
+        colors.normalColor = detailsIconButtonColor;
+        colors.highlightedColor = new Color(1f, 1f, 1f, 0.20f);
+        colors.pressedColor = new Color(0f, 0f, 0f, 0.08f);
+        colors.selectedColor = detailsIconButtonColor;
+        colors.disabledColor = new Color(1f, 1f, 1f, 0.05f);
+        colors.colorMultiplier = 1f;
+        colors.fadeDuration = 0.08f;
+        button.colors = colors;
+
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(onClick);
+
+        TextMeshProUGUI text = AddTMP("Icon", go.transform);
+        StretchFull(text.gameObject);
+        text.text = label;
+        text.fontSize = label == "×" ? 25f : 28f;
+        text.fontStyle = FontStyles.Normal;
+        text.color = detailsIconColor;
+        text.alignment = TextAlignmentOptions.Center;
+        text.raycastTarget = false;
+
+        return go;
     }
 
     private void BuildDetailsBody(Transform parent)
     {
-        float bodyHeight = GetResolvedDetailsHeight() - detailsHeaderHeight;
+        float bodyHeight = GetResolvedDetailsHeight() - GetResolvedDetailsHeaderHeight() - 56f;
 
-        GameObject body = MakeLayoutChild("DetailsBody", parent, bodyHeight);
+        GameObject body = MakeLayoutChild("DetailsBody_HTML", parent, bodyHeight);
+
         VerticalLayoutGroup layout = body.AddComponent<VerticalLayoutGroup>();
-        layout.padding = new RectOffset(
-            Mathf.RoundToInt(detailsBodyPaddingX),
-            Mathf.RoundToInt(detailsBodyPaddingX),
-            Mathf.RoundToInt(detailsBodyPaddingY),
-            Mathf.RoundToInt(detailsBodyPaddingY)
-        );
+        layout.padding = new RectOffset(4, 4, Mathf.RoundToInt(detailsBodyPaddingY), 0);
         layout.spacing = detailsBodySectionSpacing;
         layout.childAlignment = TextAnchor.UpperLeft;
         layout.childControlWidth = true;
@@ -1567,6 +2226,8 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         BuildDetailsFeaturesSection(body.transform);
         BuildDetailsFinishSection(body.transform);
         BuildDetailsStorageSection(body.transform);
+        BuildDetailsPriceSection(body.transform);
+        BuildDetailsCTASection(body.transform);
     }
 
     private void BuildDetailsDimensionsSection(Transform parent)
@@ -1588,7 +2249,22 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         BuildDimensionItem(row.transform, "WIDTH", GetWidth(_currentIndex));
         BuildDimensionItem(row.transform, "HEIGHT", GetHeight(_currentIndex));
         BuildDimensionItem(row.transform, "DEPTH", GetDepth(_currentIndex));
-        BuildDimensionItem(row.transform, "WEIGHT", GetWeight(_currentIndex));
+        BuildDimensionItem(row.transform, GetFourthDimensionLabel(), GetWeight(_currentIndex));
+    }
+
+    private string GetFourthDimensionLabel()
+    {
+        if (targetMode == FurnitureBrowserTargetMode.Cabinets)
+        {
+            return string.IsNullOrWhiteSpace(cabinetFourthDimensionLabel) ? "ISLAND" : cabinetFourthDimensionLabel.ToUpperInvariant();
+        }
+
+        if (targetMode == FurnitureBrowserTargetMode.Lights)
+        {
+            return "SCENE";
+        }
+
+        return string.IsNullOrWhiteSpace(fridgeFourthDimensionLabel) ? "WEIGHT" : fridgeFourthDimensionLabel.ToUpperInvariant();
     }
 
     private void BuildDimensionItem(Transform parent, string label, string value)
@@ -1608,7 +2284,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         bg.raycastTarget = false;
 
         VerticalLayoutGroup layout = item.AddComponent<VerticalLayoutGroup>();
-        layout.padding = new RectOffset(6, 6, 11, 9);
+        layout.padding = new RectOffset(8, 8, 12, 8);
         layout.spacing = 4f;
         layout.childAlignment = TextAnchor.MiddleCenter;
         layout.childControlWidth = true;
@@ -1618,9 +2294,9 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
         TextMeshProUGUI labelText = AddTMP("Label", item.transform);
         labelText.text = label;
-        labelText.fontSize = 10f;
-        labelText.fontStyle = FontStyles.Bold;
-        labelText.characterSpacing = 2.4f;
+        labelText.fontSize = 9f;
+        labelText.fontStyle = FontStyles.Normal;
+        labelText.characterSpacing = 16f;
         labelText.color = detailsHeaderTextColor;
         labelText.alignment = TextAlignmentOptions.Center;
         labelText.enableWordWrapping = false;
@@ -1629,9 +2305,9 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
         TextMeshProUGUI valueText = AddTMP("Value", item.transform);
         valueText.text = value;
-        valueText.fontSize = detailBodyFontSize + 5f;
+        valueText.fontSize = 14f;
         valueText.fontStyle = FontStyles.Bold;
-        valueText.color = darkTextColor;
+        valueText.color = detailsDarkBlueTextColor;
         valueText.alignment = TextAlignmentOptions.Center;
         valueText.enableWordWrapping = false;
         valueText.overflowMode = TextOverflowModes.Ellipsis;
@@ -1645,12 +2321,13 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
         TextMeshProUGUI text = AddTMP("MaterialsText", section.transform);
         text.text = GetMaterials(_currentIndex);
-        text.fontSize = detailBodyFontSize + 1f;
+        text.fontSize = 14f;
         text.fontStyle = FontStyles.Normal;
-        text.color = mutedTextColor;
+        text.color = detailsDarkBlueTextColor;
         text.alignment = TextAlignmentOptions.Left;
         text.enableWordWrapping = true;
         text.overflowMode = TextOverflowModes.Ellipsis;
+        text.lineSpacing = 10f;
         SetPreferredHeight(text.gameObject, detailsMaterialsTextHeight);
     }
 
@@ -1679,9 +2356,9 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     {
         TextMeshProUGUI text = AddTMP("FeatureText", parent);
         text.text = value;
-        text.fontSize = detailBodyFontSize;
+        text.fontSize = 14f;
         text.fontStyle = FontStyles.Normal;
-        text.color = mutedTextColor;
+        text.color = detailsDarkBlueTextColor;
         text.alignment = TextAlignmentOptions.Left;
         text.enableWordWrapping = false;
         text.overflowMode = TextOverflowModes.Ellipsis;
@@ -1709,9 +2386,9 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         rowLayout.padding = new RectOffset(0, 0, 0, 0);
         rowLayout.spacing = detailsFinishSwatchSpacing;
         rowLayout.childAlignment = TextAnchor.MiddleLeft;
-        rowLayout.childControlWidth = true;
+        rowLayout.childControlWidth = false;
         rowLayout.childControlHeight = true;
-        rowLayout.childForceExpandWidth = true;
+        rowLayout.childForceExpandWidth = false;
         rowLayout.childForceExpandHeight = true;
 
         for (int i = 0; i < count; i++)
@@ -1729,52 +2406,54 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         LayoutElement le = item.AddComponent<LayoutElement>();
         le.minHeight = detailsFinishSwatchHeight;
         le.preferredHeight = detailsFinishSwatchHeight;
+        le.minWidth = 72f;
+        le.preferredWidth = 72f;
+        le.flexibleWidth = 0f;
         le.flexibleHeight = 0f;
-        le.minWidth = 0f;
-        le.preferredWidth = 0f;
-        le.flexibleWidth = 1f;
-
-        UIImage bg = item.AddComponent<UIImage>();
-        ApplyRoundedImageOrSprite(
-            bg,
-            finishSwatchBackgroundColor,
-            detailsMutedCardCornerRadius,
-            finishSwatchBackgroundSprite != null ? finishSwatchBackgroundSprite : detailsMutedCardSprite
-        );
-        bg.raycastTarget = false;
 
         VerticalLayoutGroup layout = item.AddComponent<VerticalLayoutGroup>();
-        layout.padding = new RectOffset(8, 8, 10, 10);
-        layout.spacing = 7f;
-        layout.childAlignment = TextAnchor.MiddleCenter;
-        layout.childControlWidth = true;
-        layout.childControlHeight = true;
-        layout.childForceExpandWidth = true;
+        layout.padding = new RectOffset(0, 0, 0, 0);
+        layout.spacing = 8f;
+        layout.childAlignment = TextAnchor.UpperCenter;
+        layout.childControlWidth = false;
+        layout.childControlHeight = false;
+        layout.childForceExpandWidth = false;
         layout.childForceExpandHeight = false;
+
+        GameObject swatchFrame = MakeUIObject("SwatchFrame", item.transform);
+
+        LayoutElement frameLE = swatchFrame.AddComponent<LayoutElement>();
+        frameLE.minWidth = detailsFinishDotSize;
+        frameLE.preferredWidth = detailsFinishDotSize;
+        frameLE.minHeight = detailsFinishDotSize;
+        frameLE.preferredHeight = detailsFinishDotSize;
+        frameLE.flexibleWidth = 0f;
+        frameLE.flexibleHeight = 0f;
+
+        UIImage frameImage = swatchFrame.AddComponent<UIImage>();
+        ApplyRoundedImage(frameImage, new Color(1f, 1f, 1f, index == 2 ? 0.85f : 0.5f), colorDotCornerRadius + 4);
+        frameImage.raycastTarget = false;
+
+        GameObject colorGO = MakeUIObject("ColorSquare", swatchFrame.transform);
+        RectTransform colorRT = colorGO.GetComponent<RectTransform>();
+        colorRT.anchorMin = Vector2.zero;
+        colorRT.anchorMax = Vector2.one;
+        colorRT.offsetMin = new Vector2(4f, 4f);
+        colorRT.offsetMax = new Vector2(-4f, -4f);
+
+        UIImage dotImage = colorGO.AddComponent<UIImage>();
+        ApplyColorDotImage(dotImage, color);
+        dotImage.raycastTarget = false;
 
         TextMeshProUGUI labelText = AddTMP("Label", item.transform);
         labelText.text = label;
         labelText.fontSize = 11f;
-        labelText.fontStyle = FontStyles.Bold;
-        labelText.color = finishSwatchLabelColor;
+        labelText.fontStyle = index == 2 ? FontStyles.Bold : FontStyles.Normal;
+        labelText.color = index == 2 ? detailsDarkBlueTextColor : detailsHeaderTextColor;
         labelText.alignment = TextAlignmentOptions.Center;
         labelText.enableWordWrapping = false;
         labelText.overflowMode = TextOverflowModes.Ellipsis;
-        SetPreferredHeight(labelText.gameObject, 18f);
-
-        GameObject dot = MakeUIObject("ColorDot", item.transform);
-
-        LayoutElement dotLE = dot.AddComponent<LayoutElement>();
-        dotLE.minWidth = detailsFinishDotSize;
-        dotLE.preferredWidth = detailsFinishDotSize;
-        dotLE.minHeight = detailsFinishDotSize;
-        dotLE.preferredHeight = detailsFinishDotSize;
-        dotLE.flexibleWidth = 0f;
-        dotLE.flexibleHeight = 0f;
-
-        UIImage dotImage = dot.AddComponent<UIImage>();
-        ApplyColorDotImage(dotImage, color);
-        dotImage.raycastTarget = false;
+        SetPreferredSize(labelText.gameObject, 72f, 22f);
     }
 
     private void BuildDetailsStorageSection(Transform parent)
@@ -1784,13 +2463,64 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
         TextMeshProUGUI text = AddTMP("StorageText", section.transform);
         text.text = GetStorage(_currentIndex);
-        text.fontSize = detailBodyFontSize + 1f;
+        text.fontSize = 14f;
         text.fontStyle = FontStyles.Normal;
-        text.color = mutedTextColor;
+        text.color = detailsDarkBlueTextColor;
         text.alignment = TextAlignmentOptions.Left;
         text.enableWordWrapping = true;
         text.overflowMode = TextOverflowModes.Ellipsis;
+        text.lineSpacing = 10f;
         SetPreferredHeight(text.gameObject, detailsStorageTextHeight);
+    }
+
+    private void BuildDetailsPriceSection(Transform parent)
+    {
+        GameObject section = MakeCleanSection("PriceSection", parent, 58f);
+
+        TextMeshProUGUI label = AddTMP("PriceEyebrow", section.transform);
+        label.text = string.IsNullOrWhiteSpace(detailsPriceEyebrowText) ? "FROM" : detailsPriceEyebrowText.ToUpperInvariant();
+        label.fontSize = 10f;
+        label.fontStyle = FontStyles.Normal;
+        label.characterSpacing = 16f;
+        label.color = detailsHeaderTextColor;
+        label.alignment = TextAlignmentOptions.Left;
+        label.enableWordWrapping = false;
+        label.overflowMode = TextOverflowModes.Ellipsis;
+        SetPreferredHeight(label.gameObject, 18f);
+
+        TextMeshProUGUI price = AddTMP("Price", section.transform);
+        price.text = GetPrice(_currentIndex);
+        price.fontSize = 18f;
+        price.fontStyle = FontStyles.Bold;
+        price.color = detailsDarkBlueTextColor;
+        price.alignment = TextAlignmentOptions.Left;
+        price.enableWordWrapping = false;
+        price.overflowMode = TextOverflowModes.Ellipsis;
+        SetPreferredHeight(price.gameObject, 30f);
+    }
+
+    private void BuildDetailsCTASection(Transform parent)
+    {
+        GameObject button = BuildButton(
+            "PlaceInKitchenButton",
+            parent,
+            string.IsNullOrWhiteSpace(detailsCTAButtonText) ? "Place in this kitchen" : detailsCTAButtonText,
+            detailsCTAColor,
+            detailsCTATextColor,
+            14f,
+            CloseDetails
+        );
+
+        RectTransform buttonRT = button.GetComponent<RectTransform>();
+        buttonRT.sizeDelta = new Vector2(0f, 50f);
+
+        LayoutElement le = button.GetComponent<LayoutElement>();
+        if (le == null) le = button.AddComponent<LayoutElement>();
+
+        le.minHeight = 50f;
+        le.preferredHeight = 50f;
+        le.flexibleHeight = 0f;
+        le.flexibleWidth = 1f;
     }
 
     private GameObject MakeCleanSection(string objectName, Transform parent, float height)
@@ -1813,9 +2543,9 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     {
         TextMeshProUGUI title = AddTMP("SectionTitle", parent);
         title.text = label;
-        title.fontSize = 12f;
-        title.fontStyle = FontStyles.Bold;
-        title.characterSpacing = 7f;
+        title.fontSize = 11f;
+        title.fontStyle = FontStyles.Normal;
+        title.characterSpacing = 20f;
         title.color = detailsHeaderTextColor;
         title.alignment = TextAlignmentOptions.Left;
         title.enableWordWrapping = false;
@@ -1882,7 +2612,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         StretchFull(text.gameObject);
         text.text = label;
         text.fontSize = fontSize;
-        text.fontStyle = FontStyles.Bold;
+        text.fontStyle = FontStyles.Normal;
         text.color = textColor;
         text.alignment = TextAlignmentOptions.Center;
         text.raycastTarget = false;
@@ -2031,6 +2761,23 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         return productCatalog.products[index];
     }
 
+    private string GetBrandText(int index)
+    {
+        MetaRayFurnitureProductVariant product = GetProduct(index);
+
+        if (product != null && !string.IsNullOrWhiteSpace(product.brandText))
+        {
+            return product.brandText;
+        }
+
+        if (targetMode == FurnitureBrowserTargetMode.Cabinets)
+        {
+            return "Nobilia";
+        }
+
+        return "XRCC";
+    }
+
     private string GetTitle(int index)
     {
         MetaRayFurnitureProductVariant product = GetProduct(index);
@@ -2171,11 +2918,11 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         switch (index % 3)
         {
             case 0:
-                return new Color(0.78f, 0.66f, 0.47f, 1f);
+                return new Color(0.87f, 0.88f, 0.93f, 1f);
             case 1:
-                return new Color(0.95f, 0.95f, 0.92f, 1f);
+                return new Color(0.76f, 0.60f, 0.42f, 1f);
             default:
-                return new Color(0.16f, 0.17f, 0.18f, 1f);
+                return new Color(0.54f, 0.58f, 0.67f, 1f);
         }
     }
 
@@ -2377,6 +3124,176 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     }
 
 #if UNITY_EDITOR
+    private void QueueTargetModeUIPrefabExport()
+    {
+        if (_editorPrefabExportQueued) return;
+
+        _editorPrefabExportQueued = true;
+
+        EditorApplication.delayCall += () =>
+        {
+            _editorPrefabExportQueued = false;
+
+            if (this == null) return;
+            if (gameObject == null) return;
+            if (UApplication.isPlaying) return;
+
+            CreateOrUpdateTargetModeUIPrefabsNow();
+        };
+    }
+
+    private void CreateOrUpdateTargetModeUIPrefabsNow()
+    {
+        if (_editorIsExportingPrefabs) return;
+
+        _editorIsExportingPrefabs = true;
+
+        FurnitureBrowserTargetMode originalTargetMode = targetMode;
+        FurnitureBrowserUIState originalUIState = uiState;
+        int originalCurrentIndex = _currentIndex;
+
+        try
+        {
+            string folderPath = EnsureAssetFolder(uiPrefabFolderPath);
+            FurnitureBrowserTargetMode[] modes =
+                (FurnitureBrowserTargetMode[])Enum.GetValues(typeof(FurnitureBrowserTargetMode));
+
+            for (int i = 0; i < modes.Length; i++)
+            {
+                FurnitureBrowserTargetMode mode = modes[i];
+                CreateOrUpdateSingleTargetModePrefab(folderPath, mode);
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            if (debugLogs)
+            {
+                UDebug.Log($"<color=#89CFF0><b>[MetaRayFurnitureBrowser]</b></color> Created/updated Target Mode UI prefabs in {folderPath}.", this);
+            }
+        }
+        finally
+        {
+            targetMode = originalTargetMode;
+            uiState = originalUIState;
+            _currentIndex = originalCurrentIndex;
+            _editorIsExportingPrefabs = false;
+            EditorUtility.SetDirty(this);
+        }
+    }
+
+    private void CreateOrUpdateSingleTargetModePrefab(string folderPath, FurnitureBrowserTargetMode mode)
+    {
+        string safePrefix = SanitizeFileName(string.IsNullOrWhiteSpace(uiPrefabNamePrefix)
+            ? nameof(MetaRayFurnitureBrowser)
+            : uiPrefabNamePrefix.Trim());
+
+        string prefabName = SanitizeFileName($"{safePrefix}_{mode}");
+        string prefabPath = $"{folderPath}/{prefabName}.prefab";
+
+        GameObject temp = null;
+
+        try
+        {
+            temp = Instantiate(gameObject);
+            temp.name = prefabName;
+            temp.SetActive(gameObject.activeSelf);
+
+            MetaRayFurnitureBrowser browser = temp.GetComponent<MetaRayFurnitureBrowser>();
+            if (browser == null) return;
+
+            browser._editorPrefabExportQueued = false;
+            browser._editorIsExportingPrefabs = true;
+            browser._suppressExternalTargetApply = true;
+            browser.createTargetModeUIPrefabsNow = false;
+            browser.rebuildOnValidate = false;
+            browser.targetMode = mode;
+
+            if (!keepScenePlacementInGeneratedPrefabs)
+            {
+                temp.transform.localPosition = Vector3.zero;
+                temp.transform.localRotation = Quaternion.identity;
+                temp.transform.localScale = Vector3.one;
+            }
+
+            if (includeGeneratedUIInPrefabs)
+            {
+                browser.GrabRequiredComponents();
+                browser.ClampInspectorValues();
+                browser.TryAutoAssignDefaultSprites();
+                browser.ConfigureCanvas();
+                browser.ApplyInitialProductIndex();
+                browser.ClearGeneratedObjects();
+                browser.RebuildBrowser(false, 1);
+            }
+            else
+            {
+                browser.ClearGeneratedObjects();
+            }
+
+            browser._suppressExternalTargetApply = false;
+            browser._editorIsExportingPrefabs = false;
+            PrefabUtility.SaveAsPrefabAsset(temp, prefabPath);
+        }
+        finally
+        {
+            if (temp != null)
+            {
+                DestroyImmediate(temp);
+            }
+        }
+    }
+
+    private static string EnsureAssetFolder(string requestedFolderPath)
+    {
+        string folderPath = string.IsNullOrWhiteSpace(requestedFolderPath)
+            ? "Assets/UIPrefabs"
+            : requestedFolderPath.Trim().Replace("\\", "/");
+
+        if (!folderPath.StartsWith("Assets", StringComparison.Ordinal))
+        {
+            folderPath = "Assets/" + folderPath.TrimStart('/');
+        }
+
+        if (folderPath == "Assets")
+        {
+            return folderPath;
+        }
+
+        string[] parts = folderPath.Split('/');
+        string current = parts[0];
+
+        for (int i = 1; i < parts.Length; i++)
+        {
+            if (string.IsNullOrWhiteSpace(parts[i])) continue;
+
+            string next = current + "/" + parts[i];
+
+            if (!AssetDatabase.IsValidFolder(next))
+            {
+                AssetDatabase.CreateFolder(current, parts[i]);
+            }
+
+            current = next;
+        }
+
+        return current;
+    }
+
+    private static string SanitizeFileName(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return "Prefab";
+
+        char[] invalid = System.IO.Path.GetInvalidFileNameChars();
+
+        for (int i = 0; i < invalid.Length; i++)
+        {
+            value = value.Replace(invalid[i], '_');
+        }
+
+        return value.Replace(" ", "_").Trim('_');
+    }
+
     private void TryAutoAssignDefaultSprites()
     {
         if (finishColorDotSprite == null)
@@ -2669,7 +3586,6 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
             }
             catch
             {
-                // SDK-version-safe fallback below.
             }
         }
 
@@ -2687,7 +3603,6 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         }
         catch
         {
-            // Non-fatal.
         }
     }
 
@@ -2708,7 +3623,6 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         }
         catch
         {
-            // Ignore SDK-version-specific field restrictions.
         }
     }
 }
@@ -2728,10 +3642,14 @@ public class MetaRayFurnitureProductVariant
 {
     [Header("Identity")]
     public int id;
-    public string productName = "Natural Birch Cabinet";
-    public string subtitle = "Storage cabinet";
+
+    [Tooltip("Small brand/manufacturer label shown at the top of the details card. Example: Nobilia")]
+    public string brandText = "Nobilia";
+
+    public string productName = "Riva 893, two-tone";
+    public string subtitle = "Cream + slate, oak butcher-block top";
     public string badgeText = "Room fit";
-    public string priceText = "$649";
+    public string priceText = "€5,240";
 
     [Header("Image")]
     public Sprite productImage;
@@ -2742,52 +3660,54 @@ public class MetaRayFurnitureProductVariant
     public string calloutText = "A clean storage cabinet was found for this room. Open it to compare dimensions, materials, finish and storage.";
 
     [TextArea(2, 4)]
-    public string shortDescription = "A refined storage cabinet with a natural birch finish and clean vertical proportions.";
+    public string shortDescription = "A refined kitchen solution with soft cabinet fronts, oak accents and clean vertical proportions.";
 
     [TextArea(3, 7)]
-    public string description = "A refined storage cabinet with a natural birch finish, matte panel doors and practical adjustable shelving.";
+    public string description = "A refined kitchen solution with lacquered fronts, oak butcher-block surfaces and practical storage for everyday use.";
 
     [TextArea(3, 7)]
-    public string longDescription = "A refined storage cabinet with a natural birch finish, matte panel doors and practical adjustable shelving.";
+    public string longDescription = "A refined kitchen solution with lacquered fronts, oak butcher-block surfaces and practical storage for everyday use.";
 
     [Header("Dimensions")]
-    public string widthText = "201 cm";
-    public string heightText = "93 cm";
-    public string depthText = "64 cm";
-    public string weightText = "38 kg";
+    public string widthText = "240 cm";
+    public string heightText = "220 cm";
+    public string depthText = "62 cm";
+
+    [Tooltip("For fridges this is shown as WEIGHT. For cabinets this can be used as ISLAND, because the browser changes the label based on Target Mode.")]
+    public string weightText = "180 cm";
 
     [Header("Features")]
     public List<string> features = new List<string>
     {
-        "Soft-close hinges",
-        "Adjustable interior shelving",
-        "Cable management cutout",
-        "Anti-tip wall anchor included"
+        "Soft-close hinges throughout",
+        "Integrated dimmable under-cabinet lighting",
+        "Push-to-open island drawers",
+        "FSC-certified oak, low-VOC finishes"
     };
 
     [Header("Materials / Finish")]
     [TextArea(2, 4)]
-    public string materialsText = "Solid birch frame, MDF panel doors, steel hardware";
+    public string materialsText = "Lacquered MDF fronts, European oak butcher-block, brushed-brass hardware";
 
-    public string finish = "Natural Birch / Matte White / Anthracite";
+    public string finish = "Cream / Oak / Slate";
 
     public List<Color> finishColors = new List<Color>
     {
-        new Color(0.78f, 0.66f, 0.47f, 1f),
-        new Color(0.95f, 0.95f, 0.92f, 1f),
-        new Color(0.16f, 0.17f, 0.18f, 1f)
+        new Color32(0xDD, 0xE1, 0xEC, 0xFF),
+        new Color32(0xC9, 0xA4, 0x72, 0xFF),
+        new Color32(0x8A, 0x93, 0xAB, 0xFF)
     };
 
     public List<string> finishColorLabels = new List<string>
     {
-        "Natural Birch",
-        "Matte White",
-        "Anthracite"
+        "Cream",
+        "Oak",
+        "Slate"
     };
 
     [Header("Storage / Included")]
     [TextArea(2, 4)]
-    public string storageText = "3 large doors, 4 adjustable shelves";
+    public string storageText = "12 base drawers, 4 wall cabinets, integrated pantry pull-out";
 
     public List<string> includedParts = new List<string>();
 

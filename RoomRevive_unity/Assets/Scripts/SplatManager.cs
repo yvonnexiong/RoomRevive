@@ -15,9 +15,15 @@ public class SplatManager : MonoBehaviour
     public enum SplatRoom
     {
         None,
+
         CalmRoom,
         FastRoom,
-        HostRoom
+        HostRoom,
+
+        HostKitchenLightingCold,
+        HostKitchenLightingWarm,
+        HostKitchenNewCabinetA,
+        HostKitchenNewCabinetB
     }
 
     public enum SplatSwitchMode
@@ -46,6 +52,9 @@ public class SplatManager : MonoBehaviour
     public bool playTransitionOnFirstRoomApply = false;
     public bool triggerFeedbackWhenSettingSameRoom = false;
 
+    [Tooltip("If true, lighting/cabinet Host variants reuse HostRoom particles/music instead of needing separate feedback cases.")]
+    public bool useHostRoomFeedbackForHostVariants = true;
+
     [Header("Switch Mode")]
     public SplatSwitchMode switchMode = SplatSwitchMode.SwapAssetOnTargetRenderer;
 
@@ -55,14 +64,37 @@ public class SplatManager : MonoBehaviour
 
     [Header("MODE 1 — Single Renderer Asset Swapping")]
     public GaussianSplatRenderer targetRenderer;
+
+    [Header("Base Room Assets")]
     public GaussianSplatAsset calmRoomAsset;
     public GaussianSplatAsset fastRoomAsset;
     public GaussianSplatAsset hostRoomAsset;
 
+    [Header("Host / Gather Kitchen Variant Assets")]
+    [Tooltip("Asset name example: Host and Gather Kitchen_lighting_cold")]
+    public GaussianSplatAsset hostKitchenLightingColdAsset;
+
+    [Tooltip("Asset name example: Host and Gather Kitchen_lighting_warm")]
+    public GaussianSplatAsset hostKitchenLightingWarmAsset;
+
+    [Tooltip("Asset name example: Host and Gather Kitchen_new_Cabinet_A")]
+    public GaussianSplatAsset hostKitchenNewCabinetAAsset;
+
+    [Tooltip("Asset name example: Host and Gather Kitchen_new_Cabinet_B")]
+    public GaussianSplatAsset hostKitchenNewCabinetBAsset;
+
     [Header("MODE 2 — Toggle Existing Renderers")]
+    [Header("Base Room Renderers")]
     public GaussianSplatRenderer calmRoomRenderer;
     public GaussianSplatRenderer fastRoomRenderer;
     public GaussianSplatRenderer hostRoomRenderer;
+
+    [Header("Host / Gather Kitchen Variant Renderers")]
+    public GaussianSplatRenderer hostKitchenLightingColdRenderer;
+    public GaussianSplatRenderer hostKitchenLightingWarmRenderer;
+    public GaussianSplatRenderer hostKitchenNewCabinetARenderer;
+    public GaussianSplatRenderer hostKitchenNewCabinetBRenderer;
+
     public bool disableInactiveGameObjects = true;
 
     [Header("Optional Transform Sync")]
@@ -401,6 +433,26 @@ public class SplatManager : MonoBehaviour
         SetRoom(SplatRoom.HostRoom);
     }
 
+    public void SetHostKitchenLightingCold()
+    {
+        SetRoom(SplatRoom.HostKitchenLightingCold);
+    }
+
+    public void SetHostKitchenLightingWarm()
+    {
+        SetRoom(SplatRoom.HostKitchenLightingWarm);
+    }
+
+    public void SetHostKitchenNewCabinetA()
+    {
+        SetRoom(SplatRoom.HostKitchenNewCabinetA);
+    }
+
+    public void SetHostKitchenNewCabinetB()
+    {
+        SetRoom(SplatRoom.HostKitchenNewCabinetB);
+    }
+
     public void HideAllRooms()
     {
         if (activeTransitionRoutine != null)
@@ -417,9 +469,7 @@ public class SplatManager : MonoBehaviour
 
         if (switchMode == SplatSwitchMode.ToggleRendererObjects)
         {
-            SetRendererActive(calmRoomRenderer, false);
-            SetRendererActive(fastRoomRenderer, false);
-            SetRendererActive(hostRoomRenderer, false);
+            SetAllRoomRenderersActive(false);
         }
         else if (targetRenderer != null)
         {
@@ -709,9 +759,8 @@ public class SplatManager : MonoBehaviour
             return false;
         }
 
-        SetRendererActive(calmRoomRenderer, room == SplatRoom.CalmRoom);
-        SetRendererActive(fastRoomRenderer, room == SplatRoom.FastRoom);
-        SetRendererActive(hostRoomRenderer, room == SplatRoom.HostRoom);
+        SetAllRoomRenderersActive(false);
+        SetRendererActive(activeRenderer, true);
 
         if (forceActiveSplatToManagerTransform)
             CopyManagerTransformTo(activeRenderer.transform);
@@ -744,13 +793,15 @@ public class SplatManager : MonoBehaviour
     {
         TryAutoAssignFeedbackManagers();
 
+        SplatRoom feedbackRoom = GetFeedbackRoom(room);
+
         if (particlesManager != null)
         {
             if (playTransition && playParticleTransitionOnRoomChange)
                 particlesManager.PlayRoomChangeParticles();
 
             if (playRoomFeedback && playRoomParticleOnRoomChange)
-                particlesManager.PlayIntentParticles(room);
+                particlesManager.PlayIntentParticles(feedbackRoom);
         }
 
         if (audioManager != null)
@@ -759,8 +810,27 @@ public class SplatManager : MonoBehaviour
                 audioManager.PlayRoomChangeSfx();
 
             if (playRoomFeedback && playRoomMusicOnRoomChange)
-                audioManager.PlayAtmosphereForRoom(room);
+                audioManager.PlayAtmosphereForRoom(feedbackRoom);
         }
+    }
+
+    private SplatRoom GetFeedbackRoom(SplatRoom room)
+    {
+        if (!useHostRoomFeedbackForHostVariants)
+            return room;
+
+        if (IsHostVariantRoom(room))
+            return SplatRoom.HostRoom;
+
+        return room;
+    }
+
+    private bool IsHostVariantRoom(SplatRoom room)
+    {
+        return room == SplatRoom.HostKitchenLightingCold ||
+               room == SplatRoom.HostKitchenLightingWarm ||
+               room == SplatRoom.HostKitchenNewCabinetA ||
+               room == SplatRoom.HostKitchenNewCabinetB;
     }
 
     private void PreviewCutoutTransitionInEditor()
@@ -1036,9 +1106,7 @@ public class SplatManager : MonoBehaviour
             return;
         }
 
-        SetRendererActive(calmRoomRenderer, false);
-        SetRendererActive(fastRoomRenderer, false);
-        SetRendererActive(hostRoomRenderer, false);
+        SetAllRoomRenderersActive(false);
     }
 
     private void SetTransitionRenderersVisible(bool visible)
@@ -1094,6 +1162,18 @@ public class SplatManager : MonoBehaviour
             case SplatRoom.HostRoom:
                 return hostRoomAsset;
 
+            case SplatRoom.HostKitchenLightingCold:
+                return hostKitchenLightingColdAsset;
+
+            case SplatRoom.HostKitchenLightingWarm:
+                return hostKitchenLightingWarmAsset;
+
+            case SplatRoom.HostKitchenNewCabinetA:
+                return hostKitchenNewCabinetAAsset;
+
+            case SplatRoom.HostKitchenNewCabinetB:
+                return hostKitchenNewCabinetBAsset;
+
             default:
                 return null;
         }
@@ -1112,9 +1192,33 @@ public class SplatManager : MonoBehaviour
             case SplatRoom.HostRoom:
                 return hostRoomRenderer;
 
+            case SplatRoom.HostKitchenLightingCold:
+                return hostKitchenLightingColdRenderer;
+
+            case SplatRoom.HostKitchenLightingWarm:
+                return hostKitchenLightingWarmRenderer;
+
+            case SplatRoom.HostKitchenNewCabinetA:
+                return hostKitchenNewCabinetARenderer;
+
+            case SplatRoom.HostKitchenNewCabinetB:
+                return hostKitchenNewCabinetBRenderer;
+
             default:
                 return null;
         }
+    }
+
+    private void SetAllRoomRenderersActive(bool active)
+    {
+        SetRendererActive(calmRoomRenderer, active);
+        SetRendererActive(fastRoomRenderer, active);
+        SetRendererActive(hostRoomRenderer, active);
+
+        SetRendererActive(hostKitchenLightingColdRenderer, active);
+        SetRendererActive(hostKitchenLightingWarmRenderer, active);
+        SetRendererActive(hostKitchenNewCabinetARenderer, active);
+        SetRendererActive(hostKitchenNewCabinetBRenderer, active);
     }
 
     private void SetRendererActive(GaussianSplatRenderer renderer, bool active)

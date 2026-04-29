@@ -9,16 +9,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 669d7243d12d7ab46b87c7c6f134fa78, type: 3}
+  m_Script: {fileID: 0}
   m_Name: FridgesCatalog
   m_EditorClassIdentifier: Assembly-CSharp::MetaRayFurnitureProductCatalog
   products:
   - id: 1
+    brandText: Nobilia
     productName: Modern Fridge
     subtitle: Premium four-door stainless fridge
     badgeText: Modern
     priceText: $1,299
-    productImage: {fileID: 21300000, guid: 3b24d6815320e8e45a7ce4557d01c16f, type: 3}
+    productImage: {fileID: 21300000, guid: 3fcbbb89021804c418d75197dc8e9ab8, type: 3}
     sourceImageUrl: 
     calloutText: A modern stainless fridge was found for this kitchen. Open it to
       compare storage zones, finish and fit.
@@ -70,6 +71,7 @@ MonoBehaviour:
       m_PersistentCalls:
         m_Calls: []
   - id: 2
+    brandText: Nobilia
     productName: Nordic Tall Fridge
     subtitle: Minimal bottom-freezer refrigerator
     badgeText: Clean Fit
@@ -127,7 +129,8 @@ MonoBehaviour:
       m_PersistentCalls:
         m_Calls: []
   - id: 3
-    productName: French Door Fridge
+    brandText: Nobilia
+    productName: Aurora French Door Fridge
     subtitle: French-door fridge with dispenser
     badgeText: Premium
     priceText: $1,799

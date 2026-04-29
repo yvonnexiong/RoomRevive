@@ -11,8 +11,7 @@ Material:
   m_Shader: {fileID: 4800000, guid: 3a4384a97ee36b54cb7114ba12a91159, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - _SURFACE_TYPE_TRANSPARENT
+  m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -21,8 +20,6 @@ Material:
   stringTagMap: {}
   disabledShaderPasses:
   - MOTIONVECTORS
-  - DepthOnly
-  - SHADOWCASTER
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
@@ -135,17 +132,18 @@ Material:
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
     - _Cull: 0
+    - _CullMode: 2
     - _Cutoff: 0.5
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
-    - _DstBlendAlpha: 10
+    - _DstBlendAlpha: 0
     - _EnvironmentReflections: 1
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossinessSource: 0
     - _GlossyReflections: 0
-    - _Metallic: 0.767
+    - _Metallic: 1
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
@@ -155,7 +153,7 @@ Material:
     - _ReflectionSource: 0
     - _SampleGI: 0
     - _Shininess: 0.5
-    - _Smoothness: 0.571
+    - _Smoothness: 0.456
     - _SmoothnessSource: 1
     - _SmoothnessTextureChannel: 0
     - _SpecSource: 0
@@ -167,7 +165,7 @@ Material:
     - _WorkflowMode: 1
     - _XRMotionVectorsPass: 1
     - _ZTest: 4
-    - _ZWrite: 0
+    - _ZWrite: 1
     - _ZWriteControl: 0
     - alphaCutoff: 0.5
     - baseColorTexture_texCoord: 0
@@ -182,7 +180,7 @@ Material:
     - roughnessFactor: 1
     - transmissionFactor: 0
     m_Colors:
-    - _BaseColor: {r: 0.8553459, g: 0.8553459, b: 0.8553459, a: 0}
+    - _BaseColor: {r: 0.8553459, g: 0.8553459, b: 0.8553459, a: 1}
     - _Color: {r: 0.8553459, g: 0.8553459, b: 0.8553459, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.5, g: 0.5, b: 0.5, a: 0.5}

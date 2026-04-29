@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -9,17 +9,17 @@ using UnityEditor;
 /// <summary>
 /// Calm, detailed room-atmosphere particle effect for a kitchen.
 ///
-/// FIXED:
-/// - No longer tries to load Default-ParticleSystem.mat.
-/// - Uses a generated fallback particle material instead.
-/// - This prevents build errors caused by missing Unity built-in particle material.
-/// 
+/// UPDATED:
+/// - Does NOT use Unity's built-in Default-Particle Material.
+/// - Does NOT require assigning a material in the inspector.
+/// - Creates its own custom soft circular particle material.
+/// - The generated particle texture is a soft white glowing dot, similar to Unity's Default-Particle Material.
+///
 /// IMPORTANT:
 /// - Does NOT set the transform pose of generated particle children after creation.
 /// - You can move/rotate/scale generated particle children manually.
 /// - Steam wisps have been removed and old generated steam children are auto-deleted.
-/// - All particles use Mesh render mode by default.
-/// - All particles use Facing render alignment by default.
+/// - Use Mesh Particles should usually be OFF for the soft round particle look.
 /// - All particles can collide with 3D world colliders.
 /// </summary>
 [ExecuteAlways]
@@ -45,15 +45,35 @@ public class CalmKitchenRoomParticles : MonoBehaviour
     public bool useShapeOffsetsInsteadOfTransformPose = false;
 
     [Header("Particle Rendering")]
-    public bool useMeshParticles = true;
+    [Tooltip("OFF gives the soft round particle look from the screenshot. ON renders particles on a generated cube mesh.")]
+    public bool useMeshParticles = false;
 
-    [Tooltip("Optional mesh override. If empty, the script generates a cube mesh automatically.")]
+    [Tooltip("Optional mesh override. If empty and Use Mesh Particles is ON, the script generates a cube mesh automatically.")]
     public Mesh particleMeshOverride;
 
     public bool enableMeshGPUInstancing = true;
 
-    [Tooltip("Facing makes the mesh particles face the player/camera.")]
+    [Tooltip("Facing makes the particles face the player/camera.")]
     public ParticleSystemRenderSpace particleRenderAlignment = ParticleSystemRenderSpace.Facing;
+
+    [Header("Generated Custom Particle Material")]
+    [Tooltip("Name of the generated custom material.")]
+    public string generatedMaterialName = "__Generated_CalmKitchen_SoftParticle_Material";
+
+    [Tooltip("Texture resolution for the generated soft particle dot.")]
+    [Range(32, 512)]
+    public int generatedParticleTextureSize = 128;
+
+    [Tooltip("Higher values make the particle edge softer/fall off faster.")]
+    [Range(0.5f, 8f)]
+    public float generatedParticleFalloffPower = 2.6f;
+
+    [Tooltip("Controls the bright center size of the generated particle texture.")]
+    [Range(0f, 0.9f)]
+    public float generatedParticleCoreSize = 0.08f;
+
+    [Tooltip("If true, the generated material uses additive-like blending when possible. Good for glowy particles.")]
+    public bool useSoftAdditiveBlend = false;
 
     [Header("Particle Collision")]
     public bool enableParticleCollision = true;
@@ -88,30 +108,23 @@ public class CalmKitchenRoomParticles : MonoBehaviour
     public bool multiplyColliderForceByParticleSize = false;
     public bool sendCollisionMessages = false;
 
-    [Header("Particle Material")]
-    [Tooltip("Legacy field kept only so old inspector data does not break. This script no longer loads Default-ParticleSystem.mat because it can break builds.")]
-    public bool useUnityDefaultParticleMaterial = false;
-
-    [Tooltip("Optional override. If assigned, all particles use this material.")]
-    public Material particleMaterialOverride;
-
     [Header("Room Volume")]
     [Tooltip("Only used as ParticleSystem Shape offset when Use Shape Offsets Instead Of Transform Pose is ON. It does NOT move the GameObject.")]
     public Vector3 roomCenterOffset = new Vector3(0f, 1.35f, 0f);
 
     public Vector3 roomSize = new Vector3(4.5f, 2.7f, 4.5f);
 
-    [Header("Effect Colors — Ambient Dust")]
+    [Header("Effect Colors â€” Ambient Dust")]
     public Color ambientDustColorA = new Color(1.0f, 0.82f, 0.55f, 1f);
     public Color ambientDustColorB = new Color(0.78f, 0.86f, 1.0f, 1f);
 
-    [Header("Effect Colors — Sunbeam Dust")]
+    [Header("Effect Colors â€” Sunbeam Dust")]
     public Color sunbeamDustColor = new Color(1.0f, 0.82f, 0.55f, 1f);
 
-    [Header("Effect Colors — Slow Floating Glow")]
+    [Header("Effect Colors â€” Slow Floating Glow")]
     public Color slowGlowColor = new Color(1.0f, 0.74f, 0.38f, 1f);
 
-    [Header("Effect Colors — Counter Shimmer")]
+    [Header("Effect Colors â€” Counter Shimmer")]
     public Color counterShimmerColor = new Color(1.0f, 0.82f, 0.55f, 1f);
 
     [Header("Sunbeam")]
@@ -129,8 +142,8 @@ public class CalmKitchenRoomParticles : MonoBehaviour
 
     public Vector3 counterAreaSize = new Vector3(4.35f, 2.66f, 5.6f);
 
-    private Material _runtimeFallbackMaterial;
-    private Texture2D _runtimeFallbackTexture;
+    private Material _generatedParticleMaterial;
+    private Texture2D _generatedParticleTexture;
     private Mesh _generatedCubeMesh;
 
 #if UNITY_EDITOR
@@ -161,10 +174,9 @@ public class CalmKitchenRoomParticles : MonoBehaviour
         collisionRadiusScale = Mathf.Max(0.01f, collisionRadiusScale);
         maxCollisionShapes = Mathf.Clamp(maxCollisionShapes, 1, 256);
         maxKillSpeed = Mathf.Max(minKillSpeed, maxKillSpeed);
+        generatedParticleTextureSize = Mathf.Clamp(generatedParticleTextureSize, 32, 512);
 
-        // Important:
-        // Force this OFF because loading Default-ParticleSystem.mat can break builds.
-        useUnityDefaultParticleMaterial = false;
+        RecreateGeneratedMaterialIfNeeded();
 
         if (!rebuildOnValidate)
             return;
@@ -205,6 +217,25 @@ public class CalmKitchenRoomParticles : MonoBehaviour
         ConfigureCounterShimmer(GetOrCreateParticleSystem(CounterName));
 
         DeleteGeneratedSteamWisps();
+    }
+
+    [ContextMenu("Regenerate Custom Particle Material")]
+    public void RecreateGeneratedMaterialIfNeeded()
+    {
+        DestroyGeneratedMaterialObjects();
+
+        _generatedParticleTexture = CreateSoftParticleTexture(
+            Mathf.Clamp(generatedParticleTextureSize, 32, 512),
+            generatedParticleFalloffPower,
+            generatedParticleCoreSize
+        );
+
+        _generatedParticleTexture.name = "__Generated_CalmKitchen_SoftParticle_Texture";
+        _generatedParticleTexture.hideFlags = HideFlags.HideAndDontSave;
+
+        _generatedParticleMaterial = CreateGeneratedParticleMaterial(_generatedParticleTexture);
+        _generatedParticleMaterial.name = generatedMaterialName;
+        _generatedParticleMaterial.hideFlags = HideFlags.HideAndDontSave;
     }
 
     [ContextMenu("Delete Old Steam Wisp Children")]
@@ -270,7 +301,10 @@ public class CalmKitchenRoomParticles : MonoBehaviour
 
     private void ConfigureRenderer(ParticleSystemRenderer renderer)
     {
-        renderer.sharedMaterial = GetParticleMaterial();
+        Material material = GetGeneratedParticleMaterial();
+
+        if (material != null)
+            renderer.sharedMaterial = material;
 
         if (useMeshParticles)
         {
@@ -293,6 +327,150 @@ public class CalmKitchenRoomParticles : MonoBehaviour
         renderer.sortingFudge = 1f;
         renderer.minParticleSize = 0.0001f;
         renderer.maxParticleSize = 0.45f;
+    }
+
+    private Material GetGeneratedParticleMaterial()
+    {
+        if (_generatedParticleMaterial != null)
+            return _generatedParticleMaterial;
+
+        RecreateGeneratedMaterialIfNeeded();
+        return _generatedParticleMaterial;
+    }
+
+    private Material CreateGeneratedParticleMaterial(Texture2D texture)
+    {
+        Shader shader =
+            Shader.Find("Universal Render Pipeline/Particles/Unlit") ??
+            Shader.Find("Universal Render Pipeline/Unlit") ??
+            Shader.Find("Particles/Standard Unlit") ??
+            Shader.Find("Sprites/Default") ??
+            Shader.Find("Unlit/Transparent");
+
+        if (shader == null)
+        {
+            Debug.LogWarning(
+                "[CalmKitchenRoomParticles] Could not find a transparent particle shader.",
+                this
+            );
+
+            return null;
+        }
+
+        Material material = new Material(shader);
+
+        if (material.HasProperty("_BaseMap"))
+            material.SetTexture("_BaseMap", texture);
+
+        if (material.HasProperty("_MainTex"))
+            material.SetTexture("_MainTex", texture);
+
+        if (material.HasProperty("_BaseColor"))
+            material.SetColor("_BaseColor", Color.white);
+
+        if (material.HasProperty("_Color"))
+            material.SetColor("_Color", Color.white);
+
+        ConfigureTransparentMaterial(material);
+
+        return material;
+    }
+
+    private void ConfigureTransparentMaterial(Material material)
+    {
+        if (material == null)
+            return;
+
+        material.SetOverrideTag("RenderType", "Transparent");
+        material.renderQueue = (int)RenderQueue.Transparent;
+
+        if (material.HasProperty("_Surface"))
+            material.SetFloat("_Surface", 1f);
+
+        if (material.HasProperty("_Blend"))
+            material.SetFloat("_Blend", useSoftAdditiveBlend ? 1f : 0f);
+
+        if (material.HasProperty("_AlphaClip"))
+            material.SetFloat("_AlphaClip", 0f);
+
+        if (material.HasProperty("_SrcBlend"))
+            material.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+
+        if (material.HasProperty("_DstBlend"))
+        {
+            material.SetFloat(
+                "_DstBlend",
+                useSoftAdditiveBlend
+                    ? (float)BlendMode.One
+                    : (float)BlendMode.OneMinusSrcAlpha
+            );
+        }
+
+        if (material.HasProperty("_ZWrite"))
+            material.SetFloat("_ZWrite", 0f);
+
+        if (material.HasProperty("_Cull"))
+            material.SetFloat("_Cull", (float)CullMode.Off);
+
+        material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        material.EnableKeyword("_ALPHABLEND_ON");
+        material.DisableKeyword("_ALPHATEST_ON");
+    }
+
+    private Texture2D CreateSoftParticleTexture(int size, float falloffPower, float coreSize)
+    {
+        Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false, false);
+
+        float center = (size - 1) * 0.5f;
+        float radius = center;
+        float safeFalloff = Mathf.Max(0.01f, falloffPower);
+        float safeCore = Mathf.Clamp01(coreSize);
+
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float dx = (x - center) / radius;
+                float dy = (y - center) / radius;
+                float distance = Mathf.Sqrt(dx * dx + dy * dy);
+
+                float normalizedDistance = Mathf.Clamp01(distance);
+
+                float alpha;
+                if (normalizedDistance <= safeCore)
+                {
+                    alpha = 1f;
+                }
+                else
+                {
+                    float edgeT = Mathf.InverseLerp(safeCore, 1f, normalizedDistance);
+                    alpha = Mathf.Pow(1f - edgeT, safeFalloff);
+                }
+
+                texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+            }
+        }
+
+        texture.wrapMode = TextureWrapMode.Clamp;
+        texture.filterMode = FilterMode.Bilinear;
+        texture.Apply(false, false);
+
+        return texture;
+    }
+
+    private void DestroyGeneratedMaterialObjects()
+    {
+        if (_generatedParticleMaterial != null)
+        {
+            DestroySafeAsset(_generatedParticleMaterial);
+            _generatedParticleMaterial = null;
+        }
+
+        if (_generatedParticleTexture != null)
+        {
+            DestroySafeAsset(_generatedParticleTexture);
+            _generatedParticleTexture = null;
+        }
     }
 
     private void ConfigureCollision(ParticleSystem ps)
@@ -388,124 +566,6 @@ public class CalmKitchenRoomParticles : MonoBehaviour
         mesh.RecalculateBounds();
 
         return mesh;
-    }
-
-    private Material GetParticleMaterial()
-    {
-        if (particleMaterialOverride != null)
-            return particleMaterialOverride;
-
-        return GetRuntimeFallbackSoftParticleMaterial();
-    }
-
-    private Material GetRuntimeFallbackSoftParticleMaterial()
-    {
-        if (_runtimeFallbackMaterial != null)
-            return _runtimeFallbackMaterial;
-
-        Shader shader =
-            Shader.Find("Universal Render Pipeline/Particles/Unlit") ??
-            Shader.Find("Universal Render Pipeline/Unlit") ??
-            Shader.Find("Particles/Standard Unlit") ??
-            Shader.Find("Sprites/Default") ??
-            Shader.Find("Unlit/Transparent");
-
-        if (shader == null)
-        {
-            Debug.LogWarning(
-                "[CalmKitchenRoomParticles] Could not find a particle shader. " +
-                "Assign a material manually in Particle Material Override."
-            );
-
-            return null;
-        }
-
-        _runtimeFallbackMaterial = new Material(shader);
-        _runtimeFallbackMaterial.name = "Runtime Calm Kitchen Safe Particle Material";
-        _runtimeFallbackMaterial.hideFlags = HideFlags.HideAndDontSave;
-
-        _runtimeFallbackTexture = CreateSoftCircleTexture(96);
-        _runtimeFallbackTexture.hideFlags = HideFlags.HideAndDontSave;
-
-        if (_runtimeFallbackMaterial.HasProperty("_BaseMap"))
-            _runtimeFallbackMaterial.SetTexture("_BaseMap", _runtimeFallbackTexture);
-
-        if (_runtimeFallbackMaterial.HasProperty("_MainTex"))
-            _runtimeFallbackMaterial.SetTexture("_MainTex", _runtimeFallbackTexture);
-
-        if (_runtimeFallbackMaterial.HasProperty("_BaseColor"))
-            _runtimeFallbackMaterial.SetColor("_BaseColor", Color.white);
-
-        if (_runtimeFallbackMaterial.HasProperty("_Color"))
-            _runtimeFallbackMaterial.SetColor("_Color", Color.white);
-
-        ConfigureTransparentMaterial(_runtimeFallbackMaterial);
-
-        return _runtimeFallbackMaterial;
-    }
-
-    private void ConfigureTransparentMaterial(Material material)
-    {
-        if (material == null)
-            return;
-
-        material.SetOverrideTag("RenderType", "Transparent");
-        material.renderQueue = (int)RenderQueue.Transparent;
-
-        if (material.HasProperty("_Surface"))
-            material.SetFloat("_Surface", 1f);
-
-        if (material.HasProperty("_Blend"))
-            material.SetFloat("_Blend", 0f);
-
-        if (material.HasProperty("_AlphaClip"))
-            material.SetFloat("_AlphaClip", 0f);
-
-        if (material.HasProperty("_SrcBlend"))
-            material.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
-
-        if (material.HasProperty("_DstBlend"))
-            material.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
-
-        if (material.HasProperty("_ZWrite"))
-            material.SetFloat("_ZWrite", 0f);
-
-        if (material.HasProperty("_Cull"))
-            material.SetFloat("_Cull", (float)CullMode.Off);
-
-        material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-        material.EnableKeyword("_ALPHABLEND_ON");
-        material.DisableKeyword("_ALPHATEST_ON");
-    }
-
-    private Texture2D CreateSoftCircleTexture(int size)
-    {
-        Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        texture.name = "Runtime Soft Particle Circle";
-
-        float center = (size - 1) * 0.5f;
-        float radius = center;
-
-        for (int y = 0; y < size; y++)
-        {
-            for (int x = 0; x < size; x++)
-            {
-                float dx = (x - center) / radius;
-                float dy = (y - center) / radius;
-                float distance = Mathf.Sqrt(dx * dx + dy * dy);
-
-                float alpha = Mathf.Clamp01(1f - distance);
-                alpha = Mathf.Pow(alpha, 2.6f);
-
-                texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
-            }
-        }
-
-        texture.wrapMode = TextureWrapMode.Clamp;
-        texture.filterMode = FilterMode.Bilinear;
-        texture.Apply();
-
-        return texture;
     }
 
     private void ConfigureAmbientDust(ParticleSystem ps)
@@ -822,7 +882,7 @@ public class CalmKitchenRoomParticles : MonoBehaviour
                 new GradientAlphaKey(maxAlpha, 0.18f),
                 new GradientAlphaKey(maxAlpha * 0.7f, 0.65f),
                 new GradientAlphaKey(0f, 1f)
-            }   
+            }
         );
 
         return gradient;
@@ -834,8 +894,27 @@ public class CalmKitchenRoomParticles : MonoBehaviour
             return;
 
         if (Application.isPlaying)
+        {
             Destroy(go);
+        }
         else
+        {
+#if UNITY_EDITOR
+            Undo.DestroyObjectImmediate(go);
+#else
             DestroyImmediate(go);
+#endif
+        }
+    }
+
+    private void DestroySafeAsset(Object obj)
+    {
+        if (obj == null)
+            return;
+
+        if (Application.isPlaying)
+            Destroy(obj);
+        else
+            DestroyImmediate(obj);
     }
 }

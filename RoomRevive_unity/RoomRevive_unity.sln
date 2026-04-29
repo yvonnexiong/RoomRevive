@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp-Editor", "Assembly-CSharp-Editor.csproj", "{C8F90068-C467-A9F0-3648-2AB97CDF9AC9}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly-CSharp.csproj", "{25F3B8EE-C432-D086-62A0-7771262BC938}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GaussianSplattingEditor", "GaussianSplattingEditor.csproj", "{62190B5A-693D-9F47-6ED5-27FF91B5C288}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp-Editor", "Assembly-CSharp-Editor.csproj", "{C8F90068-C467-A9F0-3648-2AB97CDF9AC9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorldLabs", "WorldLabs.csproj", "{8AC0D543-5580-A690-D671-9D0172637666}"
 EndProject
@@ -19,6 +19,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C8F90068-C467-A9F0-3648-2AB97CDF9AC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8F90068-C467-A9F0-3648-2AB97CDF9AC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8F90068-C467-A9F0-3648-2AB97CDF9AC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8F90068-C467-A9F0-3648-2AB97CDF9AC9}.Release|Any CPU.Build.0 = Release|Any CPU
 		{25F3B8EE-C432-D086-62A0-7771262BC938}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{25F3B8EE-C432-D086-62A0-7771262BC938}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{25F3B8EE-C432-D086-62A0-7771262BC938}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -27,10 +31,6 @@ Global
 		{62190B5A-693D-9F47-6ED5-27FF91B5C288}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{62190B5A-693D-9F47-6ED5-27FF91B5C288}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{62190B5A-693D-9F47-6ED5-27FF91B5C288}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C8F90068-C467-A9F0-3648-2AB97CDF9AC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C8F90068-C467-A9F0-3648-2AB97CDF9AC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C8F90068-C467-A9F0-3648-2AB97CDF9AC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C8F90068-C467-A9F0-3648-2AB97CDF9AC9}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8AC0D543-5580-A690-D671-9D0172637666}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8AC0D543-5580-A690-D671-9D0172637666}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8AC0D543-5580-A690-D671-9D0172637666}.Release|Any CPU.ActiveCfg = Release|Any CPU

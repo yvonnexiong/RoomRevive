@@ -7,6 +7,7 @@ Shader "XRCC/Yinan Visual Cube Sphere Intersection URP"
 
         _SphereCenterWS ("Sphere Center WS", Vector) = (0, 0, 0, 0)
         _SphereRadiusWS ("Sphere Radius WS", Float) = 1
+        _EffectVisible ("Effect Visible", Float) = 1
 
         _BandThickness ("Band Thickness", Float) = 0.18
         _EdgeSoftness ("Edge Softness", Float) = 0.08
@@ -60,6 +61,7 @@ Shader "XRCC/Yinan Visual Cube Sphere Intersection URP"
 
                 float4 _SphereCenterWS;
                 float _SphereRadiusWS;
+                float _EffectVisible;
 
                 float _BandThickness;
                 float _EdgeSoftness;
@@ -153,6 +155,8 @@ Shader "XRCC/Yinan Visual Cube Sphere Intersection URP"
                     _BandThickness + _EdgeSoftness,
                     shellDistance
                 );
+
+                band *= saturate(_EffectVisible);
 
                 clip(band - 0.002);
 
