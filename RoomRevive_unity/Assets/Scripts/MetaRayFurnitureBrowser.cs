@@ -35,7 +35,8 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     public enum FurnitureBrowserTargetMode
     {
         Fridges,
-        Cabinets
+        Cabinets,
+        Lights
     }
 
     public enum FaceCameraUpdateModeValue
@@ -52,8 +53,36 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     public MetaRayFurnitureProductCatalog productCatalog;
 
     [Header("Target Mode")]
-    [Tooltip("Fridges = toggles local fridge/product GameObjects. Cabinets = changes cabinet Gaussian splats through SplatManager.")]
+    [Tooltip("Fridges = toggles local fridge/product GameObjects. Cabinets = changes cabinet Gaussian splats through SplatManager. Lights = UI prefab preset for light-changing UI.")]
     public FurnitureBrowserTargetMode targetMode = FurnitureBrowserTargetMode.Fridges;
+
+#if UNITY_EDITOR
+    [Header("Editor Prefab Export")]
+    [Tooltip("Turn this on, then Unity will create/update one prefab per Target Mode in OnValidate. It turns itself off after exporting.")]
+    public bool createTargetModeUIPrefabsNow = false;
+
+    [Tooltip("Folder where the generated UI prefabs are saved.")]
+    public string uiPrefabFolderPath = "Assets/UIPrefabs";
+
+    [Tooltip("Prefab name prefix. Final names become Prefix_Fridges, Prefix_Cabinets, Prefix_Lights.")]
+    public string uiPrefabNamePrefix = "MetaRayFurnitureBrowser";
+
+    [Tooltip("If true, each prefab is rebuilt before saving so the generated UI children are included in the prefab.")]
+    public bool includeGeneratedUIInPrefabs = true;
+
+    [Tooltip("If true, the prefab root keeps the same local position, rotation, and scale as this object.")]
+    public bool keepScenePlacementInGeneratedPrefabs = true;
+#endif
+
+    [Header("Root Placement / Inspector Movement")]
+    [Tooltip("Keep this true if you want to move, rotate, and scale this GameObject normally in the Inspector. The generated UI is rebuilt as children only.")]
+    public bool keepRootTransformEditable = true;
+
+    [Tooltip("Legacy behavior. If true AND Keep Root Transform Editable is false, World Scale is applied to this GameObject every rebuild/validate.")]
+    public bool autoApplyWorldScaleToRoot = false;
+
+    [Tooltip("Extra safety: caches the root transform before rebuilding children and restores it after the rebuild.")]
+    public bool preserveRootTransformDuringRebuild = true;
 
     [Header("UI State")]
     [Tooltip("Controls which UI is visible. Enter advances Discover -> Product -> Details -> Product.")]
@@ -144,8 +173,8 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     [Tooltip("FaceCameraAdvanced: Update Mode.")]
     public FaceCameraUpdateModeValue faceCameraUpdateMode = FaceCameraUpdateModeValue.LateUpdate;
 
-    [Tooltip("FaceCameraAdvanced: Update In Edit Mode.")]
-    public bool faceCameraUpdateInEditMode = true;
+    [Tooltip("FaceCameraAdvanced: Update In Edit Mode. Keep false while placing/moving the UI in the editor.")]
+    public bool faceCameraUpdateInEditMode = false;
 
     [Tooltip("Print a warning if the FaceCameraAdvanced script is not found.")]
     public bool warnIfFaceCameraAdvancedMissing = true;
@@ -176,6 +205,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     public ProductVariantEvent onDetailsUnlocked = new ProductVariantEvent();
 
     [Header("World Space Canvas")]
+    [Tooltip("Legacy scale value. It is only applied automatically when Keep Root Transform Editable is false and Auto Apply World Scale To Root is true. Otherwise, scale this GameObject directly in the Inspector.")]
     public float worldScale = 0.001f;
     public Camera eventCamera;
     public bool autoCreateEventSystem = true;
@@ -397,10 +427,43 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
 #if UNITY_EDITOR
     private bool _editorRebuildQueued;
+    private bool _editorPrefabExportQueued;
+    private bool _editorIsExportingPrefabs;
 #endif
+
+    private bool _suppressExternalTargetApply;
+
+    private struct RootTransformSnapshot
+    {
+        public Vector3 localPosition;
+        public Quaternion localRotation;
+        public Vector3 localScale;
+    }
+
+    private RootTransformSnapshot CaptureRootTransform()
+    {
+        return new RootTransformSnapshot
+        {
+            localPosition = transform.localPosition,
+            localRotation = transform.localRotation,
+            localScale = transform.localScale
+        };
+    }
+
+    private void RestoreRootTransform(RootTransformSnapshot snapshot)
+    {
+        if (!keepRootTransformEditable) return;
+        if (!preserveRootTransformDuringRebuild) return;
+
+        transform.localPosition = snapshot.localPosition;
+        transform.localRotation = snapshot.localRotation;
+        transform.localScale = snapshot.localScale;
+    }
 
     private void Reset()
     {
+        RootTransformSnapshot snapshot = CaptureRootTransform();
+
         GrabRequiredComponents();
         ClampInspectorValues();
         TryAutoAssignDefaultSprites();
@@ -408,6 +471,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         ApplyInitialProductIndex();
         EnsureFaceCameraAdvanced();
         ApplyVariantGameObjects();
+        RestoreRootTransform(snapshot);
 
 #if UNITY_EDITOR
         if (!UApplication.isPlaying)
@@ -419,6 +483,8 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
     private void Awake()
     {
+        RootTransformSnapshot snapshot = CaptureRootTransform();
+
         GrabRequiredComponents();
         ClampInspectorValues();
         TryAutoAssignDefaultSprites();
@@ -431,6 +497,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         }
 
         ApplyVariantGameObjects();
+        RestoreRootTransform(snapshot);
     }
 
     private void Start()
@@ -477,6 +544,8 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 #if UNITY_EDITOR
     private void OnValidate()
     {
+        RootTransformSnapshot snapshot = CaptureRootTransform();
+
         GrabRequiredComponents();
         ClampInspectorValues();
         TryAutoAssignDefaultSprites();
@@ -484,6 +553,14 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         ApplyInitialProductIndex();
         ApplyVariantGameObjects();
         ApplyArrowButtonTransforms();
+        RestoreRootTransform(snapshot);
+
+        if (createTargetModeUIPrefabsNow)
+        {
+            createTargetModeUIPrefabsNow = false;
+            QueueTargetModeUIPrefabExport();
+            EditorUtility.SetDirty(this);
+        }
 
         if (!rebuildOnValidate) return;
 
@@ -505,6 +582,8 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
             if (UApplication.isPlaying) return;
             if (!rebuildOnValidate) return;
 
+            RootTransformSnapshot snapshot = CaptureRootTransform();
+
             GrabRequiredComponents();
             ClampInspectorValues();
             TryAutoAssignDefaultSprites();
@@ -515,6 +594,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
             RebuildBrowser(false, 1);
             ApplyArrowButtonTransforms();
+            RestoreRootTransform(snapshot);
 
             EditorUtility.SetDirty(this);
         };
@@ -525,6 +605,20 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     public void RebuildBrowser()
     {
         RebuildBrowser(false, 1);
+    }
+
+#if UNITY_EDITOR
+    [ContextMenu("Create/Update Target Mode UI Prefabs")]
+    public void CreateOrUpdateTargetModeUIPrefabsFromContextMenu()
+    {
+        QueueTargetModeUIPrefabExport();
+    }
+#endif
+
+    [ContextMenu("Apply World Scale To Root Transform")]
+    public void ApplyWorldScaleToRootTransformFromContextMenu()
+    {
+        transform.localScale = Vector3.one * Mathf.Max(0.0001f, worldScale);
     }
 
     public void PressPrimaryAction()
@@ -744,24 +838,39 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
     private void ApplyVariantGameObjects()
     {
-        if (targetMode == FurnitureBrowserTargetMode.Cabinets)
+        if (_suppressExternalTargetApply)
         {
-            if (disableFridgeVariantGameObjectsInCabinetMode)
-            {
-                SetVariantGameObjectActive(variant0GameObject, false);
-                SetVariantGameObjectActive(variant1GameObject, false);
-                SetVariantGameObjectActive(variant2GameObject, false);
-            }
-
-            ApplyCabinetSplatSelection();
             return;
         }
 
-        int activeVariantIndex = GetActiveVariantGameObjectIndex();
+        switch (targetMode)
+        {
+            case FurnitureBrowserTargetMode.Cabinets:
+                if (disableFridgeVariantGameObjectsInCabinetMode)
+                {
+                    SetVariantGameObjectActive(variant0GameObject, false);
+                    SetVariantGameObjectActive(variant1GameObject, false);
+                    SetVariantGameObjectActive(variant2GameObject, false);
+                }
 
-        SetVariantGameObjectActive(variant0GameObject, activeVariantIndex == 0);
-        SetVariantGameObjectActive(variant1GameObject, activeVariantIndex == 1);
-        SetVariantGameObjectActive(variant2GameObject, activeVariantIndex == 2);
+                ApplyCabinetSplatSelection();
+                return;
+
+            case FurnitureBrowserTargetMode.Lights:
+                SetVariantGameObjectActive(variant0GameObject, false);
+                SetVariantGameObjectActive(variant1GameObject, false);
+                SetVariantGameObjectActive(variant2GameObject, false);
+                return;
+
+            case FurnitureBrowserTargetMode.Fridges:
+            default:
+                int activeVariantIndex = GetActiveVariantGameObjectIndex();
+
+                SetVariantGameObjectActive(variant0GameObject, activeVariantIndex == 0);
+                SetVariantGameObjectActive(variant1GameObject, activeVariantIndex == 1);
+                SetVariantGameObjectActive(variant2GameObject, activeVariantIndex == 2);
+                return;
+        }
     }
 
     private void ApplyCabinetSplatSelection()
@@ -1232,7 +1341,10 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         _canvas.renderMode = RenderMode.WorldSpace;
         _canvas.worldCamera = eventCamera != null ? eventCamera : Camera.main;
 
-        transform.localScale = Vector3.one * worldScale;
+        if (!keepRootTransformEditable && autoApplyWorldScaleToRoot)
+        {
+            transform.localScale = Vector3.one * worldScale;
+        }
 
         if (_rectTransform != null)
         {
@@ -1301,6 +1413,8 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
     private void RebuildBrowser(bool animateProduct, int direction)
     {
+        RootTransformSnapshot snapshot = CaptureRootTransform();
+
         UnsubscribeRayState();
 
         GrabRequiredComponents();
@@ -1345,6 +1459,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         }
 
         ApplyArrowButtonTransforms();
+        RestoreRootTransform(snapshot);
 
         if (UApplication.isPlaying)
         {
@@ -2142,6 +2257,11 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         if (targetMode == FurnitureBrowserTargetMode.Cabinets)
         {
             return string.IsNullOrWhiteSpace(cabinetFourthDimensionLabel) ? "ISLAND" : cabinetFourthDimensionLabel.ToUpperInvariant();
+        }
+
+        if (targetMode == FurnitureBrowserTargetMode.Lights)
+        {
+            return "SCENE";
         }
 
         return string.IsNullOrWhiteSpace(fridgeFourthDimensionLabel) ? "WEIGHT" : fridgeFourthDimensionLabel.ToUpperInvariant();
@@ -3004,6 +3124,176 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     }
 
 #if UNITY_EDITOR
+    private void QueueTargetModeUIPrefabExport()
+    {
+        if (_editorPrefabExportQueued) return;
+
+        _editorPrefabExportQueued = true;
+
+        EditorApplication.delayCall += () =>
+        {
+            _editorPrefabExportQueued = false;
+
+            if (this == null) return;
+            if (gameObject == null) return;
+            if (UApplication.isPlaying) return;
+
+            CreateOrUpdateTargetModeUIPrefabsNow();
+        };
+    }
+
+    private void CreateOrUpdateTargetModeUIPrefabsNow()
+    {
+        if (_editorIsExportingPrefabs) return;
+
+        _editorIsExportingPrefabs = true;
+
+        FurnitureBrowserTargetMode originalTargetMode = targetMode;
+        FurnitureBrowserUIState originalUIState = uiState;
+        int originalCurrentIndex = _currentIndex;
+
+        try
+        {
+            string folderPath = EnsureAssetFolder(uiPrefabFolderPath);
+            FurnitureBrowserTargetMode[] modes =
+                (FurnitureBrowserTargetMode[])Enum.GetValues(typeof(FurnitureBrowserTargetMode));
+
+            for (int i = 0; i < modes.Length; i++)
+            {
+                FurnitureBrowserTargetMode mode = modes[i];
+                CreateOrUpdateSingleTargetModePrefab(folderPath, mode);
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            if (debugLogs)
+            {
+                UDebug.Log($"<color=#89CFF0><b>[MetaRayFurnitureBrowser]</b></color> Created/updated Target Mode UI prefabs in {folderPath}.", this);
+            }
+        }
+        finally
+        {
+            targetMode = originalTargetMode;
+            uiState = originalUIState;
+            _currentIndex = originalCurrentIndex;
+            _editorIsExportingPrefabs = false;
+            EditorUtility.SetDirty(this);
+        }
+    }
+
+    private void CreateOrUpdateSingleTargetModePrefab(string folderPath, FurnitureBrowserTargetMode mode)
+    {
+        string safePrefix = SanitizeFileName(string.IsNullOrWhiteSpace(uiPrefabNamePrefix)
+            ? nameof(MetaRayFurnitureBrowser)
+            : uiPrefabNamePrefix.Trim());
+
+        string prefabName = SanitizeFileName($"{safePrefix}_{mode}");
+        string prefabPath = $"{folderPath}/{prefabName}.prefab";
+
+        GameObject temp = null;
+
+        try
+        {
+            temp = Instantiate(gameObject);
+            temp.name = prefabName;
+            temp.SetActive(gameObject.activeSelf);
+
+            MetaRayFurnitureBrowser browser = temp.GetComponent<MetaRayFurnitureBrowser>();
+            if (browser == null) return;
+
+            browser._editorPrefabExportQueued = false;
+            browser._editorIsExportingPrefabs = true;
+            browser._suppressExternalTargetApply = true;
+            browser.createTargetModeUIPrefabsNow = false;
+            browser.rebuildOnValidate = false;
+            browser.targetMode = mode;
+
+            if (!keepScenePlacementInGeneratedPrefabs)
+            {
+                temp.transform.localPosition = Vector3.zero;
+                temp.transform.localRotation = Quaternion.identity;
+                temp.transform.localScale = Vector3.one;
+            }
+
+            if (includeGeneratedUIInPrefabs)
+            {
+                browser.GrabRequiredComponents();
+                browser.ClampInspectorValues();
+                browser.TryAutoAssignDefaultSprites();
+                browser.ConfigureCanvas();
+                browser.ApplyInitialProductIndex();
+                browser.ClearGeneratedObjects();
+                browser.RebuildBrowser(false, 1);
+            }
+            else
+            {
+                browser.ClearGeneratedObjects();
+            }
+
+            browser._suppressExternalTargetApply = false;
+            browser._editorIsExportingPrefabs = false;
+            PrefabUtility.SaveAsPrefabAsset(temp, prefabPath);
+        }
+        finally
+        {
+            if (temp != null)
+            {
+                DestroyImmediate(temp);
+            }
+        }
+    }
+
+    private static string EnsureAssetFolder(string requestedFolderPath)
+    {
+        string folderPath = string.IsNullOrWhiteSpace(requestedFolderPath)
+            ? "Assets/UIPrefabs"
+            : requestedFolderPath.Trim().Replace("\\", "/");
+
+        if (!folderPath.StartsWith("Assets", StringComparison.Ordinal))
+        {
+            folderPath = "Assets/" + folderPath.TrimStart('/');
+        }
+
+        if (folderPath == "Assets")
+        {
+            return folderPath;
+        }
+
+        string[] parts = folderPath.Split('/');
+        string current = parts[0];
+
+        for (int i = 1; i < parts.Length; i++)
+        {
+            if (string.IsNullOrWhiteSpace(parts[i])) continue;
+
+            string next = current + "/" + parts[i];
+
+            if (!AssetDatabase.IsValidFolder(next))
+            {
+                AssetDatabase.CreateFolder(current, parts[i]);
+            }
+
+            current = next;
+        }
+
+        return current;
+    }
+
+    private static string SanitizeFileName(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return "Prefab";
+
+        char[] invalid = System.IO.Path.GetInvalidFileNameChars();
+
+        for (int i = 0; i < invalid.Length; i++)
+        {
+            value = value.Replace(invalid[i], '_');
+        }
+
+        return value.Replace(" ", "_").Trim('_');
+    }
+
     private void TryAutoAssignDefaultSprites()
     {
         if (finishColorDotSprite == null)
@@ -3427,7 +3717,7 @@ public class MetaRayFurnitureProductVariant
 
     [Header("Events")]
     public UnityEvent onShown;
-    public UnityEvent onDiscovered;         
+    public UnityEvent onDiscovered;
     public UnityEvent onDetailsUnlocked;
 }
 
@@ -3440,7 +3730,7 @@ public class MetaRayFurnitureCardHitbox : MonoBehaviour,
 
     public void Initialize(MetaRayFurnitureBrowser owner)
     {
-        browser = owner;    
+        browser = owner;
     }
 
     public void OnPointerEnter(PointerEventData eventData)
