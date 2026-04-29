@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Fast
   m_EditorClassIdentifier: Assembly-CSharp::MetaRayIntentCardData
   title: Fast & Focused
-  subtitle: Short description.
+  subtitle: I want to gather, host and share
   cardImage: {fileID: 21300000, guid: d092a8883769cb344b816973cd51856d, type: 3}
   splatAction: 0
   useCustomFallbackColor: 0

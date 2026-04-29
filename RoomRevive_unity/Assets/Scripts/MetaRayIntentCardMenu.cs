@@ -20,10 +20,15 @@ using UnityEditor;
 /// Drop this on an empty GameObject.
 /// It generates a world-space Meta Interaction SDK ray-interactable card menu.
 ///
-/// UPDATED AUDIO FLOW:
-/// - AudioManager can play StartMusic when the scene first loads.
-/// - When this Intent UI is enabled in play mode, it asks AudioManager to play the music for selectedIntent.
-/// - When a room card is selected, it also asks AudioManager to play the matching room atmosphere.
+/// FEATURES:
+/// - Room mood card selection
+/// - Optional SplatManager integration
+/// - Optional AudioManager integration
+/// - Product UI / Cabinet UI / Fridges / Cabinets visibility based on Host Room selection
+///
+/// UPDATED:
+/// - Next button removed completely
+/// - Cabinet UI added and follows Product UI visibility
 /// </summary>
 [ExecuteAlways]
 [DisallowMultipleComponent]
@@ -56,7 +61,9 @@ public class MetaRayIntentCardMenu : MonoBehaviour
 
     [Header("Host Room Only Objects")]
     public GameObject productUI;
+    public GameObject cabinetUI;
     public GameObject fridgesGO;
+    public GameObject cabinetsGO;
     public bool onlyShowProductUIAndFridgesInHostRoom = true;
     public bool updateHostRoomObjectsInEditor = true;
 
@@ -111,7 +118,6 @@ public class MetaRayIntentCardMenu : MonoBehaviour
     public bool addButtonComponentToCards = true;
     public bool selectCardOnPointerDown = true;
     public bool selectCardOnPointerClick = true;
-    public bool enableNextButton = true;
 
     [Header("Keyboard Simulation")]
     public bool keyboardDebug = true;
@@ -127,11 +133,10 @@ public class MetaRayIntentCardMenu : MonoBehaviour
     public float cardHeight = 347f;
     public float cardSpacing = 36f;
     public float canvasPadX = 120f;
-    public float canvasPadY = 210f;
+    public float canvasPadY = 140f;
     public float headerHeight = 56f;
     public float headerTopOffset = 28f;
     public float cardsVerticalOffset = -8f;
-    public float nextButtonBottomOffset = 28f;
 
     [Header("Card Scale")]
     [Range(0.75f, 1.00f)] public float normalScale = 0.93f;
@@ -147,7 +152,6 @@ public class MetaRayIntentCardMenu : MonoBehaviour
     [Range(1, 64)] public int cardContentCornerRadius = 24;
     [Range(1, 64)] public int labelPanelCornerRadius = 18;
     [Range(1, 64)] public int checkmarkCornerRadius = 32;
-    [Range(1, 64)] public int nextButtonCornerRadius = 24;
 
     [Header("Card Colors")]
     public Color cardFallbackColorA = new Color(0.13f, 0.20f, 0.24f, 1f);
@@ -162,15 +166,12 @@ public class MetaRayIntentCardMenu : MonoBehaviour
     public Color labelSelected = new Color(1f, 1f, 1f, 0.25f);
     public Color overlayColor = new Color(0f, 0f, 0f, 0.58f);
     public Color headerBgColor = new Color(0f, 0f, 0f, 0.36f);
-    public Color nextButtonColor = new Color(1f, 1f, 1f, 0.9f);
 
     [Header("Typography")]
     public string headerText = "Choose room mood";
-    public string nextButtonText = "Next";
     public float headerFontSize = 30f;
     public float titleFontSize = 19f;
     public float subtitleFontSize = 12f;
-    public float nextButtonFontSize = 20f;
 
     [Header("Debug")]
     public bool debugLogs = true;
@@ -269,6 +270,7 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         else
         {
             ApplyHostRoomObjectVisibility();
+
             if (playRoomMusicWhenIntentUIIsEnabled)
                 PlayAudioForCurrentIntent();
         }
@@ -355,7 +357,6 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         BuildRayInteractionSurface();
         BuildHeader(_generatedRoot.transform);
         BuildCardsRow(_generatedRoot.transform);
-        BuildNextButton(_generatedRoot.transform);
 
         RefreshVisuals(true);
 
@@ -372,7 +373,9 @@ public class MetaRayIntentCardMenu : MonoBehaviour
     }
 
     public void SelectCard(int index) => ApplySelection(index, true);
+
     public void SelectPreviousCard() => SelectRelativeCard(-1, arrowKeysInvokeSelection);
+
     public void SelectNextCard() => SelectRelativeCard(1, arrowKeysInvokeSelection);
 
     public void SetIntent(IntentSelection intent)
@@ -468,7 +471,9 @@ public class MetaRayIntentCardMenu : MonoBehaviour
     private void TryAutoFindAudioManager()
     {
         if (!autoFindAudioManager || audioManager != null) return;
+
         audioManager = AudioManager.GetOrFindInstance();
+
         if (audioManager == null)
             audioManager = FindAny<AudioManager>();
     }
@@ -538,8 +543,11 @@ public class MetaRayIntentCardMenu : MonoBehaviour
         if (!onlyShowProductUIAndFridgesInHostRoom) return;
 
         bool shouldBeActive = ShouldHostRoomObjectsBeActive();
+
         SetActiveIfNeeded(productUI, shouldBeActive);
+        SetActiveIfNeeded(cabinetUI, shouldBeActive);
         SetActiveIfNeeded(fridgesGO, shouldBeActive);
+        SetActiveIfNeeded(cabinetsGO, shouldBeActive);
     }
 
     private bool ShouldHostRoomObjectsBeActive()
@@ -974,47 +982,6 @@ public class MetaRayIntentCardMenu : MonoBehaviour
 
         ui.checkmarkRoot.SetActive(false);
         _runtimeCards.Add(ui);
-    }
-
-    private void BuildNextButton(Transform parent)
-    {
-        GameObject go = MakeUIObject("NextButton", parent);
-        RectTransform rt = go.GetComponent<RectTransform>();
-
-        rt.anchorMin = new Vector2(0.5f, 0f);
-        rt.anchorMax = new Vector2(0.5f, 0f);
-        rt.pivot = new Vector2(0.5f, 0f);
-        rt.anchoredPosition = new Vector2(0f, nextButtonBottomOffset);
-        rt.sizeDelta = new Vector2(210f, 54f);
-
-        UIImage image = go.AddComponent<UIImage>();
-        ApplyRoundedImage(image, nextButtonColor, nextButtonCornerRadius);
-        image.raycastTarget = true;
-
-        Button button = go.AddComponent<Button>();
-        button.targetGraphic = image;
-        button.transition = Selectable.Transition.ColorTint;
-        button.navigation = new Navigation { mode = Navigation.Mode.None };
-        button.interactable = enableNextButton;
-
-        ColorBlock colors = button.colors;
-        colors.normalColor = nextButtonColor;
-        colors.highlightedColor = Color.white;
-        colors.pressedColor = new Color(0.86f, 0.9f, 1f, 1f);
-        colors.selectedColor = Color.white;
-        button.colors = colors;
-
-        button.onClick.RemoveAllListeners();
-        button.onClick.AddListener(ConfirmSelection);
-
-        TextMeshProUGUI text = AddTMP("NextLabel", go.transform);
-        StretchFull(text.gameObject);
-        text.text = nextButtonText;
-        text.fontSize = nextButtonFontSize;
-        text.fontStyle = FontStyles.Normal;
-        text.color = new Color(0.07f, 0.08f, 0.12f, 1f);
-        text.alignment = TextAlignmentOptions.Center;
-        text.raycastTarget = false;
     }
 
     private void ApplySelection(int index, bool invokeEvents)
