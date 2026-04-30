@@ -1,3 +1,4 @@
+using GaussianSplatting.Runtime;
 using UnityEngine;
 
 namespace RoomRevive
@@ -16,6 +17,7 @@ namespace RoomRevive
         [SerializeField] private GameObject intentSelectorUI;
         [SerializeField] private GameObject splatRenderer1;
         [SerializeField] private GameObject splatRenderer2;
+        [SerializeField] private GaussianSplatRenderer mainSplatRenderer;
 
         private Transform _cam;
         private bool _aligned;
@@ -111,6 +113,12 @@ namespace RoomRevive
         {
             if (alignmentSphere != null) alignmentSphere.SetActive(false);
             if (alignmentUI != null) alignmentUI.SetActive(false);
+
+            if (mainSplatRenderer != null)
+            {
+                mainSplatRenderer.m_Asset = null;
+                mainSplatRenderer.UpdateRessources();
+            }
 
             // Save aligned pivot transform so we can restore it after any tracking recenter
             if (splatPivot != null)
