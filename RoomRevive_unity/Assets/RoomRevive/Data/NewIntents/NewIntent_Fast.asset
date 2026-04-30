@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::IntentData
   title: Fast & Focused
   subtitle: I want it simple and efficient
-  cardImage: {fileID: 21300000, guid: d092a8883769cb344b816973cd51856d, type: 3}
+  cardImage: {fileID: 21300000, guid: 3cd19e6390d519b42b7adf5a976848e2, type: 3}

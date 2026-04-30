@@ -59,8 +59,24 @@ public class SplatManager : MonoBehaviour
     public SplatSwitchMode switchMode = SplatSwitchMode.SwapAssetOnTargetRenderer;
 
     [Header("Start Room")]
-    public bool applyRoomOnStart = true;
-    public SplatRoom startRoom = SplatRoom.CalmRoom;
+    [Tooltip("Keep this false if the video should begin with no splats visible.")]
+    public bool applyRoomOnStart = false;
+
+    [Tooltip("Use None if the video should begin with no splats visible.")]
+    public SplatRoom startRoom = SplatRoom.None;
+
+    [Header("Startup Hidden State")]
+    [Tooltip("Forces all splat renderers off in Awake, before the first rendered frame.")]
+    public bool forceHideAllSplatsOnAwake = true;
+
+    [Tooltip("Forces all splat renderers off again in Start, unless Apply Room On Start is enabled.")]
+    public bool forceHideAllSplatsOnStart = true;
+
+    [Tooltip("Also disables the old/new transition splat renderers at startup.")]
+    public bool hideTransitionRenderersOnStartup = true;
+
+    [Tooltip("If true, CurrentRoom becomes None when the startup hide runs.")]
+    public bool clearCurrentRoomOnStartupHide = true;
 
     [Header("MODE 1 — Single Renderer Asset Swapping")]
     public GaussianSplatRenderer targetRenderer;
@@ -243,6 +259,8 @@ public class SplatManager : MonoBehaviour
     private Vector3 newCutoutInitialScale = Vector3.one;
     private bool hasCapturedInitialCutoutScales;
 
+    private bool hasAppliedStartupHide;
+
     public static SplatManager GetOrFindInstance()
     {
         if (Instance != null)
@@ -295,10 +313,15 @@ public class SplatManager : MonoBehaviour
 
     private void Reset()
     {
+        applyRoomOnStart = false;
+        startRoom = SplatRoom.None;
+
         TryAutoAssignReferences();
         TryAutoAssignTransitionReferences();
         CaptureInitialCutoutScales(true);
         ResetTransitionVisualsToIdle();
+
+        ForceAllSplatsHiddenForStartup("Reset");
     }
 
     private void Awake()
@@ -310,6 +333,9 @@ public class SplatManager : MonoBehaviour
 
         if (resetCircleEffectToZeroOnEnable)
             ResetTransitionVisualsToIdle();
+
+        if (Application.isPlaying && forceHideAllSplatsOnAwake)
+            ForceAllSplatsHiddenForStartup("Awake");
     }
 
     private void OnEnable()
@@ -324,6 +350,9 @@ public class SplatManager : MonoBehaviour
 
         if (disableTransitionEffectsOnEnable && disableTransitionRenderersWhenIdle && !previewCutoutTransitionInEditor)
             SetTransitionRenderersVisible(false);
+
+        if (Application.isPlaying && forceHideAllSplatsOnAwake && !hasAppliedStartupHide)
+            ForceAllSplatsHiddenForStartup("OnEnable");
     }
 
     private void OnDestroy()
@@ -338,7 +367,10 @@ public class SplatManager : MonoBehaviour
 
         ResetTransitionVisualsToIdle();
 
-        if (applyRoomOnStart)
+        if (forceHideAllSplatsOnStart && !applyRoomOnStart)
+            ForceAllSplatsHiddenForStartup("Start");
+
+        if (applyRoomOnStart && startRoom != SplatRoom.None)
             SetRoom(startRoom);
     }
 
@@ -453,6 +485,7 @@ public class SplatManager : MonoBehaviour
         SetRoom(SplatRoom.HostKitchenNewCabinetB);
     }
 
+    [ContextMenu("XRCC / Hide All Rooms")]
     public void HideAllRooms()
     {
         if (activeTransitionRoutine != null)
@@ -491,6 +524,50 @@ public class SplatManager : MonoBehaviour
 
         if (debugLogs)
             Debug.Log("<b>[SplatManager]</b> Hid all splat rooms.", this);
+    }
+
+    private void ForceAllSplatsHiddenForStartup(string reason)
+    {
+        if (activeTransitionRoutine != null)
+        {
+            StopCoroutine(activeTransitionRoutine);
+            activeTransitionRoutine = null;
+        }
+
+        isTransitioning = false;
+        hasLockedTransitionOrigin = false;
+
+        ResetTransitionVisualsToIdle();
+
+        if (hideTransitionRenderersOnStartup)
+            SetTransitionRenderersVisible(false);
+
+        DisableRendererComponentOnly(MainSplat);
+        DisableRendererComponentOnly(targetRenderer);
+
+        SetAllRoomRenderersActive(false);
+
+        if (oldWorldTransitionRenderer != null)
+            SetTransitionRendererVisible(oldWorldTransitionRenderer, false);
+
+        if (newWorldTransitionRenderer != null)
+            SetTransitionRendererVisible(newWorldTransitionRenderer, false);
+
+        if (clearCurrentRoomOnStartupHide)
+            CurrentRoom = SplatRoom.None;
+
+        hasAppliedStartupHide = true;
+
+        if (debugLogs)
+            Debug.Log($"<b>[SplatManager]</b> Startup hide completed from {reason}. No splats should be visible at the beginning.", this);
+    }
+
+    private void DisableRendererComponentOnly(GaussianSplatRenderer renderer)
+    {
+        if (renderer == null)
+            return;
+
+        renderer.enabled = false;
     }
 
     public void SetRoom(SplatRoom room)
@@ -1230,6 +1307,9 @@ public class SplatManager : MonoBehaviour
             renderer.gameObject.SetActive(active);
         else
             renderer.enabled = active;
+
+        if (!active)
+            renderer.enabled = false;
     }
 
     private void CopyManagerTransformTo(Transform target)

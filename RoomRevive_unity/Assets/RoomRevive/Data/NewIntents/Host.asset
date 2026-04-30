@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MetaRayIntentCardData
   title: Host & Gather
   subtitle: I want it simple and efficient
-  cardImage: {fileID: 21300000, guid: 213e37614eb4a5947abfe1284e94ae4a, type: 3}
+  cardImage: {fileID: 21300000, guid: bd4d92fd180541345ba9b473a24f9042, type: 3}
   splatAction: 0
   useCustomFallbackColor: 0
   fallbackColor: {r: 0.14, g: 0.17, b: 0.24, a: 1}
