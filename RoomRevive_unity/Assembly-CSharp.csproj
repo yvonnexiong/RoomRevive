@@ -63,6 +63,7 @@
     <Compile Include="Assets\RoomRevive\Scripts\Intent\IntentDebugSwitcher.cs" />
     <Compile Include="Assets\Scripts\IntersectionRevealSphereEffect.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Startup\BillboardPanel.cs" />
+    <Compile Include="Assets\RoomRevive\Scripts\ProductCard\BeforeAfterSliderUI.cs" />
     <Compile Include="Assets\Scripts\FridgeController.cs" />
     <Compile Include="Assets\Scripts\AssignMaterialToChildren.cs" />
     <Compile Include="Assets\Scripts\FaceCameraAdvanced.cs" />
@@ -79,6 +80,7 @@
     <Compile Include="Assets\Scripts\MetaRayIntentCardMenu.cs" />
     <Compile Include="Assets\Scripts\SetupManager.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Startup\AlignmentSphere.cs" />
+    <Compile Include="Assets\RoomRevive\Scripts\ProductCard\WelcomeUI.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\EffectMeshToggle.cs" />
     <Compile Include="Assets\Scripts\MetaRayFurnitureBrowser.cs" />
     <Compile Include="Assets\Scripts\IntentSelectMenu.cs" />

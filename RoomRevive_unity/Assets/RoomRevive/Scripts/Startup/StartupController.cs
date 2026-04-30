@@ -14,6 +14,8 @@ namespace RoomRevive
 
         [Header("References")]
         [SerializeField] private GameObject intentSelectorUI;
+        [SerializeField] private GameObject splatRenderer1;
+        [SerializeField] private GameObject splatRenderer2;
 
         private Transform _cam;
         private bool _aligned;
@@ -75,6 +77,8 @@ namespace RoomRevive
         public void OnStartPressed()
         {
             if (_cam == null) return;
+            splatRenderer1?.SetActive(false);
+            splatRenderer2?.SetActive(false);
 
             // Spawn splat pivot in front of user at floor level
             if (splatPivot != null)

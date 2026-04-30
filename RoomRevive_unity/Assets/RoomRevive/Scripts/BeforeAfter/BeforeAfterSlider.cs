@@ -8,15 +8,15 @@ namespace RoomRevive
     public class BeforeAfterSlider : MonoBehaviour
     {
         [SerializeField] private Transform cutoutTransform;
-        [SerializeField] private Slider slider;
+        private Slider slider;
 
-        [Header("Cutout Positions (local space)")]
-        [SerializeField] private Vector3 beforePosition = new Vector3(-0.32f, 1.45f, -2.88f);
-        [SerializeField] private Vector3 afterPosition = new Vector3(-4.3f, 1.45f, -5.65f);
+        [Header("Cutout Positions")]
+        [SerializeField] private Transform beforeLocator;
+        [SerializeField] private Transform afterLocator;
 
         [Header("Follow Settings")]
         [Tooltip("If enabled, this slider follows the user's head/camera.")]
-        [SerializeField] private bool followUserHead = true;
+        [SerializeField] private bool followUserHead = false;
 
         [Tooltip("If enabled, the script tries to find CenterEyeAnchor first, then falls back to Camera.main.")]
         [SerializeField] private bool autoFindCamera = true;
@@ -32,15 +32,31 @@ namespace RoomRevive
         [Tooltip("If enabled, the slider also rotates to face the same direction as the camera.")]
         [SerializeField] private bool followRotation = true;
 
+        [Header("Toggle")]
+        [SerializeField] private OVRInput.Button toggleButton = OVRInput.Button.Two;
+
+        private CanvasGroup _canvasGroup;
+        private bool _visible = true;
         private Transform _cam;
 
         private void Start()
         {
+            _canvasGroup = GetComponent<CanvasGroup>();
+            if (_canvasGroup == null)
+                _canvasGroup = gameObject.AddComponent<CanvasGroup>();
+
+            SetVisible(false);
             SetupCameraReference();
             SetupSlider();
 
             // Default = after/full splat
             ApplyCutoutPosition(1f);
+        }
+
+        private void Update()
+        {
+            if (OVRInput.GetDown(toggleButton))
+                SetVisible(!_visible);
         }
 
         private void LateUpdate()
@@ -86,6 +102,10 @@ namespace RoomRevive
 
         private void SetupSlider()
         {
+            if (slider == null)
+                slider = GetComponentInChildren<Slider>(true);
+            if (slider == null)
+                slider = FindFirstObjectByType<Slider>();
             if (slider == null) return;
 
             slider.minValue = 0f;
@@ -103,9 +123,9 @@ namespace RoomRevive
 
         private void ApplyCutoutPosition(float value)
         {
-            if (cutoutTransform == null) return;
+            if (cutoutTransform == null || beforeLocator == null || afterLocator == null) return;
 
-            cutoutTransform.localPosition = Vector3.Lerp(beforePosition, afterPosition, value);
+            cutoutTransform.position = Vector3.Lerp(beforeLocator.position, afterLocator.position, value);
         }
 
         // Call this on intent switch to reset to full splat view
@@ -134,6 +154,15 @@ namespace RoomRevive
         public void DisableFollow()
         {
             followUserHead = false;
+        }
+
+        private void SetVisible(bool visible)
+        {
+            _visible = visible;
+            if (_canvasGroup == null) return;
+            _canvasGroup.alpha = visible ? 1f : 0f;
+            _canvasGroup.interactable = visible;
+            _canvasGroup.blocksRaycasts = visible;
         }
     }
 }
