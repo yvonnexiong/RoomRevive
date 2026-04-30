@@ -9,6 +9,9 @@ namespace RoomRevive
     {
         [SerializeField] private HotspotSO _data;
 
+        [Header("Display")]
+        [SerializeField] private GameObject displayTarget;
+
         [Header("Dwell Ring")]
         [SerializeField] private Image _dwellRing;
         [SerializeField] private RectTransform _dwellRingRect;
@@ -74,6 +77,7 @@ namespace RoomRevive
         public void OnGazeExit()
         {
             _isGazed = false;
+            displayTarget?.SetActive(false);
             StartRingAlpha(0f, 0.35f);
             // Cancel dot coroutine — proximity takes over from current position
             if (_glowDotScaleCoroutine != null) { StopCoroutine(_glowDotScaleCoroutine); _glowDotScaleCoroutine = null; }
@@ -95,10 +99,7 @@ namespace RoomRevive
                 _smoothedProximityT = _glowDot.transform.localScale.x / _glowDotBaseScale.x;
 
             StartRingAlpha(0f, 0.15f);
-
-            Debug.Log($"[Hotspot] Selected — product={_data?.linkedProduct?.productName}");
-            if (_data?.linkedProduct != null)
-                OnAnySelected?.Invoke(_data.linkedProduct);
+            displayTarget?.SetActive(true);
         }
 
         // Called every frame by GazeHotspotDetector for all hotspots
