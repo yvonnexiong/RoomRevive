@@ -76,25 +76,25 @@ namespace RoomRevive
         {
             if (_cam == null) return;
 
-            // Spawn splat pivot at user's feet, facing user's forward direction
+            // Spawn splat pivot in front of user at floor level
             if (splatPivot != null)
             {
                 var forward = _cam.forward;
                 forward.y = 0f;
                 forward.Normalize();
 
-                var floorPos = _cam.position;
+                var floorPos = _cam.position + forward * 0.5f;
                 floorPos.y = 0f;
                 splatPivot.position = floorPos;
                 splatPivot.rotation = Quaternion.LookRotation(forward);
                 splatPivot.gameObject.SetActive(true);
             }
 
-            // Place alignment sphere 1m above pivot origin so it's within reach
+            // Place alignment sphere above pivot so it's grabbable
             if (alignmentSphere != null)
             {
                 alignmentSphere.transform.position = (splatPivot != null ? splatPivot.position : Vector3.zero)
-                    + Vector3.up * 1.5f;
+                    + Vector3.up * 1.2f;
                 alignmentSphere.SetActive(true);
             }
 

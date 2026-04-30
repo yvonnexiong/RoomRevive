@@ -10,14 +10,23 @@ namespace RoomRevive
         [SerializeField] private Transform splatPivot;
 
         private float _floorY;
+        private Rigidbody _rb;
 
         void OnEnable()
         {
+            _rb = GetComponent<Rigidbody>();
             _floorY = transform.position.y;
         }
 
         void LateUpdate()
         {
+            // Kill any physics velocity so the sphere can't drift or get thrown
+            if (_rb != null)
+            {
+                _rb.linearVelocity = Vector3.zero;
+                _rb.angularVelocity = Vector3.zero;
+            }
+
             // Lock sphere Y to floor level at all times
             var pos = transform.position;
             pos.y = _floorY;

@@ -12,6 +12,7 @@ namespace RoomRevive
         [SerializeField] private IntentSO defaultIntent;
         [SerializeField] private GameObject hotspotsRoot;
 
+
         public IntentSO CurrentIntent { get; private set; }
         public event Action<IntentSO> OnIntentChanged;
 
@@ -20,6 +21,24 @@ namespace RoomRevive
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
             hotspotsRoot?.SetActive(false);
+            RoomRevive.IntentCardSelectorUI.OnIntentSelected += OnCardSelected;
+        }
+
+        void OnDestroy()
+        {
+            RoomRevive.IntentCardSelectorUI.OnIntentSelected -= OnCardSelected;
+        }
+
+        void OnCardSelected(int index)
+        {
+            SplatManager.SplatRoom[] map =
+            {
+                SplatManager.SplatRoom.CalmRoom,
+                SplatManager.SplatRoom.HostRoom,
+                SplatManager.SplatRoom.FastRoom,
+            };
+            if (index >= 0 && index < map.Length)
+                SplatManager.Instance?.SetRoom(map[index]);
         }
 
         [SerializeField] private bool autoInitOnStart = false;
