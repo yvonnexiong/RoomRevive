@@ -27437,7 +27437,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 591168898}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 799904996}
+  m_Script: {fileID: 11500000, guid: f3a8e2b1c4d54e5f90a1b2c3d4e5f6a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MetaRayIntentCardHitbox
   menu: {fileID: 1073737489}
@@ -31048,7 +31048,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 757580148}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 799904996}
+  m_Script: {fileID: 11500000, guid: f3a8e2b1c4d54e5f90a1b2c3d4e5f6a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MetaRayIntentCardHitbox
   menu: {fileID: 1073737489}
@@ -39180,7 +39180,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1050494399}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 799904996}
+  m_Script: {fileID: 11500000, guid: f3a8e2b1c4d54e5f90a1b2c3d4e5f6a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MetaRayIntentCardHitbox
   menu: {fileID: 1073737489}

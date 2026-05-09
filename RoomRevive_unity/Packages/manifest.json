@@ -1,9 +1,9 @@
 {
   "dependencies": {
+    "com.gamelovers.mcp-unity": "https://github.com/CoderGamester/mcp-unity.git",
     "com.meta.xr.sdk.all": "201.0.0",
     "com.meta.xr.sdk.core": "201.0.0",
     "com.meta.xr.sdk.interaction.ovr": "201.0.0",
-    "com.meta.xr.unity-mcp.extension": "https://github.com/meta-quest/Unity-Mcp-Extensions.git",
     "com.unity.ai.assistant": "2.6.0-pre.1",
     "com.unity.ai.navigation": "2.0.12",
     "com.unity.burst": "1.8.29",
