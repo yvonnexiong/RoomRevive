@@ -939,11 +939,11 @@ PlayerSettings:
   captureStartupLogs: {}
   activeInputHandler: 1
   windowsGamepadBackendHint: 0
-  cloudProjectId: 57662c90-8d7d-4fe0-8166-5f31991c0596
+  cloudProjectId: b6fb0cb7-536e-4f68-bd3f-ecf555c8791c
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: RoomRevive_unity
-  organizationId: yvonnexiong
+  projectName: RoomRevive
+  organizationId: chrille009
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}
