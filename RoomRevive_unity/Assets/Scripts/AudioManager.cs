@@ -209,6 +209,38 @@ public class AudioManager : MonoBehaviour
         PlayMusicClip(targetClip, loopAtmosphereMusic, $"atmosphere for {room}");
     }
 
+    /// <summary>
+    /// Play an arbitrary atmosphere AudioClip (loops by default). Used by IntentAudioRouter
+    /// so per-state clips can be driven from ScriptableObject data instead of the room enum.
+    /// Crossfades through the same music source as PlayAtmosphereForRoom.
+    /// </summary>
+    public void PlayAtmosphereClip(AudioClip clip)
+    {
+        EnsureAudioSources();
+
+        if (clip == null)
+        {
+            if (debugLogs)
+                Debug.LogWarning("<b>[AudioManager]</b> PlayAtmosphereClip called with null clip.", this);
+
+            return;
+        }
+
+        if (doNotRestartSameMusic &&
+            !_isPlayingStartMusic &&
+            musicSource.clip == clip &&
+            musicSource.isPlaying)
+        {
+            return;
+        }
+
+        // Clear room enum association — this clip is data-driven, not bound to SplatRoom.
+        _currentMusicRoom = SplatManager.SplatRoom.None;
+        _isPlayingStartMusic = false;
+
+        PlayMusicClip(clip, loopAtmosphereMusic, $"clip {clip.name}");
+    }
+
     public void PlayRoomChangeSfx()
     {
         EnsureAudioSources();

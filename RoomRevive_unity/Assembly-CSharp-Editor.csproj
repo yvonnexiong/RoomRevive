@@ -63,11 +63,16 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Editor\FridgeCatalogCreator.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Editor\ReadmeEditor.cs" />
+    <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Editor\IntentSelectorPrefabCreator.cs" />
+    <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Editor\IntentSelectorPrefabBinder.cs" />
     <Compile Include="Assets\Scripts\Editor\XRCCMissingScriptFinder.cs" />
     <Compile Include="Assets\Scripts\Editor\MetaRayFurnitureExampleCatalogCreator.cs" />
     <Compile Include="Assets\Scripts\Editor\CabinetVariantsCatalogCreator.cs" />
     <Compile Include="Assets\Scripts\Editor\XRCCBadScriptReferenceFinder.cs" />
+    <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Editor\IntentSelectorSnapshotExporter.cs" />
+    <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Editor\IntentSelectorControllerEditor.cs" />
     <Compile Include="Assets\Scripts\Editor\FridgeControllerEditor.cs" />
+    <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Editor\IntentSelectorSpriteFactory.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">

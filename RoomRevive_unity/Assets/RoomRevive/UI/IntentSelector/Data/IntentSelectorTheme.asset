@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e2680e1c0ba69f1448b6d25b7ab3a28c, type: 3}
+  m_Name: IntentSelectorTheme
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.IntentSelector.IntentSelectorTheme
+  normalScale: 0.93
+  hoverScale: 1
+  selectedScale: 1.08
+  scaleLerpSpeed: 14
+  greyedOutOverlayColor: {r: 0, g: 0, b: 0, a: 1}
+  greyedOutOverlayAlpha: 0.55
+  greyedOutHoveredAlpha: 0.3
+  greyedOutPressedAlpha: 0.15
+  reduceGreyOnHoveredUnselectedCard: 1
+  preSelectionHoverOverlayColor: {r: 1, g: 1, b: 1, a: 1}
+  hoverOverlayAlpha: 0.1
+  pressedOverlayAlpha: 0.18
+  overlayLerpSpeed: 14

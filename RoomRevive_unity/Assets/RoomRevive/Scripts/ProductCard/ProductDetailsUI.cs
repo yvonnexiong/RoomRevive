@@ -110,8 +110,8 @@ namespace RoomRevive
         void Update()
         {
             if (!Application.isPlaying) return;
-            if (Input.GetKeyDown(KeyCode.Y) && testProduct != null) TestShow();
-            if (Input.GetKeyDown(KeyCode.Escape)) Hide();
+            if (KeyInput.GetKeyDown(KeyCode.Y) && testProduct != null) TestShow();
+            if (KeyInput.GetKeyDown(KeyCode.Escape)) Hide();
         }
 
         void LateUpdate()
