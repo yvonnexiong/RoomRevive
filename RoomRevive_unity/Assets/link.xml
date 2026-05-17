@@ -1,0 +1,26 @@
+<linker>
+    <!--
+        Preserve user assemblies from IL2CPP stripping.
+        Without this, IL2CPP can strip managed types that are only referenced
+        in scene YAML (not in C# code), causing "level0 corrupted / Position
+        out of bounds" crashes at runtime on device.
+    -->
+
+    <!-- Project scripts -->
+    <assembly fullname="Assembly-CSharp" preserve="all"/>
+    <assembly fullname="Assembly-CSharp-firstpass" preserve="all"/>
+
+    <!-- RoomRevive runtime modules -->
+    <assembly fullname="RoomRevive.IntentSelector" preserve="all"/>
+    <assembly fullname="RoomRevive.UI" preserve="all"/>
+
+    <!-- Unity serialization — must not be stripped -->
+    <assembly fullname="UnityEngine.CoreModule" preserve="all"/>
+    <assembly fullname="UnityEngine.JSONSerializeModule" preserve="all"/>
+    <assembly fullname="Unity.RenderPipelines.Universal.Runtime" preserve="all"/>
+
+    <!-- Meta XR SDK -->
+    <assembly fullname="Meta.XR" preserve="all"/>
+    <assembly fullname="Oculus.VR" preserve="all"/>
+    <assembly fullname="Oculus.VR.Editor" preserve="all"/>
+</linker>

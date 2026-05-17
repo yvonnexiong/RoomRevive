@@ -21,7 +21,8 @@ namespace RoomRevive
         void LateUpdate()
         {
             // Kill any physics velocity so the sphere can't drift or get thrown
-            if (_rb != null)
+            // Skip if kinematic — kinematic bodies don't support velocity assignment
+            if (_rb != null && !_rb.isKinematic)
             {
                 _rb.linearVelocity = Vector3.zero;
                 _rb.angularVelocity = Vector3.zero;
