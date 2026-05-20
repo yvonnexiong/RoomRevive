@@ -1,3 +1,4 @@
+using GaussianSplatting.Runtime;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -30,6 +31,10 @@ namespace RoomRevive.IntentSelector
         [Header("Card Prefab (optional)")]
         [Tooltip("Per-state card prefab. If assigned, IntentSelectorView clones this when building the cards row. If null, the view falls back to its shared cardTemplate.")]
         public IntentCardView cardPrefab;
+
+        [Header("Gaussian Splat")]
+        [Tooltip("Splat asset loaded by SplatManager when this intent is selected.")]
+        public GaussianSplatAsset splatAsset;
 
         [Header("Audio")]
         [Tooltip("Atmosphere music played by IntentAudioRouter when this state is selected. Optional.")]

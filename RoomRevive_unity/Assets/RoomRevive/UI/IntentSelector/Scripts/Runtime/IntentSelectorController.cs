@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using GaussianSplatting.Runtime;
 
 namespace RoomRevive.IntentSelector
 {
@@ -114,6 +115,12 @@ namespace RoomRevive.IntentSelector
             onIndexSelected?.Invoke(index);
             OnIntentSelected?.Invoke(index);
             OnIntentStateSelected?.Invoke(state);
+
+            if (state != null && state.splatAsset != null)
+                SplatManager.Instance?.SetAsset(state.splatAsset);
+
+            if (Application.isPlaying && state != null && state.atmosphereMusic != null)
+                AudioManager.Instance?.PlayAtmosphereClip(state.atmosphereMusic);
 
             if (state != null && state.onSelectedAssetEvent != null)
                 state.onSelectedAssetEvent.Invoke();

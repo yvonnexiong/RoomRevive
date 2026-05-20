@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_CabinetWalnut
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: cabinet_walnut
+  brandName: Nobilia
+  productName: Warm Walnut
+  emotionalLine: "Rich, grounded, warm \u2014 a kitchen that feels like it has always
+    been there."
+  shortDescription: Full-height walnut cabinet system with continuous vertical grain
+    and a dark stone countertop.
+  productImage: {fileID: 21300000, guid: a5c34db9ef811644f92a7c0b8159bd1f, type: 3}
+  fromPrice: From $8,900
+  splatAsset: {fileID: 11400000, guid: 8b9f1abbac4e34a4cb1c51d437f5a56c, type: 2}
+  variants:
+  - label: Warm Walnut
+    image: {fileID: 0}
+    price: 
+    swatchColor: {r: 0.54, g: 0.33, b: 0.18, a: 1}
+  - label: Dark Stone
+    image: {fileID: 0}
+    price: 
+    swatchColor: {r: 0.25, g: 0.27, b: 0.26, a: 1}
+  - label: Deep Shadow Trim
+    image: {fileID: 0}
+    price: 
+    swatchColor: {r: 0.17, g: 0.13, b: 0.1, a: 1}
+  startsSelectedByDefault: 1
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

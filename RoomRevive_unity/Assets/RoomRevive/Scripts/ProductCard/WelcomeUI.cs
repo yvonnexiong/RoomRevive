@@ -73,6 +73,13 @@ namespace RoomRevive
             Rebuild();
         }
 
+        void Update()
+        {
+            if (!Application.isPlaying) return;
+            if (KeyInput.GetKeyDown(KeyCode.Return) || KeyInput.GetKeyDown(KeyCode.KeypadEnter))
+                OnScanRequested?.Invoke();
+        }
+
         void LateUpdate()
         {
             if (!Application.isPlaying || _cam == null) return;

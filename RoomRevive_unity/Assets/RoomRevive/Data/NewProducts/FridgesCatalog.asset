@@ -19,7 +19,7 @@ MonoBehaviour:
     subtitle: Premium four-door stainless fridge
     badgeText: Modern
     priceText: $1,299
-    productImage: {fileID: 21300000, guid: 3fcbbb89021804c418d75197dc8e9ab8, type: 3}
+    productImage: {fileID: 0}
     sourceImageUrl: 
     calloutText: A modern stainless fridge was found for this kitchen. Open it to
       compare storage zones, finish and fit.
@@ -76,7 +76,7 @@ MonoBehaviour:
     subtitle: Minimal bottom-freezer refrigerator
     badgeText: Clean Fit
     priceText: $899
-    productImage: {fileID: 21300000, guid: 7aad4b169f7d899479fc9f1c8bac2808, type: 3}
+    productImage: {fileID: 0}
     sourceImageUrl: 
     calloutText: A slim Scandinavian-style fridge was found for this space. Open
       it to inspect the height, freezer layout and quiet daily-use features.
@@ -134,7 +134,7 @@ MonoBehaviour:
     subtitle: French-door fridge with dispenser
     badgeText: Premium
     priceText: $1,799
-    productImage: {fileID: 21300000, guid: cfa2e0c02a5c31c42950cb313472021e, type: 3}
+    productImage: {fileID: 0}
     sourceImageUrl: 
     calloutText: A premium French-door fridge was found for this kitchen. Open it
       to compare the dispenser, handle design and storage capacity.

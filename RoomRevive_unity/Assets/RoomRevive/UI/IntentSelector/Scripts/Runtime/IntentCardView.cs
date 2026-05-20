@@ -64,7 +64,6 @@ namespace RoomRevive.IntentSelector
             _controller = controller;
 
             ApplyStateContent();
-            WireButton();
         }
 
         /// <summary>
@@ -106,15 +105,7 @@ namespace RoomRevive.IntentSelector
                 iconImage.sprite = stateData.icon;
         }
 
-        void WireButton()
-        {
-            if (button == null) return;
-            button.onClick.RemoveAllListeners();
-            int captured = Index;
-            button.onClick.AddListener(() => _controller?.NotifyClick(captured));
-        }
-
-        public void SetVisualState(bool hasSelection, bool selected, bool hovered, bool pressed, IntentSelectorTheme theme, bool instant)
+public void SetVisualState(bool hasSelection, bool selected, bool hovered, bool pressed, IntentSelectorTheme theme, bool instant)
         {
             if (theme == null) return;
 

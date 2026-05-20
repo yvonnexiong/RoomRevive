@@ -62,13 +62,23 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Editor\FridgeCatalogCreator.cs" />
+    <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Editor\Product\ProductBrowserSnapshotExporter.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Editor\ReadmeEditor.cs" />
+    <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Editor\Product\ProductBrowserPrefabBinder.cs" />
+    <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Editor\Product\ProductBrowserPrefabCreator.cs" />
+    <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Editor\ProductVariantRouterEditor.cs" />
+    <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Editor\Product\ProductSwapViewEditor.cs" />
+    <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Editor\Product\ProductBrowserCabinetWizard.cs" />
     <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Editor\IntentSelectorPrefabCreator.cs" />
+    <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Editor\Product\ProductSeedDataCreator.cs" />
     <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Editor\IntentSelectorPrefabBinder.cs" />
     <Compile Include="Assets\Scripts\Editor\XRCCMissingScriptFinder.cs" />
     <Compile Include="Assets\Scripts\Editor\MetaRayFurnitureExampleCatalogCreator.cs" />
     <Compile Include="Assets\Scripts\Editor\CabinetVariantsCatalogCreator.cs" />
+    <Compile Include="Assets\RoomRevive\Scripts\ProductCard\Editor\WelcomeUIEditor.cs" />
     <Compile Include="Assets\Scripts\Editor\XRCCBadScriptReferenceFinder.cs" />
+    <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Editor\Product\ProductBrowserFridgeWizard.cs" />
+    <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Editor\Product\ProductBrowserControllerEditor.cs" />
     <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Editor\IntentSelectorSnapshotExporter.cs" />
     <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Editor\IntentSelectorControllerEditor.cs" />
     <Compile Include="Assets\Scripts\Editor\FridgeControllerEditor.cs" />

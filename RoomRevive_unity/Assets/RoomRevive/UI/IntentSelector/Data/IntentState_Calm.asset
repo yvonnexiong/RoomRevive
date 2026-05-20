@@ -19,7 +19,8 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 018705591378f2748abd13eac60a9939, type: 3}
   accentColor: {r: 1, g: 1, b: 1, a: 1}
   cardPrefab: {fileID: 2035416973759370660, guid: a6c17cbff88a0fa4a875dfa82aeefe03, type: 3}
-  atmosphereMusic: {fileID: 0}
+  splatAsset: {fileID: 11400000, guid: 9b504e5bd8ee9e840aae5c594b78b7bf, type: 2}
+  atmosphereMusic: {fileID: 8300000, guid: 3300f7fb3f8ff5c40a88e6d16975b54e, type: 3}
   startsSelectedByDefault: 1
   showProductUI: 0
   showCabinetUI: 0

@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6f3ead8468d95f4fb2536af87ca846b, type: 3}
+  m_Name: ProductCatalog_Fridges
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductCatalog
+  products:
+  - {fileID: 11400000, guid: be49751dcdd2e3e4187bd2343391fd7b, type: 2}
+  - {fileID: 11400000, guid: d98e3d60652a2cd4bb4beab015418fe1, type: 2}
+  - {fileID: 11400000, guid: 0114d747b0c932e489ea445871af930c, type: 2}
+  - {fileID: 11400000, guid: c071f1fe087579042bd3eb602acf7efd, type: 2}

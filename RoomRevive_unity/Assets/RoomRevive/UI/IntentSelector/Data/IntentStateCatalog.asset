@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.IntentSelector.IntentStateCatalog
   states:
   - {fileID: 11400000, guid: 703783fac039b0a49aad3572c843e92d, type: 2}
-  - {fileID: 11400000, guid: 80abe17f316aa024f8a0e549af953f19, type: 2}
   - {fileID: 11400000, guid: f15f84826565f8349a591bafc26db423, type: 2}
+  - {fileID: 11400000, guid: 80abe17f316aa024f8a0e549af953f19, type: 2}

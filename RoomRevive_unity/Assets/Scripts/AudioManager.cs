@@ -295,8 +295,8 @@ public class AudioManager : MonoBehaviour
 
     private void PlayMusicClip(AudioClip targetClip, bool loop, string debugLabel)
     {
-        if (targetClip == null)
-            return;
+        if (!Application.isPlaying) return;
+        if (targetClip == null) return;
 
         if (_fadeRoutine != null)
             StopCoroutine(_fadeRoutine);

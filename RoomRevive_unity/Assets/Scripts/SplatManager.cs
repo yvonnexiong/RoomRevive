@@ -65,6 +65,9 @@ public class SplatManager : MonoBehaviour
     [Tooltip("Use None if the video should begin with no splats visible.")]
     public SplatRoom startRoom = SplatRoom.None;
 
+    [Tooltip("Splat loaded immediately on Start before any intent or product selection. Replaces the removed per-room asset fields for the initial view.")]
+    public GaussianSplatAsset defaultSplatAsset;
+
     [Header("Startup Hidden State")]
     [Tooltip("Forces all splat renderers off in Awake, before the first rendered frame.")]
     public bool forceHideAllSplatsOnAwake = true;
@@ -79,25 +82,8 @@ public class SplatManager : MonoBehaviour
     public bool clearCurrentRoomOnStartupHide = true;
 
     [Header("MODE 1 — Single Renderer Asset Swapping")]
+    [Tooltip("Target renderer for asset swapping. Callers (Intent UI, Cabinet UI) pass their own GaussianSplatAsset references to SetAsset().")]
     public GaussianSplatRenderer targetRenderer;
-
-    [Header("Base Room Assets")]
-    public GaussianSplatAsset calmRoomAsset;
-    public GaussianSplatAsset fastRoomAsset;
-    public GaussianSplatAsset hostRoomAsset;
-
-    [Header("Host / Gather Kitchen Variant Assets")]
-    [Tooltip("Asset name example: Host and Gather Kitchen_lighting_cold")]
-    public GaussianSplatAsset hostKitchenLightingColdAsset;
-
-    [Tooltip("Asset name example: Host and Gather Kitchen_lighting_warm")]
-    public GaussianSplatAsset hostKitchenLightingWarmAsset;
-
-    [Tooltip("Asset name example: Host and Gather Kitchen_new_Cabinet_A")]
-    public GaussianSplatAsset hostKitchenNewCabinetAAsset;
-
-    [Tooltip("Asset name example: Host and Gather Kitchen_new_Cabinet_B")]
-    public GaussianSplatAsset hostKitchenNewCabinetBAsset;
 
     [Header("MODE 2 — Toggle Existing Renderers")]
     [Header("Base Room Renderers")]
@@ -367,11 +353,18 @@ public class SplatManager : MonoBehaviour
 
         ResetTransitionVisualsToIdle();
 
-        if (forceHideAllSplatsOnStart && !applyRoomOnStart)
-            ForceAllSplatsHiddenForStartup("Start");
+        if (defaultSplatAsset != null)
+        {
+            ApplyAssetImmediate(defaultSplatAsset, targetRenderer);
+        }
+        else
+        {
+            if (forceHideAllSplatsOnStart && !applyRoomOnStart)
+                ForceAllSplatsHiddenForStartup("Start");
 
-        if (applyRoomOnStart && startRoom != SplatRoom.None)
-            SetRoom(startRoom);
+            if (applyRoomOnStart && startRoom != SplatRoom.None)
+                SetRoom(startRoom);
+        }
     }
 
 #if UNITY_EDITOR
@@ -617,6 +610,125 @@ public class SplatManager : MonoBehaviour
         TriggerFeedbackForRoom(room, shouldPlayTransitionFeedback, shouldTriggerFeedback);
     }
 
+    /// <summary>
+    /// Directly swaps the asset on the target renderer without going through the SplatRoom enum.
+    /// Used by ProductVariantRouter in GaussianSplat mode for data-driven cabinet swapping.
+    /// Uses the cutout sphere transition when available in play mode.
+    /// Pass an explicit <paramref name="renderer"/> to target a specific renderer (e.g. one on the Cabinet UI);
+    /// pass null to fall back to <see cref="targetRenderer"/>.
+    /// </summary>
+    public void SetAsset(GaussianSplatAsset asset, GaussianSplatRenderer renderer = null)
+    {
+        GaussianSplatRenderer resolvedRenderer = renderer != null ? renderer : targetRenderer;
+
+        if (resolvedRenderer == null)
+        {
+            Debug.LogWarning("[SplatManager] SetAsset called but no renderer is available.", this);
+            return;
+        }
+        if (asset == null)
+        {
+            Debug.LogWarning("[SplatManager] SetAsset called with a null asset.", this);
+            return;
+        }
+
+        bool canTransition = Application.isPlaying &&
+                             useCutoutSphereTransition &&
+                             circleEffect != null &&
+                             oldWorldTransitionRenderer != null &&
+                             newWorldTransitionRenderer != null &&
+                             resolvedRenderer.m_Asset != null &&
+                             resolvedRenderer.m_Asset != asset;
+
+        if (canTransition)
+        {
+            if (activeTransitionRoutine != null)
+                StopCoroutine(activeTransitionRoutine);
+
+            activeTransitionRoutine = StartCoroutine(CutoutTransitionRoutineForAsset(asset, resolvedRenderer));
+            return;
+        }
+
+        ApplyAssetImmediate(asset, resolvedRenderer);
+    }
+
+    private void ApplyAssetImmediate(GaussianSplatAsset asset, GaussianSplatRenderer renderer)
+    {
+        renderer.gameObject.SetActive(true);
+        renderer.enabled = true;
+        renderer.m_Asset = asset;
+        renderer.UpdateRessources();
+
+        if (keepMainSplatSyncedToActiveRenderer || MainSplat == null)
+            MainSplat = renderer;
+
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            EditorUtility.SetDirty(renderer);
+            EditorUtility.SetDirty(this);
+        }
+#endif
+    }
+
+    private IEnumerator CutoutTransitionRoutineForAsset(GaussianSplatAsset newAsset, GaussianSplatRenderer renderer)
+    {
+        isTransitioning = true;
+
+        TryAutoAssignReferences();
+        TryAutoAssignTransitionReferences();
+        CaptureInitialCutoutScales(false);
+        CaptureTransitionOriginNow();
+
+        GaussianSplatAsset oldAsset = renderer.m_Asset;
+
+        if (oldAsset == null || newAsset == null)
+        {
+            Debug.LogWarning("[SplatManager] Asset transition could not find old/new splat assets. Falling back to immediate switch.", this);
+            ApplyAssetImmediate(newAsset, renderer);
+            ResetTransitionVisualsToIdle();
+            isTransitioning = false;
+            activeTransitionRoutine = null;
+            yield break;
+        }
+
+        ConfigureTransitionRenderers(renderer, oldAsset, newAsset);
+
+        if (hideMainSplatDuringTransition)
+            HideMainRoomRenderersForTransition();
+
+        ApplyTransitionVisual(0f, 0f);
+
+        float elapsed = 0f;
+
+        while (elapsed < cutoutTransitionDuration)
+        {
+            elapsed += Time.deltaTime;
+
+            float t = Mathf.Clamp01(elapsed / cutoutTransitionDuration);
+            float curvedT = transitionRadiusCurve != null ? transitionRadiusCurve.Evaluate(t) : t;
+            float radius = Mathf.Lerp(transitionStartRadius, transitionEndRadius, curvedT);
+
+            ApplyTransitionVisual(radius, curvedT);
+
+            yield return null;
+        }
+
+        ApplyTransitionVisual(transitionEndRadius, 1f);
+
+        ApplyAssetImmediate(newAsset, renderer);
+        ResetTransitionVisualsToIdle();
+
+        if (disableTransitionRenderersWhenIdle)
+            SetTransitionRenderersVisible(false);
+
+        ResetCutoutScalesToInitial();
+
+        hasLockedTransitionOrigin = false;
+        isTransitioning = false;
+        activeTransitionRoutine = null;
+    }
+
     private IEnumerator CutoutTransitionRoutine(
         SplatRoom previousRoom,
         SplatRoom nextRoom,
@@ -751,6 +863,10 @@ public class SplatManager : MonoBehaviour
         if (previousRoom == SplatRoom.None || nextRoom == SplatRoom.None)
             return false;
 
+        // SwapAssetOnTargetRenderer: transition is driven by SetAsset(); SetRoom() is state/feedback only.
+        if (switchMode == SplatSwitchMode.SwapAssetOnTargetRenderer)
+            return false;
+
         GaussianSplatRenderer sourceRenderer = GetActiveRendererForRoom(previousRoom);
         GaussianSplatAsset oldAsset = GetAssetFromRendererOrRoom(sourceRenderer, previousRoom);
         GaussianSplatAsset newAsset = GetAssetForRoom(nextRoom);
@@ -782,29 +898,8 @@ public class SplatManager : MonoBehaviour
 
     private bool SwapAsset(SplatRoom room)
     {
-        if (targetRenderer == null)
-        {
-            Debug.LogError("[SplatManager] Cannot swap splat. targetRenderer is missing.", this);
-            return false;
-        }
-
-        GaussianSplatAsset targetAsset = GetAsset(room);
-
-        if (targetAsset == null)
-        {
-            Debug.LogError($"[SplatManager] Cannot switch to {room}. The matching GaussianSplatAsset is missing.", this);
-            return false;
-        }
-
-        if (forceTargetRendererToManagerTransform)
-            CopyManagerTransformTo(targetRenderer.transform);
-
-        targetRenderer.gameObject.SetActive(true);
-        targetRenderer.enabled = true;
-
-        targetRenderer.m_Asset = targetAsset;
-        targetRenderer.UpdateRessources();
-
+        // In SwapAssetOnTargetRenderer mode visuals are driven externally via SetAsset().
+        // This only updates room-state tracking so feedback and events fire correctly.
         CurrentRoom = room;
 
         if (keepMainSplatSyncedToActiveRenderer || MainSplat == null)
@@ -813,15 +908,7 @@ public class SplatManager : MonoBehaviour
         onRoomChanged?.Invoke(CurrentRoom);
 
         if (debugLogs)
-            Debug.Log($"<color=lime><b>[SplatManager]</b></color> Swapped target renderer to {room}: {targetAsset.name}", this);
-
-#if UNITY_EDITOR
-        if (!Application.isPlaying)
-        {
-            EditorUtility.SetDirty(targetRenderer);
-            EditorUtility.SetDirty(this);
-        }
-#endif
+            Debug.Log($"<color=lime><b>[SplatManager]</b></color> Room state → {room}. Visual swap handled via SetAsset().", this);
 
         return true;
     }
@@ -1211,8 +1298,9 @@ public class SplatManager : MonoBehaviour
 
     private GaussianSplatAsset GetAssetForRoom(SplatRoom room)
     {
+        // SwapAssetOnTargetRenderer: assets are owned by callers; read the live asset from the renderer.
         if (switchMode == SplatSwitchMode.SwapAssetOnTargetRenderer)
-            return GetAsset(room);
+            return targetRenderer != null ? targetRenderer.m_Asset : null;
 
         GaussianSplatRenderer renderer = GetRenderer(room);
         return renderer != null ? renderer.m_Asset : null;
@@ -1224,36 +1312,6 @@ public class SplatManager : MonoBehaviour
             return renderer.m_Asset;
 
         return GetAssetForRoom(room);
-    }
-
-    private GaussianSplatAsset GetAsset(SplatRoom room)
-    {
-        switch (room)
-        {
-            case SplatRoom.CalmRoom:
-                return calmRoomAsset;
-
-            case SplatRoom.FastRoom:
-                return fastRoomAsset;
-
-            case SplatRoom.HostRoom:
-                return hostRoomAsset;
-
-            case SplatRoom.HostKitchenLightingCold:
-                return hostKitchenLightingColdAsset;
-
-            case SplatRoom.HostKitchenLightingWarm:
-                return hostKitchenLightingWarmAsset;
-
-            case SplatRoom.HostKitchenNewCabinetA:
-                return hostKitchenNewCabinetAAsset;
-
-            case SplatRoom.HostKitchenNewCabinetB:
-                return hostKitchenNewCabinetBAsset;
-
-            default:
-                return null;
-        }
     }
 
     private GaussianSplatRenderer GetRenderer(SplatRoom room)
