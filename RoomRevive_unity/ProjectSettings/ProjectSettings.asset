@@ -17,7 +17,7 @@ PlayerSettings:
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
-  m_ShowUnitySplashScreen: 1
+  m_ShowUnitySplashScreen: 0
   m_ShowUnitySplashLogo: 1
   m_SplashScreenOverlayOpacity: 1
   m_SplashScreenAnimation: 1
@@ -148,6 +148,8 @@ PlayerSettings:
   preloadedAssets:
   - {fileID: 11400000, guid: 125709927aafab742bc53bed14ea6281, type: 2}
   - {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -7822576938731323894, guid: 8a1054a38046a214981685075e97833f, type: 2}
+  - {fileID: -4878183111715887513, guid: 9e09f65fbc0f8d542978eea0aace2a8d, type: 2}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -535,8 +537,12 @@ PlayerSettings:
     m_StaticBatching: 1
     m_DynamicBatching: 0
   m_BuildTargetShaderSettings: []
-  m_BuildTargetGraphicsJobs: []
-  m_BuildTargetGraphicsJobMode: []
+  m_BuildTargetGraphicsJobs:
+  - m_BuildTarget: AndroidPlayer
+    m_GraphicsJobs: 1
+  m_BuildTargetGraphicsJobMode:
+  - m_BuildTarget: AndroidPlayer
+    m_GraphicsJobMode: 1
   m_BuildTargetGraphicsAPIs:
   - m_BuildTarget: iOSSupport
     m_APIs: 10000000
@@ -939,11 +945,11 @@ PlayerSettings:
   captureStartupLogs: {}
   activeInputHandler: 1
   windowsGamepadBackendHint: 0
-  cloudProjectId: 57662c90-8d7d-4fe0-8166-5f31991c0596
+  cloudProjectId: b6fb0cb7-536e-4f68-bd3f-ecf555c8791c
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: RoomRevive_unity
-  organizationId: yvonnexiong
+  projectName: RoomRevive
+  organizationId: chrille009
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}

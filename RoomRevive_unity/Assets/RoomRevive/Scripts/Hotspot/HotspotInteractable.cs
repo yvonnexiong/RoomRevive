@@ -20,6 +20,10 @@ namespace RoomRevive
         [SerializeField] private SpriteRenderer _glowDot;
         [SerializeField] private float _glowDotSize = 1.92f;
 
+        [Header("Pulse Visual")]
+        [Tooltip("HotspotVisual driving the pulse shader. Auto-found on this GameObject if empty.")]
+        [SerializeField] private HotspotVisual _visual;
+
         public static event System.Action<ProductSO> OnAnySelected;
 
         private Vector3 _baseScale;
@@ -36,10 +40,14 @@ namespace RoomRevive
         void Awake()
         {
             _baseScale = transform.localScale;
+            if (_visual == null) _visual = GetComponent<HotspotVisual>();
         }
 
         void Start()
         {
+            // Hide the linked browser UI on startup — only revealed on gaze select.
+            if (displayTarget != null) displayTarget.SetActive(false);
+
             if (_dwellRing != null)
             {
                 _dwellRing.fillAmount = 1f;
@@ -93,6 +101,9 @@ namespace RoomRevive
 
         public void OnGazeSelect()
         {
+            // Already open — don't re-fire OpenDiscover and clobber the browser's current state.
+            if (displayTarget != null && displayTarget.activeSelf) return;
+
             _isGazed = false;
             if (_glowDotScaleCoroutine != null) { StopCoroutine(_glowDotScaleCoroutine); _glowDotScaleCoroutine = null; }
             if (_glowDot != null && _glowDotBaseScale.x > 0f)
@@ -132,6 +143,8 @@ namespace RoomRevive
 
             if (_glowDot != null)
                 _glowDot.color = new Color(_currentRingColor.r, _currentRingColor.g, _currentRingColor.b, 0.6f);
+
+            _visual?.SetColor(_currentRingColor);
         }
 
         private void StartRingAlpha(float target, float duration)

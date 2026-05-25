@@ -2,10 +2,18 @@
 * text=auto
 
 # Unity specific
+# YAML-serialized Unity files use the unityyamlmerge driver so three-way merges
+# understand fileIDs and component lists. Configure the driver per-machine — see README.
 *.cs text eol=lf
-*.unity text eol=lf
-*.asset text eol=lf
-*.prefab text eol=lf
+*.unity text eol=lf merge=unityyamlmerge
+*.asset text eol=lf merge=unityyamlmerge
+*.prefab text eol=lf merge=unityyamlmerge
+*.mat text eol=lf merge=unityyamlmerge
+*.anim text eol=lf merge=unityyamlmerge
+*.controller text eol=lf merge=unityyamlmerge
+*.physicsMaterial2D text eol=lf merge=unityyamlmerge
+*.physicMaterial text eol=lf merge=unityyamlmerge
+*.meta text eol=lf
 *.asmdef text eol=lf
 *.json text eol=lf
 *.md text eol=lf

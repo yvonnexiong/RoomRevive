@@ -561,19 +561,19 @@ public class IntentSwapManager : MonoBehaviour
     // ─────────────────────────────────────────────────────────────────────────
     void HandleKeyboard()
     {
-        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        if (KeyInput.GetKeyDown(KeyCode.LeftArrow))
         {
             int next = Mathf.Max(0, _selectedIndex - 1);
             ApplySelection(next);
             if (debugLogs) Debug.Log($"[IntentSwapManager] ← → Card {next}: {intents[next].title}");
         }
-        else if (Input.GetKeyDown(KeyCode.RightArrow))
+        else if (KeyInput.GetKeyDown(KeyCode.RightArrow))
         {
             int next = Mathf.Min(_cardUIs.Count - 1, _selectedIndex + 1);
             ApplySelection(next);
             if (debugLogs) Debug.Log($"[IntentSwapManager] → Card {next}: {intents[next].title}");
         }
-        else if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+        else if (KeyInput.GetKeyDown(KeyCode.Return) || KeyInput.GetKeyDown(KeyCode.KeypadEnter))
         {
             ConfirmSelection();
         }

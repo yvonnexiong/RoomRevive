@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_CabinetCream
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: cabinet_cream
+  brandName: Nobilia
+  productName: Soft Cream Stone
+  emotionalLine: "Light, open and calm \u2014 a kitchen that breathes."
+  shortDescription: Cream upper cabinets with grey base units and white marble-effect
+    surfaces for a brighter, quieter feel.
+  productImage: {fileID: 21300000, guid: 8ed77dac31f9aa34491f028cab534598, type: 3}
+  fromPrice: From $7,400
+  splatAsset: {fileID: 11400000, guid: 2323e7faa9816a44d9796031e8cf4a2d, type: 2}
+  variants:
+  - label: Soft Cream
+    image: {fileID: 0}
+    price: 
+    swatchColor: {r: 0.87, g: 0.84, b: 0.76, a: 1}
+  - label: Stone Grey
+    image: {fileID: 0}
+    price: 
+    swatchColor: {r: 0.56, g: 0.57, b: 0.56, a: 1}
+  - label: White Marble
+    image: {fileID: 0}
+    price: 
+    swatchColor: {r: 0.95, g: 0.93, b: 0.9, a: 1}
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

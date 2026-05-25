@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_CabinetSage
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: cabinet_sage
+  brandName: Nobilia
+  productName: Sage Oak
+  emotionalLine: "Soft, natural and full of life \u2014 a kitchen that feels like
+    a breath of fresh air."
+  shortDescription: Soft sage lower cabinets with cream uppers, oak shelving and
+    a natural wood countertop.
+  productImage: {fileID: 21300000, guid: d94cbe11dabddfe4ebd189cc377773a3, type: 3}
+  fromPrice: From $7,900
+  splatAsset: {fileID: 11400000, guid: e493a49190c74d24eb496eccef428deb, type: 2}
+  variants:
+  - label: Soft Sage
+    image: {fileID: 0}
+    price: 
+    swatchColor: {r: 0.62, g: 0.68, b: 0.6, a: 1}
+  - label: Warm Cream
+    image: {fileID: 0}
+    price: 
+    swatchColor: {r: 0.86, g: 0.84, b: 0.75, a: 1}
+  - label: Natural Oak
+    image: {fileID: 0}
+    price: 
+    swatchColor: {r: 0.72, g: 0.54, b: 0.32, a: 1}
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

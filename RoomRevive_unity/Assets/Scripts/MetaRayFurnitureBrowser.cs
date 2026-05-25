@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -8,6 +8,9 @@ using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.Networking;
 using UnityEngine.UI;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 using UIImage = UnityEngine.UI.Image;
 using UDebug = UnityEngine.Debug;
 using UApplication = UnityEngine.Application;
@@ -25,6 +28,15 @@ using UnityEditor;
 [RequireComponent(typeof(GraphicRaycaster))]
 public class MetaRayFurnitureBrowser : MonoBehaviour
 {
+    // ── Visual style copied/adapted from VariantCarouselUI / roomrevive_expanded_v9_bigger_type.html ──
+    private static readonly Color HtmlCardBg = HexColor(0xB5BCD0);
+    private static readonly Color HtmlDark = HexColor(0x3A4055);
+    private static readonly Color HtmlMuted = HexColor(0x6B7388);
+    private static readonly Color HtmlCtaText = HexColor(0xE6E9F0);
+    private static readonly Color HtmlCloseCircle = new Color(0.227f, 0.251f, 0.333f, 0.10f);
+    private static readonly Color HtmlDotOff = new Color(0.227f, 0.251f, 0.333f, 0.25f);
+    private static readonly Color HtmlArrowIcon = HexColor(0xE6E9F0);
+
     public enum FurnitureBrowserUIState
     {
         Discover,
@@ -238,6 +250,61 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     [Min(1f)]
     public float productImageZoom = 1f;
 
+    [Header("Expanded Card Style - VariantCarouselUI Layout")]
+    [Tooltip("Uses the bigger rounded card, top-right close button, large image, centered CTA, dots, and outside arrow buttons from file 2.")]
+    public bool useExpandedCarouselCardStyle = true;
+
+    [Tooltip("Inner padding used by the expanded card style.")]
+    public float expandedCardPad = 28f;
+
+    [Tooltip("Background color for the image area in the expanded card style.")]
+    public Color expandedImageBgColor = new Color(0.227f, 0.251f, 0.333f, 0.18f);
+
+    [Tooltip("Color of the See details / Hide details button in the expanded card style. Default is #3A4055.")]
+    public Color expandedDetailsButtonColor = new Color32(0x3A, 0x40, 0x55, 0xFF);
+
+    [Tooltip("Text color of the See details / Hide details button in the expanded card style. Default is #E6E9F0.")]
+    public Color expandedDetailsButtonTextColor = new Color32(0xE6, 0xE9, 0xF0, 0xFF);
+
+    [Tooltip("Horizontal distance from the card edge to the arrow center in the expanded card style.")]
+    public float expandedArrowOffset = 80f;
+
+    [Tooltip("Base arrow button size in the expanded card style.")]
+    public float expandedArrowSize = 80f;
+
+    [Tooltip("Scale applied to the expanded outside arrows.")]
+    public float expandedArrowScale = 1.5f;
+
+    [Tooltip("Top-right close button size in the expanded card style.")]
+    public float expandedCloseButtonSize = 72f;
+
+    [Tooltip("Minimum number of dots to draw under the CTA.")]
+    public int expandedDefaultDots = 3;
+
+    [Tooltip("Card corner radius used by the generated gradient sprite.")]
+    public float expandedRadiusCard = 28f;
+
+    [Tooltip("Image area corner radius used by the expanded card style.")]
+    public float expandedRadiusImage = 18f;
+
+    [Tooltip("CTA corner radius used by the expanded card style.")]
+    public float expandedRadiusCTA = 14f;
+
+    [Tooltip("Dot corner radius used by the expanded card style.")]
+    public float expandedRadiusDot = 4f;
+
+    [Tooltip("Brand label height used by the expanded card style.")]
+    public float expandedBrandHeight = 22f;
+
+    [Tooltip("Product name height used by the expanded card style.")]
+    public float expandedNameHeight = 32f;
+
+    [Tooltip("Description height used by the expanded card style.")]
+    public float expandedDescriptionHeight = 26f;
+
+    [Tooltip("Total height of the brand/name/description text block in the expanded card style.")]
+    public float expandedTextBlockTotalHeight = 110f;
+
     [Header("Product Text Layout")]
     public float subtitleBodyExtraGap = 10f;
 
@@ -361,7 +428,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     public Color mutedTextColor = new Color(0.36f, 0.39f, 0.47f, 1f);
     public Color softTextColor = new Color(0.52f, 0.55f, 0.62f, 1f);
 
-    public Color primaryButtonColor = new Color(0.12f, 0.14f, 0.20f, 1f);
+    public Color primaryButtonColor = new Color32(0x3A, 0x40, 0x55, 0xFF);
     public Color primaryButtonTextColor = Color.white;
     public Color secondaryButtonColor = new Color(1f, 1f, 1f, 0.9f);
     public Color secondaryButtonTextColor = new Color(0.10f, 0.11f, 0.16f, 1f);
@@ -414,9 +481,12 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     private CanvasGroup _animatedProductCanvasGroup;
     private RectTransform _productCardVisual;
     private UIImage _productCardBorder;
+    private readonly List<UIImage> _productDots = new List<UIImage>();
+    private Texture2D _expandedGradientTexture;
 
     private bool _subscribedToRayState;
     private bool _cardHovered;
+    private bool _inputSystemWarningLogged;
 
     private bool _isTransitioning;
     private float _transitionTimer;
@@ -824,16 +894,23 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     {
         _cardHovered = hovered;
 
-        if (_productCardBorder != null)
-        {
-            ApplyRoundedImage(
-                _productCardBorder,
-                hovered ? cardBorderHoverColor : cardBorderColor,
-                productCardCornerRadius
-            );
+        if (_productCardBorder == null) return;
 
+        if (useExpandedCarouselCardStyle)
+        {
+            // Keep the VariantCarouselUI gradient card intact. Hover feedback is handled by scale only.
+            _productCardBorder.color = Color.white;
             _productCardBorder.raycastTarget = true;
+            return;
         }
+
+        ApplyRoundedImage(
+            _productCardBorder,
+            hovered ? cardBorderHoverColor : cardBorderColor,
+            productCardCornerRadius
+        );
+
+        _productCardBorder.raycastTarget = true;
     }
 
     private void ApplyVariantGameObjects()
@@ -1229,11 +1306,39 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
                Mathf.Max(0, featureCount - 1) * 4f;
     }
 
+    private float GetExpandedCardInnerWidth()
+    {
+        return Mathf.Max(1f, cardWidth - expandedCardPad * 2f);
+    }
+
+    private float GetExpandedImageHeight()
+    {
+        return GetExpandedCardInnerWidth() / 1.15f;
+    }
+
+    private float GetExpandedProductCardHeight()
+    {
+        return expandedCardPad +
+               expandedCloseButtonSize + 14f +
+               GetExpandedImageHeight() + 22f +
+               expandedTextBlockTotalHeight + 24f +
+               60f + 22f +
+               38f +
+               expandedCardPad;
+    }
+
+    private float GetResolvedMainCardHeight()
+    {
+        return useExpandedCarouselCardStyle ? GetExpandedProductCardHeight() : cardHeight;
+    }
+
     private Vector3 GetDetailsAnchoredPosition3D()
     {
+        float mainCardHeight = GetResolvedMainCardHeight();
+
         return new Vector3(
             detailsCardPositionOffset.x,
-            -(cardHeight + detailsGap) + detailsCardPositionOffset.y,
+            -(mainCardHeight + detailsGap) + detailsCardPositionOffset.y,
             detailsCardPositionOffset.z
         );
     }
@@ -1252,6 +1357,21 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         imageHeight = Mathf.Clamp(imageHeight, 80f, cardHeight - 170f);
         imageAreaInset = Mathf.Max(0f, imageAreaInset);
         productImageZoom = Mathf.Max(1f, productImageZoom);
+
+        expandedCardPad = Mathf.Max(0f, expandedCardPad);
+        expandedArrowOffset = Mathf.Max(0f, expandedArrowOffset);
+        expandedArrowSize = Mathf.Max(20f, expandedArrowSize);
+        expandedArrowScale = Mathf.Max(0.01f, expandedArrowScale);
+        expandedCloseButtonSize = Mathf.Max(24f, expandedCloseButtonSize);
+        expandedDefaultDots = Mathf.Max(1, expandedDefaultDots);
+        expandedRadiusCard = Mathf.Max(0f, expandedRadiusCard);
+        expandedRadiusImage = Mathf.Max(0f, expandedRadiusImage);
+        expandedRadiusCTA = Mathf.Max(0f, expandedRadiusCTA);
+        expandedRadiusDot = Mathf.Max(0f, expandedRadiusDot);
+        expandedBrandHeight = Mathf.Max(10f, expandedBrandHeight);
+        expandedNameHeight = Mathf.Max(10f, expandedNameHeight);
+        expandedDescriptionHeight = Mathf.Max(10f, expandedDescriptionHeight);
+        expandedTextBlockTotalHeight = Mathf.Max(40f, expandedTextBlockTotalHeight);
 
         detailsGap = Mathf.Max(0f, detailsGap);
         detailsHeight = Mathf.Max(420f, detailsHeight);
@@ -1664,6 +1784,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
     private void BuildProductExperience(Transform parent)
     {
+        float mainCardHeight = GetResolvedMainCardHeight();
         float resolvedDetailsHeight = uiState == FurnitureBrowserUIState.Details ? GetResolvedDetailsHeight() : 0f;
 
         GameObject root = MakeUIObject("ProductExperience", parent);
@@ -1672,7 +1793,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         _animatedProductRoot.anchorMax = new Vector2(0.5f, 1f);
         _animatedProductRoot.pivot = new Vector2(0.5f, 1f);
         _animatedProductRoot.anchoredPosition = new Vector2(0f, -productTopOffset);
-        _animatedProductRoot.sizeDelta = new Vector2(canvasWidth, cardHeight + detailsGap + resolvedDetailsHeight);
+        _animatedProductRoot.sizeDelta = new Vector2(canvasWidth, mainCardHeight + detailsGap + resolvedDetailsHeight);
 
         _animatedProductCanvasGroup = root.AddComponent<CanvasGroup>();
         _animatedProductCanvasGroup.alpha = 1f;
@@ -1686,6 +1807,45 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     }
 
     private void BuildProductCard(Transform parent)
+    {
+        if (!useExpandedCarouselCardStyle)
+        {
+            BuildLegacyProductCard(parent);
+            return;
+        }
+
+        float mainCardHeight = GetResolvedMainCardHeight();
+
+        GameObject cardOuter = MakeUIObject("ProductCard_ExpandedCarouselStyle", parent);
+        _productCardVisual = cardOuter.GetComponent<RectTransform>();
+        _productCardVisual.anchorMin = new Vector2(0.5f, 1f);
+        _productCardVisual.anchorMax = new Vector2(0.5f, 1f);
+        _productCardVisual.pivot = new Vector2(0.5f, 1f);
+        _productCardVisual.anchoredPosition = Vector2.zero;
+        _productCardVisual.sizeDelta = new Vector2(cardWidth, mainCardHeight);
+
+        _productCardBorder = cardOuter.AddComponent<UIImage>();
+        _productCardBorder.sprite = CreateExpandedGradientRoundedSprite(cardWidth, mainCardHeight);
+        _productCardBorder.type = UIImage.Type.Simple;
+        _productCardBorder.preserveAspect = false;
+        _productCardBorder.color = Color.white;
+        _productCardBorder.raycastTarget = true;
+
+        Shadow shadow = cardOuter.AddComponent<Shadow>();
+        shadow.effectDistance = new Vector2(0f, -16f);
+        shadow.effectColor = new Color(0f, 0f, 0f, 0.20f);
+
+        MetaRayFurnitureCardHitbox hitbox = cardOuter.AddComponent<MetaRayFurnitureCardHitbox>();
+        hitbox.Initialize(this);
+
+        BuildExpandedCloseButton(cardOuter.transform);
+        BuildProductImageArea(cardOuter.transform);
+        BuildProductTextArea(cardOuter.transform);
+        BuildArrowButtons(parent);
+        BuildProductDots(cardOuter.transform);
+    }
+
+    private void BuildLegacyProductCard(Transform parent)
     {
         GameObject cardOuter = MakeUIObject("ProductCard", parent);
         _productCardVisual = cardOuter.GetComponent<RectTransform>();
@@ -1713,11 +1873,74 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         ApplyRoundedImage(innerImage, cardColor, productInnerCornerRadius);
         innerImage.raycastTarget = false;
 
-        BuildProductImageArea(cardInner.transform);
-        BuildProductTextArea(cardInner.transform);
+        BuildLegacyProductImageArea(cardInner.transform);
+        BuildLegacyProductTextArea(cardInner.transform);
     }
 
     private void BuildProductImageArea(Transform parent)
+    {
+        if (!useExpandedCarouselCardStyle)
+        {
+            BuildLegacyProductImageArea(parent);
+            return;
+        }
+
+        float inner = GetExpandedCardInnerWidth();
+        float imgH = GetExpandedImageHeight();
+        float y = -(expandedCardPad + expandedCloseButtonSize + 14f);
+
+        GameObject imageArea = MakeUIObject("ImageArea", parent);
+        RectTransform areaRT = imageArea.GetComponent<RectTransform>();
+        areaRT.anchorMin = areaRT.anchorMax = new Vector2(0.5f, 1f);
+        areaRT.pivot = new Vector2(0.5f, 1f);
+        areaRT.anchoredPosition = new Vector2(0f, y);
+        areaRT.sizeDelta = new Vector2(inner, imgH);
+
+        UIImage areaImage = imageArea.AddComponent<UIImage>();
+        ApplyRoundedImage(areaImage, expandedImageBgColor, Mathf.RoundToInt(expandedRadiusImage));
+        areaImage.raycastTarget = false;
+
+        Mask mask = imageArea.AddComponent<Mask>();
+        mask.showMaskGraphic = true;
+
+        GameObject productImageGO = MakeUIObject("ProductImage", imageArea.transform);
+        RectTransform productImageRT = productImageGO.GetComponent<RectTransform>();
+        productImageRT.anchorMin = productImageRT.anchorMax = new Vector2(0.5f, 0.5f);
+        productImageRT.pivot = new Vector2(0.5f, 0.5f);
+        productImageRT.anchoredPosition = Vector2.zero;
+        productImageRT.localScale = Vector3.one;
+        productImageRT.sizeDelta = new Vector2(inner, imgH);
+
+        UIImage productImage = productImageGO.AddComponent<UIImage>();
+        productImage.color = GetFallbackImageColor(_currentIndex);
+        productImage.raycastTarget = false;
+        productImage.preserveAspect = false;
+        productImage.type = UIImage.Type.Simple;
+
+        ApplyProductSpriteOrRuntimeUrl(
+            productImage,
+            _currentIndex,
+            productImageAspectFill,
+            new Vector2(inner, imgH)
+        );
+
+#if UNITY_EDITOR
+        if (!UApplication.isPlaying && productImage.sprite == null)
+        {
+            TextMeshProUGUI placeholder = AddTMP("ImagePlaceholder", imageArea.transform);
+            StretchFull(placeholder.gameObject);
+            placeholder.text = "Product image";
+            placeholder.fontSize = 14f;
+            placeholder.fontStyle = FontStyles.Normal;
+            placeholder.characterSpacing = 16f;
+            placeholder.color = HtmlMuted;
+            placeholder.alignment = TextAlignmentOptions.Center;
+            placeholder.raycastTarget = false;
+        }
+#endif
+    }
+
+    private void BuildLegacyProductImageArea(Transform parent)
     {
         GameObject imageArea = MakeUIObject("ImageArea", parent);
         RectTransform areaRT = imageArea.GetComponent<RectTransform>();
@@ -1834,7 +2057,19 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         RemoveExistingChildImmediately(parent, "PreviousButton");
         RemoveExistingChildImmediately(parent, "NextButton");
 
-        GameObject previous = BuildButton(
+        if (useExpandedCarouselCardStyle)
+        {
+            GameObject previous = BuildExpandedArrowButton("PreviousButton", parent, "‹", GoPrevious);
+            _previousButtonRect = previous.GetComponent<RectTransform>();
+
+            GameObject next = BuildExpandedArrowButton("NextButton", parent, "›", GoNext);
+            _nextButtonRect = next.GetComponent<RectTransform>();
+
+            ApplyArrowButtonTransforms();
+            return;
+        }
+
+        GameObject legacyPrevious = BuildButton(
             "PreviousButton",
             parent,
             "‹",
@@ -1844,13 +2079,13 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
             GoPrevious
         );
 
-        _previousButtonRect = previous.GetComponent<RectTransform>();
+        _previousButtonRect = legacyPrevious.GetComponent<RectTransform>();
         _previousButtonRect.anchorMin = new Vector2(0f, 0.5f);
         _previousButtonRect.anchorMax = new Vector2(0f, 0.5f);
         _previousButtonRect.pivot = new Vector2(0f, 0.5f);
         _previousButtonRect.sizeDelta = new Vector2(arrowButtonSize, arrowButtonSize);
 
-        GameObject next = BuildButton(
+        GameObject legacyNext = BuildButton(
             "NextButton",
             parent,
             "›",
@@ -1860,7 +2095,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
             GoNext
         );
 
-        _nextButtonRect = next.GetComponent<RectTransform>();
+        _nextButtonRect = legacyNext.GetComponent<RectTransform>();
         _nextButtonRect.anchorMin = new Vector2(1f, 0.5f);
         _nextButtonRect.anchorMax = new Vector2(1f, 0.5f);
         _nextButtonRect.pivot = new Vector2(1f, 0.5f);
@@ -1871,6 +2106,33 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
     private void ApplyArrowButtonTransforms()
     {
+        if (useExpandedCarouselCardStyle)
+        {
+            float y = -GetResolvedMainCardHeight() * 0.5f;
+            float x = cardWidth * 0.5f + expandedArrowOffset;
+
+            if (_previousButtonRect != null)
+            {
+                _previousButtonRect.anchorMin = _previousButtonRect.anchorMax = new Vector2(0.5f, 1f);
+                _previousButtonRect.pivot = new Vector2(0.5f, 0.5f);
+                _previousButtonRect.anchoredPosition = new Vector2(-x, y) + previousButtonAnchoredPosition;
+                _previousButtonRect.sizeDelta = new Vector2(expandedArrowSize, expandedArrowSize);
+                _previousButtonRect.localScale = Vector3.one * expandedArrowScale;
+            }
+
+            if (_nextButtonRect != null)
+            {
+                _nextButtonRect.anchorMin = _nextButtonRect.anchorMax = new Vector2(0.5f, 1f);
+                _nextButtonRect.pivot = new Vector2(0.5f, 0.5f);
+                _nextButtonRect.anchoredPosition = new Vector2(x, y) + nextButtonAnchoredPosition;
+                _nextButtonRect.sizeDelta = new Vector2(expandedArrowSize, expandedArrowSize);
+                _nextButtonRect.localScale = Vector3.one * expandedArrowScale;
+            }
+
+            ApplyArrowButtonVisibility();
+            return;
+        }
+
         if (_previousButtonRect != null)
         {
             _previousButtonRect.anchoredPosition = previousButtonAnchoredPosition;
@@ -1890,17 +2152,30 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
     private void ApplyArrowButtonVisibility()
     {
+        RefreshProductDots();
+
         if (!hideUnavailableArrowButtons)
         {
-            if (_previousButtonRect != null) _previousButtonRect.gameObject.SetActive(true);
-            if (_nextButtonRect != null) _nextButtonRect.gameObject.SetActive(true);
+            if (_previousButtonRect != null) _previousButtonRect.gameObject.SetActive(GetProductCount() > 1);
+            if (_nextButtonRect != null) _nextButtonRect.gameObject.SetActive(GetProductCount() > 1);
             return;
         }
 
         int count = GetProductCount();
 
-        bool showPrevious = count > 1 && _currentIndex > 0;
-        bool showNext = count > 1 && _currentIndex < count - 1;
+        bool showPrevious;
+        bool showNext;
+
+        if (wrapAroundProducts)
+        {
+            showPrevious = count > 1;
+            showNext = count > 1;
+        }
+        else
+        {
+            showPrevious = count > 1 && _currentIndex > 0;
+            showNext = count > 1 && _currentIndex < count - 1;
+        }
 
         if (_previousButtonRect != null)
         {
@@ -1914,6 +2189,93 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
     }
 
     private void BuildProductTextArea(Transform parent)
+    {
+        if (!useExpandedCarouselCardStyle)
+        {
+            BuildLegacyProductTextArea(parent);
+            return;
+        }
+
+        float inner = GetExpandedCardInnerWidth();
+        float y = -(expandedCardPad + expandedCloseButtonSize + 14f + GetExpandedImageHeight() + 22f);
+
+        GameObject textBlock = MakeUIObject("TextBlock", parent);
+        RectTransform textRT = textBlock.GetComponent<RectTransform>();
+        textRT.anchorMin = textRT.anchorMax = new Vector2(0.5f, 1f);
+        textRT.pivot = new Vector2(0.5f, 1f);
+        textRT.sizeDelta = new Vector2(inner, expandedTextBlockTotalHeight);
+        textRT.anchoredPosition = new Vector2(0f, y);
+
+        VerticalLayoutGroup layout = textBlock.AddComponent<VerticalLayoutGroup>();
+        layout.spacing = 6f;
+        layout.padding = new RectOffset(4, 4, 0, 0);
+        layout.childAlignment = TextAnchor.UpperLeft;
+        layout.childControlWidth = true;
+        layout.childForceExpandWidth = true;
+        layout.childControlHeight = true;
+        layout.childForceExpandHeight = false;
+
+        TextMeshProUGUI brand = AddTMP("Brand", textBlock.transform);
+        brand.text = GetBrandText(_currentIndex).ToUpperInvariant();
+        brand.fontSize = 14f;
+        brand.fontStyle = FontStyles.Bold;
+        brand.characterSpacing = 20f;
+        brand.color = HtmlMuted;
+        brand.alignment = TextAlignmentOptions.Left;
+        brand.enableWordWrapping = false;
+        brand.overflowMode = TextOverflowModes.Ellipsis;
+        brand.raycastTarget = false;
+        SetPreferredHeight(brand.gameObject, expandedBrandHeight);
+
+        TextMeshProUGUI name = AddTMP("ProductName", textBlock.transform);
+        name.text = GetTitle(_currentIndex);
+        name.fontSize = 24f;
+        name.fontStyle = FontStyles.Bold;
+        name.color = HtmlDark;
+        name.alignment = TextAlignmentOptions.Left;
+        name.enableWordWrapping = true;
+        name.overflowMode = TextOverflowModes.Ellipsis;
+        name.raycastTarget = false;
+        SetPreferredHeight(name.gameObject, expandedNameHeight);
+
+        TextMeshProUGUI description = AddTMP("Description", textBlock.transform);
+        description.text = GetShortDescription(_currentIndex);
+        if (string.IsNullOrWhiteSpace(description.text))
+        {
+            description.text = GetSubtitle(_currentIndex);
+        }
+        description.fontSize = 17f;
+        description.fontStyle = FontStyles.Normal;
+        description.color = HtmlMuted;
+        description.alignment = TextAlignmentOptions.Left;
+        description.enableWordWrapping = true;
+        description.overflowMode = TextOverflowModes.Ellipsis;
+        description.raycastTarget = false;
+        SetPreferredHeight(description.gameObject, expandedDescriptionHeight);
+
+        y -= expandedTextBlockTotalHeight + 24f;
+
+        GameObject button = BuildButton(
+            "DetailsButton",
+            parent,
+            uiState == FurnitureBrowserUIState.Details ? hideDetailsButtonText : detailsButtonText,
+            expandedDetailsButtonColor,
+            expandedDetailsButtonTextColor,
+            18f,
+            ToggleDetails
+        );
+
+        RectTransform buttonRT = button.GetComponent<RectTransform>();
+        buttonRT.anchorMin = buttonRT.anchorMax = new Vector2(0.5f, 1f);
+        buttonRT.pivot = new Vector2(0.5f, 1f);
+        buttonRT.anchoredPosition = new Vector2(0f, y);
+        buttonRT.sizeDelta = new Vector2(inner, 60f);
+
+        UIImage buttonImage = button.GetComponent<UIImage>();
+        ApplyRoundedImage(buttonImage, expandedDetailsButtonColor, Mathf.RoundToInt(expandedRadiusCTA));
+    }
+
+    private void BuildLegacyProductTextArea(Transform parent)
     {
         float textTop = imageHeight + 22f;
 
@@ -2620,6 +2982,122 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         return go;
     }
 
+    private void BuildExpandedCloseButton(Transform parent)
+    {
+        GameObject closeGO = MakeUIObject("CloseButton", parent);
+        RectTransform closeRT = closeGO.GetComponent<RectTransform>();
+        closeRT.anchorMin = closeRT.anchorMax = new Vector2(1f, 1f);
+        closeRT.pivot = new Vector2(1f, 1f);
+        closeRT.sizeDelta = new Vector2(expandedCloseButtonSize, expandedCloseButtonSize);
+        closeRT.anchoredPosition = new Vector2(-expandedCardPad, -expandedCardPad);
+
+        UIImage bg = closeGO.AddComponent<UIImage>();
+        ApplyRoundedImage(bg, HtmlCloseCircle, Mathf.RoundToInt(expandedCloseButtonSize * 0.5f));
+        bg.raycastTarget = true;
+
+        Button button = closeGO.AddComponent<Button>();
+        button.targetGraphic = bg;
+        button.navigation = new Navigation { mode = Navigation.Mode.None };
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(ResetToCallout);
+
+        TextMeshProUGUI label = AddTMP("CloseLabel", closeGO.transform);
+        StretchFull(label.gameObject);
+        label.text = "×";
+        label.fontSize = expandedCloseButtonSize * 0.45f;
+        label.fontStyle = FontStyles.Normal;
+        label.color = HtmlDark;
+        label.alignment = TextAlignmentOptions.Center;
+        label.raycastTarget = false;
+    }
+
+    private GameObject BuildExpandedArrowButton(string objectName, Transform parent, string label, UnityAction onClick)
+    {
+        GameObject go = MakeUIObject(objectName, parent);
+        RectTransform rt = go.GetComponent<RectTransform>();
+        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.sizeDelta = new Vector2(expandedArrowSize, expandedArrowSize);
+
+        UIImage bg = go.AddComponent<UIImage>();
+        ApplyRoundedImage(bg, new Color(HtmlDark.r, HtmlDark.g, HtmlDark.b, 0.90f), Mathf.RoundToInt(expandedArrowSize * 0.5f));
+        bg.raycastTarget = true;
+
+        Button button = go.AddComponent<Button>();
+        button.targetGraphic = bg;
+        button.navigation = new Navigation { mode = Navigation.Mode.None };
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(onClick);
+
+        TextMeshProUGUI text = AddTMP("ArrowLabel", go.transform);
+        StretchFull(text.gameObject);
+        text.text = label;
+        text.fontSize = expandedArrowSize * 0.45f;
+        text.fontStyle = FontStyles.Normal;
+        text.color = HtmlArrowIcon;
+        text.alignment = TextAlignmentOptions.Center;
+        text.raycastTarget = false;
+
+        return go;
+    }
+
+    private void BuildProductDots(Transform parent)
+    {
+        _productDots.Clear();
+
+        float inner = GetExpandedCardInnerWidth();
+        float y = -(expandedCardPad + expandedCloseButtonSize + 14f + GetExpandedImageHeight() + 22f + expandedTextBlockTotalHeight + 24f + 60f + 22f);
+
+        GameObject dotsGO = MakeUIObject("Dots", parent);
+        RectTransform dotsRT = dotsGO.GetComponent<RectTransform>();
+        dotsRT.anchorMin = dotsRT.anchorMax = new Vector2(0.5f, 1f);
+        dotsRT.pivot = new Vector2(0.5f, 1f);
+        dotsRT.sizeDelta = new Vector2(inner, 38f);
+        dotsRT.anchoredPosition = new Vector2(0f, y);
+
+        HorizontalLayoutGroup layout = dotsGO.AddComponent<HorizontalLayoutGroup>();
+        layout.childAlignment = TextAnchor.MiddleCenter;
+        layout.spacing = 8f;
+        layout.childControlWidth = false;
+        layout.childControlHeight = false;
+        layout.childForceExpandWidth = false;
+        layout.childForceExpandHeight = false;
+
+        int dotCount = Mathf.Max(expandedDefaultDots, GetProductCount());
+
+        for (int i = 0; i < dotCount; i++)
+        {
+            GameObject dot = MakeUIObject($"Dot_{i}", dotsGO.transform);
+            RectTransform dotRT = dot.GetComponent<RectTransform>();
+            dotRT.sizeDelta = new Vector2(8f, 8f);
+
+            LayoutElement le = dot.AddComponent<LayoutElement>();
+            le.minWidth = le.preferredWidth = 8f;
+            le.minHeight = le.preferredHeight = 8f;
+
+            UIImage image = dot.AddComponent<UIImage>();
+            ApplyRoundedImage(image, i == _currentIndex ? HtmlDark : HtmlDotOff, Mathf.RoundToInt(expandedRadiusDot));
+            image.raycastTarget = false;
+            dot.SetActive(i < GetProductCount());
+            _productDots.Add(image);
+        }
+    }
+
+    private void RefreshProductDots()
+    {
+        if (_productDots == null) return;
+
+        int count = GetProductCount();
+
+        for (int i = 0; i < _productDots.Count; i++)
+        {
+            if (_productDots[i] == null) continue;
+
+            _productDots[i].gameObject.SetActive(i < count);
+            _productDots[i].color = i == _currentIndex ? HtmlDark : HtmlDotOff;
+        }
+    }
+
     private void StartProductTransition(int direction)
     {
         if (_animatedProductRoot == null || _animatedProductCanvasGroup == null) return;
@@ -2708,14 +3186,22 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
     private void HandleKeyboardDebug()
     {
+#if ENABLE_INPUT_SYSTEM
+        Keyboard keyboard = Keyboard.current;
+
+        if (keyboard == null)
+        {
+            return;
+        }
+
         if (arrowKeysChangeProduct)
         {
-            if (Input.GetKeyDown(KeyCode.LeftArrow))
+            if (keyboard.leftArrowKey.wasPressedThisFrame)
             {
                 GoPrevious();
             }
 
-            if (Input.GetKeyDown(KeyCode.RightArrow))
+            if (keyboard.rightArrowKey.wasPressedThisFrame)
             {
                 GoNext();
             }
@@ -2723,7 +3209,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
         if (enterKeyPressesPrimaryAction)
         {
-            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+            if (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame)
             {
                 PressPrimaryAction();
             }
@@ -2731,7 +3217,7 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
         if (spaceKeyPressesPrimaryAction)
         {
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (keyboard.spaceKey.wasPressedThisFrame)
             {
                 PressPrimaryAction();
             }
@@ -2739,11 +3225,18 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
         if (rKeyResetsToCallout)
         {
-            if (Input.GetKeyDown(KeyCode.R))
+            if (keyboard.rKey.wasPressedThisFrame)
             {
                 ResetToCallout();
             }
         }
+#else
+        if (!_inputSystemWarningLogged && debugLogs)
+        {
+            _inputSystemWarningLogged = true;
+            UDebug.LogWarning("[MetaRayFurnitureBrowser] Keyboard Debug uses Unity's new Input System. Enable the Input System package and set Player Settings > Active Input Handling to Input System Package or Both.", this);
+        }
+#endif
     }
 
     private int GetProductCount()
@@ -3060,6 +3553,11 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
     private Vector2 GetProductImageAspectFillSize()
     {
+        if (useExpandedCarouselCardStyle)
+        {
+            return new Vector2(GetExpandedCardInnerWidth(), GetExpandedImageHeight());
+        }
+
         float width = Mathf.Max(
             1f,
             cardWidth - cardBorderThickness * 2f - imageAreaInset * 2f
@@ -3323,6 +3821,8 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
 
     private void ClearGeneratedObjects()
     {
+        _productDots.Clear();
+
         DestroyChildByName("Generated_MetaRayFurnitureBrowser");
         DestroyChildByName("ISDK_RayInteractionSurface");
 
@@ -3337,6 +3837,8 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
             DestroySmart(_raySurfaceRoot);
             _raySurfaceRoot = null;
         }
+
+        DestroyExpandedGradientTexture();
 
         _canvasRayInteractable = null;
         _animatedProductRoot = null;
@@ -3531,6 +4033,92 @@ public class MetaRayFurnitureBrowser : MonoBehaviour
         }
 
         ApplyRoundedImage(image, color, colorDotCornerRadius);
+    }
+
+    private Sprite CreateExpandedGradientRoundedSprite(float cardW, float cardH)
+    {
+        DestroyExpandedGradientTexture();
+
+        int texH = 256;
+        int texW = Mathf.Max(1, Mathf.RoundToInt(texH * Mathf.Max(1f, cardW) / Mathf.Max(1f, cardH)));
+        float rPx = Mathf.Clamp(expandedRadiusCard / Mathf.Max(1f, cardH) * texH, 0f, texH * 0.5f);
+
+        Color c0 = new Color(0.831f, 0.851f, 0.898f); // #D4D9E5
+        Color c1 = new Color(0.710f, 0.737f, 0.816f); // #B5BCD0
+        Color c2 = new Color(0.612f, 0.643f, 0.737f); // #9CA4BC
+
+        const float cx = 0.35f;
+        const float cyCss = 0.25f;
+        float cy = 1f - cyCss;
+        float rx = Mathf.Max(cx, 1f - cx);
+        float ry = Mathf.Max(cyCss, 1f - cyCss);
+
+        Texture2D tex = new Texture2D(texW, texH, TextureFormat.RGBA32, false);
+        tex.filterMode = FilterMode.Bilinear;
+        tex.wrapMode = TextureWrapMode.Clamp;
+
+        Color32[] pixels = new Color32[texW * texH];
+
+        for (int y = 0; y < texH; y++)
+        {
+            for (int x = 0; x < texW; x++)
+            {
+                float u = (x + 0.5f) / texW;
+                float v = (y + 0.5f) / texH;
+
+                float du = (u - cx) / rx;
+                float dv = (v - cy) / ry;
+                float t = Mathf.Sqrt(du * du + dv * dv);
+
+                Color col = t <= 0.65f
+                    ? Color.Lerp(c0, c1, t / 0.65f)
+                    : Color.Lerp(c1, c2, Mathf.Clamp01((t - 0.65f) / 0.35f));
+
+                float px = x + 0.5f;
+                float py = y + 0.5f;
+                float ex = Mathf.Max(rPx - px, px - (texW - rPx), 0f);
+                float ey = Mathf.Max(rPx - py, py - (texH - rPx), 0f);
+                float a = Mathf.Clamp01(rPx - Mathf.Sqrt(ex * ex + ey * ey) + 0.5f);
+
+                pixels[y * texW + x] = new Color32(
+                    (byte)(col.r * 255f + 0.5f),
+                    (byte)(col.g * 255f + 0.5f),
+                    (byte)(col.b * 255f + 0.5f),
+                    (byte)(a * 255f + 0.5f)
+                );
+            }
+        }
+
+        tex.SetPixels32(pixels);
+        tex.Apply();
+
+        _expandedGradientTexture = tex;
+        return Sprite.Create(tex, new Rect(0, 0, texW, texH), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect);
+    }
+
+    private void DestroyExpandedGradientTexture()
+    {
+        if (_expandedGradientTexture == null) return;
+
+        if (UApplication.isPlaying)
+        {
+            Destroy(_expandedGradientTexture);
+        }
+        else
+        {
+            DestroyImmediate(_expandedGradientTexture);
+        }
+
+        _expandedGradientTexture = null;
+    }
+
+    private static Color HexColor(uint rgb)
+    {
+        return new Color(
+            ((rgb >> 16) & 0xFF) / 255f,
+            ((rgb >> 8) & 0xFF) / 255f,
+            (rgb & 0xFF) / 255f
+        );
     }
 
     private static void TryConfigureRectTransformBoundsClipperDriver(

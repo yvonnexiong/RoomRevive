@@ -1090,12 +1090,12 @@ public class MetaRayIntentCardMenu : MonoBehaviour
 
     private void HandleKeyboardDebug()
     {
-        if (Input.GetKeyDown(previousCardKey)) SelectPreviousCard();
-        if (Input.GetKeyDown(nextCardKey)) SelectNextCard();
-        if (Input.GetKeyDown(KeyCode.Alpha1)) SetIntent(IntentSelection.CalmRoom);
-        if (Input.GetKeyDown(KeyCode.Alpha2)) SetIntent(IntentSelection.FastRoom);
-        if (Input.GetKeyDown(KeyCode.Alpha3)) SetIntent(IntentSelection.HostRoom);
-        if (Input.GetKeyDown(confirmKey) || Input.GetKeyDown(confirmKeyAlt)) ConfirmSelection();
+        if (KeyInput.GetKeyDown(previousCardKey)) SelectPreviousCard();
+        if (KeyInput.GetKeyDown(nextCardKey)) SelectNextCard();
+        if (KeyInput.GetKeyDown(KeyCode.Alpha1)) SetIntent(IntentSelection.CalmRoom);
+        if (KeyInput.GetKeyDown(KeyCode.Alpha2)) SetIntent(IntentSelection.FastRoom);
+        if (KeyInput.GetKeyDown(KeyCode.Alpha3)) SetIntent(IntentSelection.HostRoom);
+        if (KeyInput.GetKeyDown(confirmKey) || KeyInput.GetKeyDown(confirmKeyAlt)) ConfirmSelection();
     }
 
     private int GetCardCount()

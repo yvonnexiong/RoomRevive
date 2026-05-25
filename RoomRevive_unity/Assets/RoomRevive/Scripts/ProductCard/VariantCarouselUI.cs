@@ -128,10 +128,10 @@ namespace RoomRevive
         void Update()
         {
             if (!Application.isPlaying) return;
-            if (Input.GetKeyDown(KeyCode.LeftArrow))  NavigateLeft();
-            if (Input.GetKeyDown(KeyCode.RightArrow)) NavigateRight();
-            if (Input.GetKeyDown(KeyCode.T) && (testProduct != null || (products != null && products.Length > 0))) TestShow();
-            if (Input.GetKeyDown(KeyCode.Escape)) Hide();
+            if (KeyInput.GetKeyDown(KeyCode.LeftArrow))  NavigateLeft();
+            if (KeyInput.GetKeyDown(KeyCode.RightArrow)) NavigateRight();
+            if (KeyInput.GetKeyDown(KeyCode.T) && (testProduct != null || (products != null && products.Length > 0))) TestShow();
+            if (KeyInput.GetKeyDown(KeyCode.Escape)) Hide();
         }
 
         void LateUpdate()

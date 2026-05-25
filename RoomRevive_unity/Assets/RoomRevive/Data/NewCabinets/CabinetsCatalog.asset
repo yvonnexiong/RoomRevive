@@ -13,77 +13,13 @@ MonoBehaviour:
   m_Name: CabinetsCatalog
   m_EditorClassIdentifier: Assembly-CSharp::MetaRayFurnitureProductCatalog
   products:
-  - id: 103
-    brandText: Nobilia
-    productName: Sage Oak Cabinets
-    subtitle: Soft sage lower cabinets with oak details
-    badgeText: Scandi Fresh
-    priceText: $7,900
-    productImage: {fileID: 21300000, guid: d94cbe11dabddfe4ebd189cc377773a3, type: 3}
-    sourceImageUrl: 
-    calloutText: A sage and oak cabinet style was found for this kitchen. It preserves
-      the current kitchen proportions while adding a lighter, warmer and more playful
-      Scandinavian finish.
-    shortDescription: A soft sage cabinet system with cream upper fronts, oak shelving
-      and a natural wood countertop.
-    description: A fresh Scandinavian cabinet concept combining soft sage green,
-      warm oak and light cream surfaces. The design feels calm, natural and welcoming.
-    longDescription: A fresh Scandinavian cabinet concept combining soft sage green,
-      warm oak and light cream surfaces. The design feels calm, natural and welcoming
-      while keeping the same cabinet scale and kitchen geometry. The products shown
-      are matched to the concrete size of the existing kitchen and visualized as
-      a realistic replacement package.
-    widthText: Room matched
-    heightText: Floor to ceiling
-    depthText: 60 cm base / 35 cm wall
-    weightText: Project based
-    features:
-    - Soft sage green lower cabinets
-    - Cream upper cabinet fronts
-    - Warm oak shelves and countertop
-    - Light speckled backsplash surface
-    - Minimal handles and calm panel rhythm
-    - Designed around the scanned cabinet footprint
-    materialsText: Matte sage painted fronts, cream laminate fronts, oak veneer shelves,
-      oak countertop, speckled stone-effect backsplash
-    finish: Soft Sage / Cream / Natural Oak
-    finishColors:
-    - {r: 0.61960787, g: 0.6784314, b: 0.6039216, a: 1}
-    - {r: 0.8627451, g: 0.8352941, b: 0.74509805, a: 1}
-    - {r: 0.72156864, g: 0.5372549, b: 0.32156864, a: 1}
-    finishColorLabels:
-    - Soft Sage
-    - Warm Cream
-    - Natural Oak
-    storageText: Tall storage wall, upper open shelves, sage base drawers, island
-      panels and fitted cabinet fronts
-    includedParts:
-    - Tall cabinet fronts
-    - Upper cabinet fronts
-    - Sage base cabinet fronts
-    - Island side panels
-    - Oak open shelves
-    - Oak countertop
-    - Speckled backsplash panels
-    - Soft-close hinge and drawer hardware
-    useCustomFallbackColor: 1
-    fallbackColor: {r: 0.61960787, g: 0.6784314, b: 0.6039216, a: 1}
-    onShown:
-      m_PersistentCalls:
-        m_Calls: []
-    onDiscovered:
-      m_PersistentCalls:
-        m_Calls: []
-    onDetailsUnlocked:
-      m_PersistentCalls:
-        m_Calls: []
   - id: 101
     brandText: Nobilia
     productName: Warm Walnut Cabinets
     subtitle: Full-height walnut kitchen with dark stone
     badgeText: Natural Warmth
     priceText: $8,900
-    productImage: {fileID: 21300000, guid: a5c34db9ef811644f92a7c0b8159bd1f, type: 3}
+    productImage: {fileID: 0}
     sourceImageUrl: 
     calloutText: A warm walnut cabinet style was found for this kitchen. The layout
       keeps the original room proportions while applying a rich wood finish and darker
@@ -148,7 +84,7 @@ MonoBehaviour:
     subtitle: Cream upper cabinets with grey lower fronts
     badgeText: Minimal Calm
     priceText: $7,400
-    productImage: {fileID: 21300000, guid: 8ed77dac31f9aa34491f028cab534598, type: 3}
+    productImage: {fileID: 0}
     sourceImageUrl: 
     calloutText: A soft cream and stone cabinet style was found for this kitchen.
       It keeps the same kitchen footprint while creating a brighter, quieter and
@@ -198,6 +134,70 @@ MonoBehaviour:
     - Soft-close hinge and drawer hardware
     useCustomFallbackColor: 1
     fallbackColor: {r: 0.8666667, g: 0.84313726, b: 0.7607843, a: 1}
+    onShown:
+      m_PersistentCalls:
+        m_Calls: []
+    onDiscovered:
+      m_PersistentCalls:
+        m_Calls: []
+    onDetailsUnlocked:
+      m_PersistentCalls:
+        m_Calls: []
+  - id: 103
+    brandText: Nobilia
+    productName: Sage Oak Cabinets
+    subtitle: Soft sage lower cabinets with oak details
+    badgeText: Scandi Fresh
+    priceText: $7,900
+    productImage: {fileID: 0}
+    sourceImageUrl: 
+    calloutText: A sage and oak cabinet style was found for this kitchen. It preserves
+      the current kitchen proportions while adding a lighter, warmer and more playful
+      Scandinavian finish.
+    shortDescription: A soft sage cabinet system with cream upper fronts, oak shelving
+      and a natural wood countertop.
+    description: A fresh Scandinavian cabinet concept combining soft sage green,
+      warm oak and light cream surfaces. The design feels calm, natural and welcoming.
+    longDescription: A fresh Scandinavian cabinet concept combining soft sage green,
+      warm oak and light cream surfaces. The design feels calm, natural and welcoming
+      while keeping the same cabinet scale and kitchen geometry. The products shown
+      are matched to the concrete size of the existing kitchen and visualized as
+      a realistic replacement package.
+    widthText: Room matched
+    heightText: Floor to ceiling
+    depthText: 60 cm base / 35 cm wall
+    weightText: Project based
+    features:
+    - Soft sage green lower cabinets
+    - Cream upper cabinet fronts
+    - Warm oak shelves and countertop
+    - Light speckled backsplash surface
+    - Minimal handles and calm panel rhythm
+    - Designed around the scanned cabinet footprint
+    materialsText: Matte sage painted fronts, cream laminate fronts, oak veneer shelves,
+      oak countertop, speckled stone-effect backsplash
+    finish: Soft Sage / Cream / Natural Oak
+    finishColors:
+    - {r: 0.61960787, g: 0.6784314, b: 0.6039216, a: 1}
+    - {r: 0.8627451, g: 0.8352941, b: 0.74509805, a: 1}
+    - {r: 0.72156864, g: 0.5372549, b: 0.32156864, a: 1}
+    finishColorLabels:
+    - Soft Sage
+    - Warm Cream
+    - Natural Oak
+    storageText: Tall storage wall, upper open shelves, sage base drawers, island
+      panels and fitted cabinet fronts
+    includedParts:
+    - Tall cabinet fronts
+    - Upper cabinet fronts
+    - Sage base cabinet fronts
+    - Island side panels
+    - Oak open shelves
+    - Oak countertop
+    - Speckled backsplash panels
+    - Soft-close hinge and drawer hardware
+    useCustomFallbackColor: 1
+    fallbackColor: {r: 0.61960787, g: 0.6784314, b: 0.6039216, a: 1}
     onShown:
       m_PersistentCalls:
         m_Calls: []

@@ -987,9 +987,9 @@ namespace RoomRevive
 
         private void HandleKeyboardDebug()
         {
-            if (Input.GetKeyDown(KeyCode.LeftArrow))  NavigateLeft();
-            if (Input.GetKeyDown(KeyCode.RightArrow)) NavigateRight();
-            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) ConfirmCurrent();
+            if (KeyInput.GetKeyDown(KeyCode.LeftArrow))  NavigateLeft();
+            if (KeyInput.GetKeyDown(KeyCode.RightArrow)) NavigateRight();
+            if (KeyInput.GetKeyDown(KeyCode.Return) || KeyInput.GetKeyDown(KeyCode.KeypadEnter)) ConfirmCurrent();
         }
 
         // ─────────────────────────────────────────────────────────────────────

@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_FridgeAurora
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: fridge_aurora
+  brandName: Nobilia
+  productName: Aurora French Door
+  emotionalLine: "A statement piece that earns its place \u2014 polished, capacious
+    and unmistakably premium."
+  shortDescription: French-door fridge with reflective stainless steel, vertical
+    handles and an integrated water dispenser.
+  productImage: {fileID: 21300000, guid: cfa2e0c02a5c31c42950cb313472021e, type: 3}
+  fromPrice: From $1,799
+  variants:
+  - label: Mirror Steel
+    image: {fileID: 0}
+    price: 
+    swatchColor: {r: 0.78, g: 0.77, b: 0.74, a: 1}
+  - label: Black Inset
+    image: {fileID: 0}
+    price: 
+    swatchColor: {r: 0.08, g: 0.08, b: 0.08, a: 1}
+  startsSelectedByDefault: 0
+  cabinetSplatRoom: 0
+  fridgeSceneObjectName: FrenchDoorFridge
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

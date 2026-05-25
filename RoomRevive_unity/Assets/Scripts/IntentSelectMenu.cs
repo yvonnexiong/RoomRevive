@@ -907,23 +907,23 @@ public class IntentSelectMenu : MonoBehaviour
     {
         if (_cards.Count == 0) return;
 
-        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        if (KeyInput.GetKeyDown(KeyCode.LeftArrow))
         {
             int next = (_selectedIndex < 0) ? 0 : Mathf.Max(0, _selectedIndex - 1);
             ApplySelection(next);
             if (debugLogs) Debug.Log($"[IntentSelectMenu] (kbd) ← Card {next}: {Title(intents[next])}");
         }
-        else if (Input.GetKeyDown(KeyCode.RightArrow))
+        else if (KeyInput.GetKeyDown(KeyCode.RightArrow))
         {
             int next = (_selectedIndex < 0) ? 0 : Mathf.Min(_cards.Count - 1, _selectedIndex + 1);
             ApplySelection(next);
             if (debugLogs) Debug.Log($"[IntentSelectMenu] (kbd) → Card {next}: {Title(intents[next])}");
         }
-        else if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+        else if (KeyInput.GetKeyDown(KeyCode.Return) || KeyInput.GetKeyDown(KeyCode.KeypadEnter))
         {
             ConfirmSelection();
         }
-        else if (Input.GetKeyDown(KeyCode.Escape))
+        else if (KeyInput.GetKeyDown(KeyCode.Escape))
         {
             if (allowDeselect) ApplySelection(-1);
         }
