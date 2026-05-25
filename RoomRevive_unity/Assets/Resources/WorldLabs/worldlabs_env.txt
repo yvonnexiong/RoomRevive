@@ -1,0 +1,2 @@
+# WorldLabs API Configuration
+WORLDLABS_API_KEY=2MzJ1VNMk35gxcJoiiLn3eWuyJwsUF6w

@@ -83,6 +83,7 @@
     <Compile Include="Assets\Scripts\IntersectionRevealSphereEffect.cs" />
     <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Runtime\IntentCardPointerProxy.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Startup\BillboardPanel.cs" />
+    <Compile Include="Assets\Scripts\BoxMoverPanel.cs" />
     <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Runtime\IntentSelectorPanelData.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\ProductCard\BeforeAfterSliderUI.cs" />
     <Compile Include="Assets\Scripts\FridgeController.cs" />
@@ -168,6 +169,7 @@
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Surface.cginc" />
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Following Characters.txt" />
     <None Include="Assets\RoomRevive\Shader\HotspotPulseURP.shader" />
+    <None Include="Assets\Resources\WorldLabs\worldlabs_env.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Masking.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF Overlay.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap-Mobile.shader" />

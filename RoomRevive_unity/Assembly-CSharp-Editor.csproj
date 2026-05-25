@@ -75,6 +75,7 @@
     <Compile Include="Assets\Scripts\Editor\XRCCMissingScriptFinder.cs" />
     <Compile Include="Assets\Scripts\Editor\MetaRayFurnitureExampleCatalogCreator.cs" />
     <Compile Include="Assets\Scripts\Editor\CabinetVariantsCatalogCreator.cs" />
+    <Compile Include="Assets\Editor\BoxMoverPanelEditor.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\ProductCard\Editor\WelcomeUIEditor.cs" />
     <Compile Include="Assets\Scripts\Editor\XRCCBadScriptReferenceFinder.cs" />
     <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Editor\Product\ProductBrowserFridgeWizard.cs" />
