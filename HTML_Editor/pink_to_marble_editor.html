@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pink → Marble — splat retexture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#14161a; --panel:#1b1e24; --panel2:#22262e; --line:#2e333d;
+  --text:#e9e7e1; --muted:#9097a3; --accent:#e2a45b; --accent-dim:#8a6537;
+  --danger:#e06c5f; --ok:#8fbf9f; --pink:#ff3fae;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --ui:'Space Grotesk',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--ui);font-size:13px}
+#app{display:grid;grid-template-rows:52px 1fr;grid-template-columns:1fr 300px;height:100%}
+#topbar{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+#wordmark{font-weight:600;letter-spacing:.12em;font-size:13px}#wordmark em{font-style:normal;color:var(--accent)}
+#filemeta{font-family:var(--mono);font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+#stats{font-family:var(--mono);font-size:11px;color:var(--muted)}#stats b{color:var(--text);font-weight:500}
+#viewwrap{position:relative;overflow:hidden;background:radial-gradient(1200px 700px at 45% 30%,#1a1d23 0%,#101216 70%)}
+canvas#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#hint{position:absolute;left:14px;bottom:12px;font-family:var(--mono);font-size:10.5px;color:var(--muted);pointer-events:none;line-height:1.7}
+kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;padding:0 4px;font-family:var(--mono);font-size:10px;color:var(--text);background:var(--panel2)}
+#dropzone{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(16,18,22,.92);z-index:20}
+#dropzone.hidden{display:none}
+#dropcard{max-width:430px;text-align:center;padding:42px 38px;border:1px dashed var(--line);border-radius:10px;background:var(--panel)}
+#dropcard h1{font-size:19px;font-weight:600;letter-spacing:.02em;margin-bottom:10px}#dropcard h1 em{font-style:normal;color:var(--accent)}
+#dropcard p{color:var(--muted);line-height:1.65;margin-bottom:6px}
+#dropcard .steps{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:left;margin:18px auto 22px;display:inline-block;line-height:2}
+#dropcard .steps b{color:var(--accent);font-weight:500;margin-right:8px}
+#dropzone.drag #dropcard{border-color:var(--accent)}
+#panel{border-left:1px solid var(--line);background:var(--panel);overflow-y:auto;display:flex;flex-direction:column}
+.sec{padding:14px 16px;border-bottom:1px solid var(--line)}
+.sec h2{font-size:10.5px;letter-spacing:.18em;color:var(--muted);font-weight:600;margin-bottom:11px;text-transform:uppercase}
+.row{display:flex;align-items:center;gap:8px;margin-bottom:9px}.row:last-child{margin-bottom:0}
+.row label{flex:1;color:var(--muted)}
+.val{font-family:var(--mono);font-size:11px;color:var(--text);min-width:54px;text-align:right}
+input[type=range]{flex:1.4;appearance:none;height:3px;background:var(--line);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;border-radius:50%;background:var(--accent);border:2px solid var(--panel);box-shadow:0 0 0 1px var(--accent-dim);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;background:var(--accent);border:2px solid var(--panel);cursor:pointer}
+input[type=number]{width:58px;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:5px;padding:5px 6px;font-family:var(--mono);font-size:12px}
+button{font-family:var(--ui);font-size:12.5px;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:7px 11px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#1a1409;font-weight:600}
+button.primary:hover{filter:brightness(1.07)}
+button.ghost{background:transparent}
+button:disabled{opacity:.42;cursor:default;pointer-events:none}
+.btnrow{display:flex;gap:8px}.btnrow button{flex:1}
+.check{display:flex;align-items:center;gap:8px;color:var(--muted);cursor:pointer;user-select:none}
+.check input{accent-color:var(--accent)}
+#pinkcount{font-family:var(--mono);font-size:11px;color:var(--pink)}
+#matchip{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+#matcanvas{width:112px;height:78px;border-radius:7px;border:1px solid var(--line);background:var(--panel2);flex-shrink:0}
+#matmeta{flex:1;min-width:0}
+#matname{font-family:var(--mono);font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:7px}
+.note{font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:10px}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:7px;padding:10px 16px;font-size:12.5px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:50;max-width:70vw}
+#toast.show{opacity:1}#toast.err{border-left-color:var(--danger)}
+#tabs{display:flex;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:5}
+#tabs .tab{flex:1;border:0;border-radius:0;background:transparent;color:var(--muted);padding:11px 0;font-weight:600;font-size:12px;border-bottom:2px solid transparent}
+#tabs .tab.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--panel2)}
+#tabs .tab:hover{color:var(--text)}
+.matgallery{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:0 0 6px;max-height:228px;overflow-y:auto;padding-right:4px}
+.matgallery::-webkit-scrollbar{width:9px}
+.matgallery::-webkit-scrollbar-track{background:transparent}
+.matgallery::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px;border:2px solid transparent;background-clip:padding-box}
+.matgallery::-webkit-scrollbar-thumb:hover{background:var(--muted);background-clip:padding-box}
+.matthumb{position:relative;border:1px solid var(--line);border-radius:6px;overflow:hidden;cursor:pointer;height:50px;background:var(--panel2)}
+.matthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.matthumb.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.matthumb span{position:absolute;left:0;right:0;bottom:0;font-size:9px;background:rgba(0,0,0,.6);color:#fff;padding:1px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.galsub{margin-bottom:14px}
+.galhead{font-size:11px;font-weight:600;color:var(--text);margin:0 0 6px}
+.galh-hint{font-weight:400;color:var(--muted)}
+.galempty{grid-column:1/4;font-size:10.5px;color:var(--muted)}
+summary.dsum{cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);list-style:none;user-select:none}
+summary.dsum::-webkit-details-marker{display:none}
+summary.dsum:hover{color:var(--text)}
+#loadsplash{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(16,18,22,.95);z-index:25;color:var(--text);gap:10px;text-align:center;padding:20px}
+#loadsplash.hidden{display:none}
+#loadsplash .bar{width:260px;height:4px;background:var(--panel2);border-radius:3px;overflow:hidden}
+#loadsplash .bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div id="wordmark">PINK<em>→MARBLE</em></div>
+    <div id="filemeta">no scene loaded</div>
+    <div id="stats"><b id="stat-pts">–</b> splats · <b id="stat-sel">0</b> pink</div>
+  </div>
+
+  <div id="viewwrap">
+    <canvas id="gl"></canvas>
+    <div id="loadsplash"><div id="loadsplash-msg">Auto-loading kitchen…</div><div class="bar"><i id="loadsplash-bar"></i></div></div>
+    <div id="hint">drag orbit · <kbd>shift</kbd>/right-drag pan · scroll zoom · double-click set pivot</div>
+    <div id="dropzone">
+      <div id="dropcard">
+        <h1>PINK<em>→MARBLE</em></h1>
+        <p>Repaints every pink-marked splat with a material image — keeping the scene's own light colour.</p>
+        <div class="steps">
+          <div><b>1</b>drop a .spz scene (pink-painted surfaces)</div>
+          <div><b>2</b>drop the marble / material image</div>
+          <div><b>3</b>tweak &amp; download the restyled .spz</div>
+        </div>
+        <div class="btnrow" style="justify-content:center">
+          <button class="primary" id="btn-open">Open scene file</button>
+          <input type="file" id="fileinput" accept=".spz" style="display:none">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="panel">
+    <div id="tabs">
+      <button id="tab-cab" class="tab active">Cabinets</button>
+      <button id="tab-wt" class="tab">Worktops</button>
+      <button id="tab-combined" class="tab">Combined</button>
+    </div>
+    <div class="sec" style="padding-bottom:10px" data-vis="cw">
+      <h2 id="chan-head">Cabinets — pink splat</h2>
+      <div class="btnrow"><button class="primary" id="btn-openchan" style="flex:2">Load this channel's pink .spz</button></div>
+      <div class="status" style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px" id="chan-status">no splat loaded for this channel</div>
+    </div>
+    <div class="sec" data-vis="cw">
+      <h2>Mask region (colour)</h2>
+      <div class="row"><label>Hue range</label>
+        <input type="number" id="hueLo" value="75" min="0" max="360"><input type="number" id="hueHi" value="155" min="0" max="360"></div>
+      <div class="row"><label>Min saturation</label>
+        <input type="range" id="sat" min="0" max="100" value="10"><span class="val" id="sat-v">0.10</span></div>
+      <div class="row"><label>Min brightness</label>
+        <input type="range" id="val" min="0" max="100" value="24"><span class="val" id="val-v">0.24</span></div>
+      <div class="row"><label class="check"><input type="checkbox" id="hl" checked> Highlight region</label>
+        <span id="pinkcount">0 splats</span></div>
+    </div>
+
+    <div class="sec" data-vis="setup">
+      <details>
+        <summary class="dsum">Scene lighting source — set once ▾</summary>
+        <div style="margin-top:10px">
+      <div class="row" style="margin-bottom:4px"><label style="flex:none;color:var(--text)">Original splat (.spz)</label><span class="val" id="matname3" style="flex:1;text-align:right">none</span></div>
+      <div class="btnrow" style="margin-bottom:6px">
+        <button id="btn-origspz">Load original splat…</button>
+        <input type="file" id="origspzinput" accept=".spz" style="display:none">
+      </div>
+      <p class="note" style="margin-top:2px">Best match: the clean pre-pink <b>.spz</b> of the same scene. Each marble splat reads the real luminance &amp; colour of the original surface at its own 3D position (no alignment needed). Drives <i>Shading</i> &amp; <i>Source colour</i>.</p>
+      <div id="matchip" style="margin-top:12px">
+        <canvas id="panocanvas" width="224" height="112"></canvas>
+        <div id="matmeta">
+          <div id="matname2">no panorama</div>
+          <button id="btn-pano">Load 360° photo…</button>
+          <input type="file" id="panoinput" accept="image/*" style="display:none">
+        </div>
+      </div>
+      <div class="row"><label>Align yaw</label>
+        <input type="range" id="panoyaw" min="0" max="359" value="0"><span class="val" id="panoyaw-v">0°</span></div>
+      <p class="note">Fallback if you don't have the original splat: the clean 360° photo. Nudge <i>Align yaw</i> if shadows sit wrong. The original splat, when loaded, overrides the panorama.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="sec" data-vis="comb">
+      <h2>Materials</h2>
+      <p class="note" style="margin:0 0 12px">Click a swatch to swap that region's material — it paints into the combined kitchen live. <b>Cabinet</b> swatches paint the green region, <b>Worktop</b> swatches the pink region.</p>
+      <div class="galsub"><div class="galhead">Cabinet material <span class="galh-hint">— green region</span></div><div id="matgallery-cab" class="matgallery"></div></div>
+      <div class="galsub"><div class="galhead">Worktop material <span class="galh-hint">— pink region</span></div><div id="matgallery-wt" class="matgallery"></div></div>
+      <div id="matchip" style="display:none">
+        <canvas id="matcanvas" width="224" height="156"></canvas>
+        <div id="matmeta">
+          <div id="matname">no material</div>
+          <button id="btn-mat">Load image…</button>
+          <input type="file" id="matinput" accept="image/*" style="display:none">
+        </div>
+      </div>
+      <div class="row" style="margin:4px 0 0"><label style="flex:none;color:var(--muted)">Adjusting look for</label><span class="val" id="edittarget" style="flex:1;text-align:right;color:var(--accent)">Cabinets</span></div>
+    </div>
+
+    <div class="sec">
+      <h2>Material look</h2>
+      <div class="btnrow" style="margin-bottom:6px">
+        <button id="btn-cabinet">Load Cabinet preset</button>
+        <button id="btn-counter">Load Worktop preset</button>
+      </div>
+      <div class="btnrow" style="margin-bottom:10px">
+        <button id="btn-save-cab" class="ghost">💾 Save → Cabinet</button>
+        <button id="btn-save-wt" class="ghost">💾 Save → Worktop</button>
+      </div>
+      <div class="row"><label>Tile size</label>
+        <input type="range" id="tilesize" min="10" max="400" value="63"><span class="val" id="tilesize-v">0.63 m</span></div>
+      <div class="row"><label>Rotation</label>
+        <input type="range" id="texrot" min="0" max="180" value="0"><span class="val" id="texrot-v">0°</span></div>
+      <div class="row"><label>Grain variation</label>
+        <input type="range" id="grainvar" min="0" max="100" value="11"><span class="val" id="grainvar-v">11%</span></div>
+      <div class="row"><label class="check"><input type="checkbox" id="facetsplit" checked> Per-facet projection (split bends)</label></div>
+      <div class="row"><label>Floor mosaic</label>
+        <input type="range" id="mosaic" min="0" max="150" value="0"><span class="val" id="mosaic-v">off</span></div>
+      <div class="row"><label>Contrast</label>
+        <input type="range" id="contrast" min="50" max="250" value="68"><span class="val" id="contrast-v">0.68×</span></div>
+      <div class="row"><label>Shading (scene)</label>
+        <input type="range" id="shading" min="0" max="200" value="18"><span class="val" id="shading-v">18%</span></div>
+      <div class="row"><label>Source colour</label>
+        <input type="range" id="panocolor" min="0" max="100" value="21"><span class="val" id="panocolor-v">21%</span></div>
+      <div class="row"><label>Keep lighting (own)</label>
+        <input type="range" id="keeplight" min="0" max="200" value="101"><span class="val" id="keeplight-v">101%</span></div>
+      <div class="row"><label>Match scene light</label>
+        <input type="range" id="matchlight" min="0" max="100" value="100"><span class="val" id="matchlight-v">100%</span></div>
+      <button id="btn-auto" style="width:100%;margin-top:12px" disabled>✨ Auto-match to scene</button>
+      <div class="btnrow" style="margin-top:8px">
+        <button id="btn-apply" class="primary">Re-apply look</button>
+        <button id="btn-revert" class="ghost" style="display:none" disabled>Revert</button>
+      </div>
+      <p class="note"><i>Auto-match</i> reads the material &amp; the scene lighting and sets contrast, shading, colour &amp; brightness for you. <i>Contrast</i> deepens the blacks; <i>Shading</i> bakes the room's light &amp; shadows; <i>Mosaic</i> breaks the floor into rotated stone tiles.</p>
+    </div>
+
+    <div class="sec">
+      <h2>View</h2>
+      <div class="row"><label>Splat size</label>
+        <input type="range" id="splatscale" min="40" max="220" value="164"><span class="val" id="splatscale-v">1.64×</span></div>
+      <div class="row"><label>Exposure</label>
+        <input type="range" id="exposure" min="50" max="220" value="100"><span class="val" id="exposure-v">1.00×</span></div>
+    </div>
+
+    <div class="sec" style="border-bottom:0;margin-top:auto" data-vis="comb">
+      <h2>Align &amp; export</h2>
+      <button id="btn-align" style="width:100%;margin-bottom:8px">⛓ Align worktops + original → cabinets</button>
+      <button id="btn-combined" class="primary" disabled style="width:100%">Download combined kitchen .spz</button>
+      <div class="btnrow" style="margin-top:8px">
+        <button id="btn-exp-cab" disabled>Cabinets only .spz</button>
+        <button id="btn-exp-wt" disabled>Worktops only .spz</button>
+      </div>
+      <button id="btn-spz" disabled style="width:100%;margin-top:8px">This channel's .spz</button>
+      <button id="btn-spz-orig" disabled style="width:100%;margin-top:8px">Paint onto original → .spz</button>
+      <p class="note"><i>Combined</i> merges both channels into one kitchen: cabinet region from Cabinets, worktop region from Worktops, overlapping splats removed so only one shows at each spot. Apply a material in each tab first.</p>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const toastEl = $('toast'); let toastTimer=null;
+function toast(msg,err){ toastEl.textContent=msg; toastEl.className='show'+(err?' err':''); clearTimeout(toastTimer); toastTimer=setTimeout(()=>toastEl.className='',3400); }
+const SH_C0=0.28209479177387814;
+const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
+const sigmoid=x=>1/(1+Math.exp(-x));
+const logit=p=>Math.log(p/(1-p));
+
+const _fbuf=new Float32Array(1), _ibuf=new Int32Array(_fbuf.buffer);
+function toHalf(v){ _fbuf[0]=v; const x=_ibuf[0];
+  let bits=(x>>16)&0x8000, m=(x>>12)&0x07ff; const e=(x>>23)&0xff;
+  if(e<103) return bits;
+  if(e>142){ bits|=0x7c00; bits|=(e===255?0:1)&&(x&0x007fffff); return bits; }
+  if(e<113){ m|=0x0800; bits|=(m>>(114-e))+((m>>(113-e))&1); return bits; }
+  bits|=((e-112)<<10)|(m>>1); bits+=m&1; return bits; }
+const packHalf2x16=(a,b)=>(toHalf(a)|(toHalf(b)<<16))>>>0;
+
+function lookAt(eye,target,up){
+  let zx=eye[0]-target[0],zy=eye[1]-target[1],zz=eye[2]-target[2];
+  let zl=Math.hypot(zx,zy,zz)||1; zx/=zl;zy/=zl;zz/=zl;
+  let xx=up[1]*zz-up[2]*zy,xy=up[2]*zx-up[0]*zz,xz=up[0]*zy-up[1]*zx;
+  let xl=Math.hypot(xx,xy,xz)||1; xx/=xl;xy/=xl;xz/=xl;
+  const yx=zy*xz-zz*xy,yy=zz*xx-zx*xz,yz=zx*xy-zy*xx;
+  return new Float32Array([xx,yx,zx,0, xy,yy,zy,0, xz,yz,zz,0,
+    -(xx*eye[0]+xy*eye[1]+xz*eye[2]),-(yx*eye[0]+yy*eye[1]+yz*eye[2]),-(zx*eye[0]+zy*eye[1]+zz*eye[2]),1]); }
+function perspective(fovy,aspect,near,far){ const f=1/Math.tan(fovy/2),nf=1/(near-far);
+  return new Float32Array([f/aspect,0,0,0, 0,f,0,0, 0,0,(far+near)*nf,-1, 0,0,2*far*near*nf,0]); }
+function mat4mul(a,b){ const o=new Float32Array(16);
+  for(let c=0;c<4;c++)for(let r=0;r<4;r++) o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];
+  return o; }
+function eigenSym3(m){
+  let a=[[m[0],m[1],m[2]],[m[1],m[3],m[4]],[m[2],m[4],m[5]]], v=[[1,0,0],[0,1,0],[0,0,1]];
+  for(let sweep=0;sweep<24;sweep++){
+    let off=Math.abs(a[0][1])+Math.abs(a[0][2])+Math.abs(a[1][2]); if(off<1e-12)break;
+    for(let p=0;p<2;p++)for(let q=p+1;q<3;q++){
+      if(Math.abs(a[p][q])<1e-15)continue;
+      const theta=(a[q][q]-a[p][p])/(2*a[p][q]);
+      const t=Math.sign(theta)/(Math.abs(theta)+Math.sqrt(theta*theta+1));
+      const c=1/Math.sqrt(t*t+1), s=t*c;
+      for(let k=0;k<3;k++){ const akp=a[k][p],akq=a[k][q]; a[k][p]=c*akp-s*akq; a[k][q]=s*akp+c*akq; }
+      for(let k=0;k<3;k++){ const apk=a[p][k],aqk=a[q][k]; a[p][k]=c*apk-s*aqk; a[q][k]=s*apk+c*aqk;
+        const vkp=v[k][p],vkq=v[k][q]; v[k][p]=c*vkp-s*vkq; v[k][q]=s*vkp+c*vkq; }
+    }
+  }
+  return {evals:[a[0][0],a[1][1],a[2][2]],
+    evecs:[[v[0][0],v[1][0],v[2][0]],[v[0][1],v[1][1],v[2][1]],[v[0][2],v[1][2],v[2][2]]]}; }
+
+/* ---- SPZ codec (Niantic .spz v1/v2) ---- */
+const SPZ_MAGIC=0x5053474e;
+const SH_DIMS={0:0,1:9,2:24,3:45};
+function parseSPZ(bytes){
+  const dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(dv.getUint32(0,true)!==SPZ_MAGIC) throw new Error('Not an SPZ file (bad magic)');
+  const version=dv.getUint32(4,true);
+  if(version!==2&&version!==1) throw new Error('Unsupported SPZ version '+version);
+  const n=dv.getUint32(8,true), shDegree=dv.getUint8(12), fracBits=dv.getUint8(13), flags=dv.getUint8(14);
+  let off=16;
+  const need=n*(9+1+3+3+3+SH_DIMS[shDegree]);
+  if(bytes.length<16+need) throw new Error('Truncated SPZ payload');
+  const positions=new Float32Array(n*3), div=1/(1<<fracBits);
+  for(let i=0;i<n*3;i++){ let v=bytes[off]|(bytes[off+1]<<8)|(bytes[off+2]<<16); if(v&0x800000)v-=0x1000000; positions[i]=v*div; off+=3; }
+  const alphasU8=bytes.slice(off,off+n); off+=n;
+  const colorBytes=bytes.slice(off,off+n*3); off+=n*3;
+  const colors=new Float32Array(n*3);
+  for(let i=0;i<n*3;i++) colors[i]=clamp(0.5+((colorBytes[i]/255-0.5)/0.15)*SH_C0,0,1);
+  const scalesLog=new Float32Array(n*3);
+  for(let i=0;i<n*3;i++) scalesLog[i]=bytes[off+i]/16-10; off+=n*3;
+  const quats=new Float32Array(n*4);
+  for(let i=0;i<n;i++){ const x=bytes[off]/127.5-1,y=bytes[off+1]/127.5-1,z=bytes[off+2]/127.5-1; off+=3;
+    const w=Math.sqrt(Math.max(0,1-x*x-y*y-z*z)); quats[i*4]=w;quats[i*4+1]=x;quats[i*4+2]=y;quats[i*4+3]=z; }
+  const shBytes=shDegree>0?bytes.slice(off,off+n*SH_DIMS[shDegree]):null;
+  return {n,shDegree,fracBits,flags,positions,alphasU8,colors,scalesLog,quats,shBytes};
+}
+function encodeSPZ(s){
+  const n=s.n, shDims=s.shBytes?SH_DIMS[s.shDegree]:0, fracBits=12;
+  const out=new Uint8Array(16+n*(9+1+3+3+3+shDims)), dv=new DataView(out.buffer);
+  dv.setUint32(0,SPZ_MAGIC,true); dv.setUint32(4,2,true); dv.setUint32(8,n,true);
+  out[12]=s.shBytes?s.shDegree:0; out[13]=fracBits; out[14]=s.flags||0; out[15]=0;
+  let off=16; const mul=1<<fracBits, lim=0x7fffff;
+  for(let i=0;i<n*3;i++){ let v=Math.round(s.positions[i]*mul); v=clamp(v,-lim-1,lim)&0xffffff;
+    out[off]=v&0xff; out[off+1]=(v>>8)&0xff; out[off+2]=(v>>16)&0xff; off+=3; }
+  out.set(s.alphasU8,off); off+=n;
+  for(let i=0;i<n*3;i++) out[off+i]=clamp(Math.round((((s.colors[i]-0.5)/SH_C0)*0.15+0.5)*255),0,255); off+=n*3;
+  for(let i=0;i<n*3;i++) out[off+i]=clamp(Math.round((s.scalesLog[i]+10)*16),0,255); off+=n*3;
+  for(let i=0;i<n;i++){ let w=s.quats[i*4],x=s.quats[i*4+1],y=s.quats[i*4+2],z=s.quats[i*4+3];
+    const l=Math.hypot(w,x,y,z)||1; w/=l;x/=l;y/=l;z/=l; if(w<0){w=-w;x=-x;y=-y;z=-z;}
+    out[off++]=clamp(Math.round(x*127.5+127.5),0,255); out[off++]=clamp(Math.round(y*127.5+127.5),0,255); out[off++]=clamp(Math.round(z*127.5+127.5),0,255); }
+  if(s.shBytes){ out.set(s.shBytes,off); off+=s.shBytes.length; }
+  return out;
+}
+async function gunzip(blobOrBuf){ const blob=blobOrBuf instanceof Blob?blobOrBuf:new Blob([blobOrBuf]);
+  return new Uint8Array(await new Response(blob.stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer()); }
+async function gzip(bytes){ return await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'))).blob(); }
+
+/* ---- renderer ---- */
+const canvas=$('gl');
+const gl=canvas.getContext('webgl2',{antialias:false,alpha:true,premultipliedAlpha:true});
+if(!gl){ document.body.innerHTML='<div style="padding:40px;font-family:sans-serif">WebGL2 is required.</div>'; throw new Error('no webgl2'); }
+const VS=`#version 300 es
+precision highp float; precision highp int; precision highp usampler2D;
+uniform usampler2D u_data; uniform usampler2D u_sel;
+uniform mat4 u_view, u_proj; uniform vec2 u_focal, u_viewport; uniform vec3 u_selTint;
+uniform float u_splatScale, u_exposure, u_selMix;
+in vec2 a_corner; in int a_index; out vec4 vColor; out vec2 vPos;
+void main(){
+  int ix=(a_index & 1023)<<1; int iy=a_index>>10;
+  uvec4 t0=texelFetch(u_data, ivec2(ix,iy),0);
+  vec3 p=vec3(uintBitsToFloat(t0.x),uintBitsToFloat(t0.y),uintBitsToFloat(t0.z));
+  vec4 cam=u_view*vec4(p,1.0); vec4 clipPos=u_proj*cam; float clip=1.2*clipPos.w;
+  if(clipPos.z<-clip||clipPos.x<-clip||clipPos.x>clip||clipPos.y<-clip||clipPos.y>clip){ gl_Position=vec4(0.0,0.0,2.0,1.0); return; }
+  uvec4 t1=texelFetch(u_data, ivec2(ix|1,iy),0);
+  vec2 c0=unpackHalf2x16(t1.x),c1=unpackHalf2x16(t1.y),c2=unpackHalf2x16(t1.z);
+  mat3 S=mat3(c0.x,c0.y,c1.x, c0.y,c1.y,c2.x, c1.x,c2.x,c2.y);
+  float tz=cam.z;
+  mat3 J=mat3(-u_focal.x/tz,0.0,0.0, 0.0,-u_focal.y/tz,0.0, u_focal.x*cam.x/(tz*tz),u_focal.y*cam.y/(tz*tz),0.0);
+  mat3 M=J*mat3(u_view); mat3 C=M*S*transpose(M);
+  float cxx=C[0][0]+0.3, cyy=C[1][1]+0.3, cxy=C[1][0];
+  float mid=0.5*(cxx+cyy), rad=length(vec2(0.5*(cxx-cyy),cxy));
+  float l1=mid+rad, l2=mid-rad; if(l2<0.0){ gl_Position=vec4(0.0,0.0,2.0,1.0); return; }
+  vec2 dir=normalize(vec2(cxy,l1-cxx));
+  vec2 major=min(sqrt(2.0*l1),1024.0)*u_splatScale*dir;
+  vec2 minor=min(sqrt(2.0*l2),1024.0)*u_splatScale*vec2(dir.y,-dir.x);
+  uint col=t0.w;
+  vec3 rgb=vec3(float(col&255u),float((col>>8)&255u),float((col>>16)&255u))/255.0;
+  float a=float((col>>24)&255u)/255.0; rgb*=u_exposure;
+  uint sel=texelFetch(u_sel, ivec2(a_index&1023,iy),0).x;
+  if(sel!=0u) rgb=mix(rgb,u_selTint,u_selMix);
+  vColor=vec4(rgb,a); vPos=a_corner;
+  vec2 ndc=clipPos.xy/clipPos.w;
+  gl_Position=vec4(ndc+a_corner.x*major/u_viewport+a_corner.y*minor/u_viewport,0.0,1.0);
+}`;
+const FS=`#version 300 es
+precision highp float; in vec4 vColor; in vec2 vPos; out vec4 frag;
+void main(){ float A=-dot(vPos,vPos); if(A<-4.0) discard; float B=exp(A)*vColor.a; frag=vec4(B*vColor.rgb,B); }`;
+function compile(type,src){ const sh=gl.createShader(type); gl.shaderSource(sh,src); gl.compileShader(sh);
+  if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh)); return sh; }
+const prog=gl.createProgram();
+gl.attachShader(prog,compile(gl.VERTEX_SHADER,VS)); gl.attachShader(prog,compile(gl.FRAGMENT_SHADER,FS));
+gl.linkProgram(prog); if(!gl.getProgramParameter(prog,gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+gl.useProgram(prog);
+const U=n=>gl.getUniformLocation(prog,n);
+const uView=U('u_view'),uProj=U('u_proj'),uFocal=U('u_focal'),uViewport=U('u_viewport'),uTint=U('u_selTint');
+const uSplatScale=U('u_splatScale'),uExposure=U('u_exposure'),uSelMix=U('u_selMix');
+gl.uniform1i(U('u_data'),0); gl.uniform1i(U('u_sel'),1);
+gl.uniform3f(uTint,1.0,0.88,0.1); gl.uniform1f(uSplatScale,1.64); gl.uniform1f(uExposure,1.0); gl.uniform1f(uSelMix,0.6);
+gl.disable(gl.DEPTH_TEST); gl.enable(gl.BLEND);
+gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA,gl.ONE,gl.ONE_MINUS_DST_ALPHA,gl.ONE);
+gl.clearColor(0,0,0,0);
+const quadBuf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,quadBuf);
+gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-2,-2,2,-2,-2,2,2,2]),gl.STATIC_DRAW);
+const aCorner=gl.getAttribLocation(prog,'a_corner'); gl.enableVertexAttribArray(aCorner);
+gl.vertexAttribPointer(aCorner,2,gl.FLOAT,false,0,0);
+const idxBuf=gl.createBuffer(); const aIndex=gl.getAttribLocation(prog,'a_index');
+gl.bindBuffer(gl.ARRAY_BUFFER,idxBuf); gl.enableVertexAttribArray(aIndex);
+gl.vertexAttribIPointer(aIndex,1,gl.INT,0,0); gl.vertexAttribDivisor(aIndex,1);
+const dataTex=gl.createTexture(), selTex=gl.createTexture();
+for(const [unit,tex] of [[0,dataTex],[1,selTex]]){ gl.activeTexture(gl.TEXTURE0+unit); gl.bindTexture(gl.TEXTURE_2D,tex);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE); }
+gl.pixelStorei(gl.UNPACK_ALIGNMENT,1);
+
+/* ---- scene state ---- */
+let scene=null, originalColors=null, selected=null, selCount=0;
+let texRows=0, texData=null, selDirty=false, colorDirty=false;
+let sortIdx=null, drawCount=0, sceneName='scene', baseName='scene';
+const cam={target:[0,1,0],theta:0.5,phi:1.15,radius:4,fov:60*Math.PI/180};
+/* ---- camera persistence: restored on open, saved as you move + when you leave ---- */
+let camSaveEnabled=false, _camSaveTimer=null;
+function saveCam(){ try{ localStorage.setItem('pm_cam', JSON.stringify({t:cam.target,th:cam.theta,ph:cam.phi,r:cam.radius})); }catch(e){} }
+function scheduleCamSave(){ if(!camSaveEnabled) return; clearTimeout(_camSaveTimer); _camSaveTimer=setTimeout(saveCam,500); }
+function loadSavedCam(){ try{ const o=JSON.parse(localStorage.getItem('pm_cam')||'null');
+  const ok=o&&Array.isArray(o.t)&&o.t.length===3&&o.t.every(Number.isFinite)&&[o.th,o.ph,o.r].every(Number.isFinite)&&o.r>0;
+  return ok?o:null; }catch(e){ return null; } }
+function applySavedCam(o){ cam.target=[o.t[0],o.t[1],o.t[2]]; cam.theta=o.th; cam.phi=clamp(o.ph,0.05,Math.PI-0.05); cam.radius=clamp(o.r,0.15,200); pickKey=''; }
+window.addEventListener('pagehide',()=>{ if(camSaveEnabled) saveCam(); });
+window.addEventListener('beforeunload',()=>{ if(camSaveEnabled) saveCam(); });
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'&&camSaveEnabled) saveCam(); });
+let viewMat=null, projMat=null, needSort=true, sortBusy=false;
+
+const workerSrc=`let positions=null,n=0; const cnt=new Uint32Array(65536);
+onmessage=(e)=>{ const d=e.data;
+  if(d.type==='init'){ positions=new Float32Array(d.positions); n=d.count; return; }
+  if(d.type!=='sort'||!positions) return;
+  const zx=d.z[0],zy=d.z[1],zz=d.z[2]; const depths=new Int32Array(n);
+  let mn=Infinity,mx=-Infinity;
+  for(let i=0;i<n;i++){ const v=-(zx*positions[i*3]+zy*positions[i*3+1]+zz*positions[i*3+2]); const q=(v*4096)|0; depths[i]=q; if(q<mn)mn=q; if(q>mx)mx=q; }
+  cnt.fill(0); const scale=65535/Math.max(1,(mx-mn));
+  for(let i=0;i<n;i++){ const b=((depths[i]-mn)*scale)|0; depths[i]=b; cnt[b]++; }
+  const starts=new Uint32Array(65536); for(let i=1;i<65536;i++) starts[i]=starts[i-1]+cnt[i-1];
+  const out=new Uint32Array(n); for(let i=0;i<n;i++) out[starts[depths[i]]++]=i;
+  postMessage({type:'sorted',indices:out.buffer,token:d.token},[out.buffer]); };`;
+let worker=null;
+try{ worker=new Worker(URL.createObjectURL(new Blob([workerSrc],{type:'application/javascript'}))); }catch(e){ worker=null; }
+let sortToken=0;
+if(worker) worker.onmessage=(e)=>{ if(e.data.type!=='sorted')return; sortBusy=false; sortIdx=new Int32Array(e.data.indices);
+  gl.bindBuffer(gl.ARRAY_BUFFER,idxBuf); gl.bufferData(gl.ARRAY_BUFFER,sortIdx,gl.DYNAMIC_DRAW); drawCount=sortIdx.length; };
+let mtDepths=null,mtCnt=null,mtStarts=null;
+function mainThreadSort(zx,zy,zz){
+  const n=scene.n,p=scene.positions;
+  if(!mtDepths||mtDepths.length!==n) mtDepths=new Int32Array(n);
+  if(!mtCnt){ mtCnt=new Uint32Array(65536); mtStarts=new Uint32Array(65536); }
+  let mn=Infinity,mx=-Infinity;
+  for(let i=0;i<n;i++){ const v=-(zx*p[i*3]+zy*p[i*3+1]+zz*p[i*3+2]); const q=(v*4096)|0; mtDepths[i]=q; if(q<mn)mn=q; if(q>mx)mx=q; }
+  mtCnt.fill(0); const scale=65535/Math.max(1,mx-mn);
+  for(let i=0;i<n;i++){ const b=((mtDepths[i]-mn)*scale)|0; mtDepths[i]=b; mtCnt[b]++; }
+  mtStarts[0]=0; for(let i=1;i<65536;i++) mtStarts[i]=mtStarts[i-1]+mtCnt[i-1];
+  const out=new Int32Array(n); for(let i=0;i<n;i++) out[mtStarts[mtDepths[i]]++]=i;
+  sortIdx=out; gl.bindBuffer(gl.ARRAY_BUFFER,idxBuf); gl.bufferData(gl.ARRAY_BUFFER,sortIdx,gl.DYNAMIC_DRAW); drawCount=n;
+}
+function quatToCov(qw,qx,qy,qz,sx,sy,sz,out){
+  const r00=1-2*(qy*qy+qz*qz),r01=2*(qx*qy-qw*qz),r02=2*(qx*qz+qw*qy);
+  const r10=2*(qx*qy+qw*qz),r11=1-2*(qx*qx+qz*qz),r12=2*(qy*qz-qw*qx);
+  const r20=2*(qx*qz-qw*qy),r21=2*(qy*qz+qw*qx),r22=1-2*(qx*qx+qy*qy);
+  const m00=r00*sx,m01=r01*sy,m02=r02*sz, m10=r10*sx,m11=r11*sy,m12=r12*sz, m20=r20*sx,m21=r21*sy,m22=r22*sz;
+  out[0]=m00*m00+m01*m01+m02*m02; out[1]=m00*m10+m01*m11+m02*m12; out[2]=m00*m20+m01*m21+m02*m22;
+  out[3]=m10*m10+m11*m11+m12*m12; out[4]=m10*m20+m11*m21+m12*m22; out[5]=m20*m20+m21*m21+m22*m22;
+}
+function colorWord(i){
+  const r=clamp(Math.round(scene.colors[i*3]*255),0,255), g=clamp(Math.round(scene.colors[i*3+1]*255),0,255), b=clamp(Math.round(scene.colors[i*3+2]*255),0,255);
+  return (r|(g<<8)|(b<<16)|(scene.alphasU8[i]<<24))>>>0;
+}
+function buildGPUData(){
+  const n=scene.n; texRows=Math.ceil(n/1024); texData=new Uint32Array(2048*texRows*4);
+  const f2u=new Uint32Array(1), f2f=new Float32Array(f2u.buffer), cov=new Float32Array(6);
+  for(let i=0;i<n;i++){
+    const row=i>>10,col=(i&1023)<<1,base=(row*2048+col)*4;
+    f2f[0]=scene.positions[i*3]; texData[base]=f2u[0];
+    f2f[0]=scene.positions[i*3+1]; texData[base+1]=f2u[0];
+    f2f[0]=scene.positions[i*3+2]; texData[base+2]=f2u[0];
+    texData[base+3]=colorWord(i);
+    const sx=Math.exp(scene.scalesLog[i*3]),sy=Math.exp(scene.scalesLog[i*3+1]),sz=Math.exp(scene.scalesLog[i*3+2]);
+    quatToCov(scene.quats[i*4],scene.quats[i*4+1],scene.quats[i*4+2],scene.quats[i*4+3],sx,sy,sz,cov);
+    texData[base+4]=packHalf2x16(cov[0],cov[1]); texData[base+5]=packHalf2x16(cov[2],cov[3]); texData[base+6]=packHalf2x16(cov[4],cov[5]); texData[base+7]=0;
+  }
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,dataTex);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA32UI,2048,texRows,0,gl.RGBA_INTEGER,gl.UNSIGNED_INT,texData);
+  selected=new Uint8Array(1024*texRows);
+  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,selTex);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.R8UI,1024,texRows,0,gl.RED_INTEGER,gl.UNSIGNED_BYTE,selected);
+  if(worker){ const posCopy=scene.positions.slice(); worker.postMessage({type:'init',positions:posCopy.buffer,count:n},[posCopy.buffer]); }
+  needSort=true;
+}
+function uploadColors(){ gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,dataTex);
+  gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,2048,texRows,gl.RGBA_INTEGER,gl.UNSIGNED_INT,texData); }
+function uploadSel(){ gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,selTex);
+  gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,1024,texRows,gl.RED_INTEGER,gl.UNSIGNED_BYTE,selected); }
+
+function eyePos(){ return [cam.target[0]+cam.radius*Math.sin(cam.phi)*Math.sin(cam.theta),
+  cam.target[1]+cam.radius*Math.cos(cam.phi), cam.target[2]+cam.radius*Math.sin(cam.phi)*Math.cos(cam.theta)]; }
+function updateMatrices(){
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const W=Math.max(1,Math.round(canvas.clientWidth*dpr)), H=Math.max(1,Math.round(canvas.clientHeight*dpr));
+  if(canvas.width!==W||canvas.height!==H){ canvas.width=W; canvas.height=H; }
+  viewMat=lookAt(eyePos(),cam.target,[0,1,0]); projMat=perspective(cam.fov,W/H,0.05,600);
+  gl.viewport(0,0,W,H); gl.uniformMatrix4fv(uView,false,viewMat); gl.uniformMatrix4fv(uProj,false,projMat);
+  const f=(H/2)/Math.tan(cam.fov/2); gl.uniform2f(uFocal,f,f); gl.uniform2f(uViewport,W,H);
+}
+let lastSortView='', lastMTSort=0;
+function frame(){
+  requestAnimationFrame(frame); if(!scene) return;
+  updateMatrices();
+  const zkey=viewMat[2].toFixed(3)+','+viewMat[6].toFixed(3)+','+viewMat[10].toFixed(3);
+  if(needSort||zkey!==lastSortView){
+    if(worker){ if(!sortBusy){ sortBusy=true; needSort=false; lastSortView=zkey; worker.postMessage({type:'sort',z:[viewMat[2],viewMat[6],viewMat[10]],token:++sortToken}); } }
+    else { const now=performance.now(); if(needSort||now-lastMTSort>140){ needSort=false; lastSortView=zkey; lastMTSort=now; mainThreadSort(viewMat[2],viewMat[6],viewMat[10]); } }
+  }
+  if(colorDirty){ uploadColors(); colorDirty=false; }
+  if(selDirty){ uploadSel(); selDirty=false; }
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  if(drawCount>0) gl.drawArraysInstanced(gl.TRIANGLE_STRIP,0,4,drawCount);
+}
+requestAnimationFrame(frame);
+
+/* ---- camera input ---- */
+let drag=null;
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+canvas.addEventListener('pointerdown',e=>{
+  if(!scene)return; canvas.setPointerCapture(e.pointerId);
+  const pan=e.button===2||e.button===1||e.shiftKey;
+  drag={mode:pan?'pan':'orbit',x:e.clientX,y:e.clientY}; canvas.style.cursor='grabbing';
+});
+canvas.addEventListener('pointermove',e=>{
+  if(!drag)return;
+  if(drag.mode==='orbit'){
+    cam.theta-=(e.clientX-drag.x)*0.006; cam.phi=clamp(cam.phi-(e.clientY-drag.y)*0.006,0.05,Math.PI-0.05);
+    drag.x=e.clientX; drag.y=e.clientY;
+  }else if(drag.mode==='pan'){
+    const dx=(e.clientX-drag.x),dy=(e.clientY-drag.y),s=cam.radius*0.0016;
+    cam.target[0]-=(viewMat[0]*dx-viewMat[1]*dy)*s; cam.target[1]-=(viewMat[4]*dx-viewMat[5]*dy)*s; cam.target[2]-=(viewMat[8]*dx-viewMat[9]*dy)*s;
+    drag.x=e.clientX; drag.y=e.clientY;
+  }
+});
+window.addEventListener('pointerup',()=>{ if(!drag)return; canvas.style.cursor='grab'; drag=null; scheduleCamSave(); });
+canvas.addEventListener('wheel',e=>{ if(!scene)return; e.preventDefault(); cam.radius=clamp(cam.radius*Math.exp(e.deltaY*0.0011),0.15,200); scheduleCamSave(); },{passive:false});
+let pickX=null,pickY=null,pickZ=null,pickKey='';
+function buildPickProjection(){
+  const W=canvas.clientWidth,H=canvas.clientHeight;
+  const key=cam.target.join(',')+cam.theta+','+cam.phi+','+cam.radius+','+W+'x'+H;
+  if(key===pickKey&&pickX)return; pickKey=key; const n=scene.n;
+  if(!pickX||pickX.length!==n){ pickX=new Float32Array(n); pickY=new Float32Array(n); pickZ=new Float32Array(n); }
+  const vp=mat4mul(projMat,viewMat), p=scene.positions;
+  for(let i=0;i<n;i++){ const x=p[i*3],y=p[i*3+1],z=p[i*3+2];
+    const cw=vp[3]*x+vp[7]*y+vp[11]*z+vp[15]; if(cw<=0.05){ pickZ[i]=-1; continue; }
+    const cx=(vp[0]*x+vp[4]*y+vp[8]*z+vp[12])/cw, cy=(vp[1]*x+vp[5]*y+vp[9]*z+vp[13])/cw;
+    pickX[i]=(cx*0.5+0.5)*W; pickY[i]=(0.5-cy*0.5)*H; pickZ[i]=-(viewMat[2]*x+viewMat[6]*y+viewMat[10]*z+viewMat[14]); }
+}
+canvas.addEventListener('dblclick',e=>{
+  if(!scene)return; buildPickProjection();
+  const rect=canvas.getBoundingClientRect(), mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  let best=-1,bestZ=Infinity;
+  for(let i=0;i<scene.n;i++){ if(pickZ[i]<=0||scene.alphasU8[i]<50)continue; const dx=pickX[i]-mx,dy=pickY[i]-my; if(dx*dx+dy*dy>144)continue; if(pickZ[i]<bestZ){bestZ=pickZ[i];best=i;} }
+  if(best>=0){ const eye=eyePos(); cam.target=[scene.positions[best*3],scene.positions[best*3+1],scene.positions[best*3+2]];
+    const v=[eye[0]-cam.target[0],eye[1]-cam.target[1],eye[2]-cam.target[2]]; cam.radius=Math.hypot(...v);
+    cam.phi=Math.acos(clamp(v[1]/cam.radius,-1,1)); cam.theta=Math.atan2(v[0],v[2]); scheduleCamSave(); toast('Pivot set'); }
+});
+
+/* ---- view sliders ---- */
+$('splatscale').addEventListener('input',()=>{ const v=parseInt($('splatscale').value)/100; gl.uniform1f(uSplatScale,v); $('splatscale-v').textContent=v.toFixed(2)+'×'; });
+$('exposure').addEventListener('input',()=>{ const v=parseInt($('exposure').value)/100; gl.uniform1f(uExposure,v); $('exposure-v').textContent=v.toFixed(2)+'×'; });
+$('hl').addEventListener('change',()=>{ gl.uniform1f(uSelMix,$('hl').checked?0.6:0.0); });
+
+/* ---- pink detection (by splat colour) ---- */
+function detectPink(){
+  if(!scene||!selected) return;
+  const c=originalColors, n=scene.n;
+  const hLo=+$('hueLo').value, hHi=+$('hueHi').value, sMin=+$('sat').value/100, vMin=+$('val').value/100;
+  let cnt=0;
+  for(let i=0;i<n;i++){
+    const r=c[i*3],g=c[i*3+1],b=c[i*3+2];
+    const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;
+    const s=mx<=0?0:d/mx, v=mx;
+    let h=0; if(d>1e-6){ if(mx===r)h=((g-b)/d)%6; else if(mx===g)h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; if(h<0)h+=360; }
+    const on=(h>=hLo&&h<=hHi&&s>=sMin&&v>=vMin)?1:0;
+    selected[i]=on; if(on)cnt++;
+  }
+  for(let i=n;i<selected.length;i++) selected[i]=0;
+  selCount=cnt; selDirty=true; segData=null; updateSelLabel();
+}
+function updateSelLabel(){
+  $('stat-sel').textContent=selCount.toLocaleString();
+  $('pinkcount').textContent=selCount.toLocaleString()+' splats';
+  $('btn-apply').disabled=viewingCombined?false:!(selCount>0&&material.data);
+  $('btn-auto').disabled=viewingCombined?false:!(selCount>0&&material.data);
+  $('btn-revert').disabled=selCount===0;
+  $('btn-spz').disabled=!scene;
+  $('btn-spz-orig').disabled=!(orig.scene&&selCount>0&&material.data);
+  try{ updateCombineBtns(); }catch(e){}
+}
+
+/* ---- material ---- */
+let material={img:null,data:null,w:0,h:0,name:'no material',meanLum:0.5};
+const matCtx=$('matcanvas').getContext('2d');
+function setMaterial(img,name){
+  const c=document.createElement('canvas'); const maxDim=2048, sc=Math.min(1,maxDim/Math.max(img.width,img.height));
+  c.width=Math.max(1,Math.round(img.width*sc)); c.height=Math.max(1,Math.round(img.height*sc));
+  c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  material.img=img; material.name=name; material.w=c.width; material.h=c.height;
+  material.data=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+  let lum=0,cnt=0; for(let o=0;o<material.data.length;o+=64){ lum+=0.2126*material.data[o]+0.7152*material.data[o+1]+0.0722*material.data[o+2]; cnt++; }
+  material.meanLum=(lum/cnt)/255;
+  $('matname').textContent=name; drawMatChip(); updateSelLabel();
+}
+function drawMatChip(){ const cw=$('matcanvas').width,ch=$('matcanvas').height; matCtx.clearRect(0,0,cw,ch);
+  if(!material.img)return; matCtx.drawImage(material.img,0,0,cw,ch); matCtx.strokeStyle='rgba(0,0,0,.25)'; matCtx.strokeRect(0.5,0.5,cw-1,ch-1); }
+$('btn-mat').onclick=()=>$('matinput').click();
+function loadMaterialFile(f){
+  const rd=new FileReader();
+  rd.onload=()=>{ const img=new Image();
+    img.onload=()=>{ setMaterial(img,f.name);
+      if(lastApply&&selCount>0){ applyMaterial(true); toast('Material applied: '+f.name); }
+      else toast('Material loaded: '+f.name); };
+    img.onerror=()=>toast('Could not decode image: '+f.name,true); img.src=rd.result; };
+  rd.onerror=()=>toast('Could not read file: '+f.name,true); rd.readAsDataURL(f);
+}
+$('matinput').addEventListener('change',e=>{ const f=e.target.files[0]; if(f){ loadMaterialFile(f); } e.target.value=''; });
+
+/* ---- original panorama (lighting source) ---- */
+const pano={data:null,w:0,h:0};
+const panoCtx=$('panocanvas').getContext('2d');
+function loadPanoFile(f){
+  const rd=new FileReader();
+  rd.onload=()=>{ const img=new Image();
+    img.onload=()=>{
+      const maxW=2048, sc=Math.min(1,maxW/img.width);
+      const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(img.width*sc)); c.height=Math.max(1,Math.round(img.height*sc));
+      const cx=c.getContext('2d',{willReadFrequently:true}); cx.drawImage(img,0,0,c.width,c.height);
+      pano.data=cx.getImageData(0,0,c.width,c.height).data; pano.w=c.width; pano.h=c.height;
+      const pc=$('panocanvas'); panoCtx.clearRect(0,0,pc.width,pc.height); panoCtx.drawImage(img,0,0,pc.width,pc.height);
+      $('matname2').textContent=f.name+' · '+img.width+'×'+img.height;
+      if(lastApply&&selCount>0) applyMaterial(true);
+      toast('Panorama loaded — lighting from '+f.name);
+    };
+    img.onerror=()=>toast('Could not decode image: '+f.name,true); img.src=rd.result; };
+  rd.onerror=()=>toast('Could not read file: '+f.name,true); rd.readAsDataURL(f);
+}
+$('btn-pano').onclick=()=>$('panoinput').click();
+$('panoinput').addEventListener('change',e=>{ const f=e.target.files[0]; if(f) loadPanoFile(f); e.target.value=''; });
+
+/* ---- original splat (best lighting source): luminance+colour grid sampled at each splat's own position ---- */
+let orig={grid:null,cell:0.08,name:'',scene:null};
+async function loadOrigSpz(f){
+  try{
+    toast('Reading original splat…');
+    const raw=new Uint8Array(await f.arrayBuffer());
+    if(!(raw[0]===0x1f&&raw[1]===0x8b)) throw new Error('Not a gzip .spz');
+    const s=parseSPZ(await gunzip(raw));
+    const GC=orig.cell, grid=new Map(), p=s.positions, c=s.colors;
+    for(let i=0;i<s.n;i++){
+      if(s.alphasU8[i]<40) continue;
+      const r=c[i*3],g=c[i*3+1],bl=c[i*3+2], L=0.2126*r+0.7152*g+0.0722*bl;
+      const kk=Math.floor(p[i*3]/GC)+','+Math.floor(p[i*3+1]/GC)+','+Math.floor(p[i*3+2]/GC);
+      let e=grid.get(kk); if(!e){ e=[0,0,0,0,0]; grid.set(kk,e); }
+      e[0]+=L; e[1]++; e[2]+=r; e[3]+=g; e[4]+=bl;
+    }
+    orig.grid=grid; orig.name=f.name; orig.scene=s;   // keep the full clean cloud so we can paint onto it
+    $('matname3').textContent=f.name.length>22?f.name.slice(0,20)+'… · '+s.n.toLocaleString():f.name+' · '+s.n.toLocaleString();
+    segData=null; if(lastApply&&selCount>0) applyMaterial(false);
+    updateSelLabel();
+    toast('Original splat loaded — '+s.n.toLocaleString()+' splats (shading + paint target)');
+  }catch(err){ console.error(err); toast('Could not load original splat: '+err.message,true); }
+}
+$('btn-origspz').onclick=()=>$('origspzinput').click();
+$('origspzinput').addEventListener('change',e=>{ const f=e.target.files[0]; if(f) loadOrigSpz(f); e.target.value=''; });
+
+
+let lastApply=null, segData=null;
+/* scene illumination: chromaticity + level of the brightest 20% of opaque splats */
+let sceneLight={tint:[1,1,1],meanLum:0.5};
+function computeSceneLight(){
+  const c=scene.colors, lums=[];
+  for(let i=0;i<scene.n;i+=4){ if(scene.alphasU8[i]<60)continue; lums.push(0.2126*c[i*3]+0.7152*c[i*3+1]+0.0722*c[i*3+2]); }
+  if(lums.length<100){ sceneLight={tint:[1,1,1],meanLum:0.5}; return; }
+  lums.sort((a,b)=>a-b); const p80=lums[Math.floor(lums.length*0.8)];
+  let r=0,g=0,b=0,m=0;
+  for(let i=0;i<scene.n;i+=4){ if(scene.alphasU8[i]<60)continue; const L=0.2126*c[i*3]+0.7152*c[i*3+1]+0.0722*c[i*3+2]; if(L<p80)continue; r+=c[i*3];g+=c[i*3+1];b+=c[i*3+2];m++; }
+  r/=m;g/=m;b/=m; const mx=Math.max(r,g,b,1e-3);
+  sceneLight={tint:[Math.max(r/mx,0.45),Math.max(g/mx,0.45),Math.max(b/mx,0.45)], meanLum:0.2126*r+0.7152*g+0.0722*b};
+}
+/* full-res bilinear texture sample (wraps) → [r,g,b] 0..1 */
+function sampleBilinear(D,W,H,u,v){
+  u-=Math.floor(u); v-=Math.floor(v);
+  const fx=u*W-0.5, fy=v*H-0.5;
+  let x0=Math.floor(fx), y0=Math.floor(fy); const tx=fx-x0, ty=fy-y0;
+  const wr=(nn,m)=>((nn%m)+m)%m;
+  x0=wr(x0,W); y0=wr(y0,H); const x1=wr(x0+1,W), y1=wr(y0+1,H);
+  const o00=(y0*W+x0)*4,o10=(y0*W+x1)*4,o01=(y1*W+x0)*4,o11=(y1*W+x1)*4;
+  const r=((D[o00]*(1-tx)+D[o10]*tx)*(1-ty)+(D[o01]*(1-tx)+D[o11]*tx)*ty)/255;
+  const g=((D[o00+1]*(1-tx)+D[o10+1]*tx)*(1-ty)+(D[o01+1]*(1-tx)+D[o11+1]*tx)*ty)/255;
+  const b=((D[o00+2]*(1-tx)+D[o10+2]*tx)*(1-ty)+(D[o01+2]*(1-tx)+D[o11+2]*tx)*ty)/255;
+  return [r,g,b];
+}
+/* surface normal of a splat = world direction of its flattest (smallest-scale) gaussian axis */
+function splatNormal(i,out){
+  const q=scene.quats,s=scene.scalesLog;
+  const qw=q[i*4],qx=q[i*4+1],qy=q[i*4+2],qz=q[i*4+3];
+  let ax=0,m=s[i*3]; if(s[i*3+1]<m){m=s[i*3+1];ax=1;} if(s[i*3+2]<m){m=s[i*3+2];ax=2;}
+  if(ax===0){ out[0]=1-2*(qy*qy+qz*qz); out[1]=2*(qx*qy+qw*qz); out[2]=2*(qx*qz-qw*qy); }
+  else if(ax===1){ out[0]=2*(qx*qy-qw*qz); out[1]=1-2*(qx*qx+qz*qz); out[2]=2*(qy*qz+qw*qx); }
+  else { out[0]=2*(qx*qz+qw*qy); out[1]=2*(qy*qz-qw*qx); out[2]=1-2*(qx*qx+qy*qy); }
+  const L=Math.hypot(out[0],out[1],out[2])||1; out[0]/=L;out[1]/=L;out[2]/=L;
+}
+/* plane fit for one facet; material is cast straight along the facet normal with gravity-aligned U/V
+   (horizontal surfaces project from above, walls keep tiles upright) — see the frame build below */
+function fitPlane(g,N){
+  const p=scene.positions, m=g.length; let cx=0,cy=0,cz=0;
+  for(const i of g){ cx+=p[i*3];cy+=p[i*3+1];cz+=p[i*3+2]; } cx/=m;cy/=m;cz/=m;
+  let xx=0,xy=0,xz=0,yy=0,yz=0,zz=0;
+  for(const i of g){ const a=p[i*3]-cx,b=p[i*3+1]-cy,c=p[i*3+2]-cz; xx+=a*a;xy+=a*b;xz+=a*c;yy+=b*b;yz+=b*c;zz+=c*c; }
+  const eig=eigenSym3([xx/m,xy/m,xz/m,yy/m,yz/m,zz/m]);
+  // geometric surface normal = direction of LEAST spread (robust plane fit — splats carry no normals,
+  // so we read the orientation off the local point cloud instead of any per-splat axis)
+  let lo=0; for(let k=1;k<3;k++) if(eig.evals[k]<eig.evals[lo])lo=k;
+  let Np=eig.evecs[lo].slice();
+  if(N && (Np[0]*N[0]+Np[1]*N[1]+Np[2]*N[2]<0)){ Np=[-Np[0],-Np[1],-Np[2]]; } // keep a consistent sign
+  N=Np;
+  // --- GRAVITY-ALIGNED planar projection: cast the tile straight along N, take U/V from the world axes ---
+  //   flat / horizontal surface (N≈±up) → U=worldX, V=worldZ  (projected from directly above)
+  //   wall or steep facet               → U=horizontal, V=up    (tiles stay upright, square, unskewed)
+  // U = up × N is ALWAYS exactly horizontal (its y-component is identically 0); V = N × U then leans
+  // with the slope so tiles stay gravity-upright. Only when the facet is within ~6° of flat does up × N
+  // collapse — there we anchor straight to world X/Z so the tile projects from directly above.
+  let U=[N[2],0,-N[0]];                       // up × N  with up = (0,1,0)
+  let UL=Math.hypot(U[0],U[1],U[2]);          // = sqrt(1 − Ny²)
+  if(UL<0.10){ U=[1,0,0]; }                   // near-horizontal surface → project from straight above (world XZ)
+  else { U=[U[0]/UL,U[1]/UL,U[2]/UL]; }
+  let V=[N[1]*U[2]-N[2]*U[1],N[2]*U[0]-N[0]*U[2],N[0]*U[1]-N[1]*U[0]];
+  const VL=Math.hypot(V[0],V[1],V[2])||1; V=[V[0]/VL,V[1]/VL,V[2]/VL];
+  let lum=0; for(const i of g) lum+=0.2126*originalColors[i*3]+0.7152*originalColors[i*3+1]+0.0722*originalColors[i*3+2];
+  return {c:[cx,cy,cz],U,V,N,meanLum:Math.max(lum/m,0.02)};
+}
+/* split the pink splats into separate FACETS via 7 cm connectivity gated by surface
+   normal — so a bend (counter top vs upstand) breaks apart and each facet is
+   textured from its own forward vector instead of sharing one stretched projection */
+function buildSegments(){
+  const n=scene.n,p=scene.positions, idxs=[];
+  for(let i=0;i<n;i++) if(selected[i]) idxs.push(i);
+  const facetSplit=$('facetsplit').checked;
+  const C=0.07, cellOf=new Map(), keys=[], cell=new Int32Array(idxs.length);
+  const kf=(x,y,z)=>x+','+y+','+z;
+  for(let k=0;k<idxs.length;k++){ const i=idxs[k];
+    const cx=Math.floor(p[i*3]/C),cy=Math.floor(p[i*3+1]/C),cz=Math.floor(p[i*3+2]/C), kk=kf(cx,cy,cz);
+    let id=cellOf.get(kk); if(id===undefined){ id=keys.length; cellOf.set(kk,id); keys.push([cx,cy,cz]); } cell[k]=id; }
+  // per-splat normals + per-cell averaged (sign-aligned) normal
+  const nrm=new Float32Array(idxs.length*3), cellN=new Float32Array(keys.length*3), t=[0,0,0];
+  for(let k=0;k<idxs.length;k++){ splatNormal(idxs[k],t); nrm[k*3]=t[0];nrm[k*3+1]=t[1];nrm[k*3+2]=t[2];
+    const bo=cell[k]*3, dx=cellN[bo],dy=cellN[bo+1],dz=cellN[bo+2]; let s=1; if((dx||dy||dz)&&(t[0]*dx+t[1]*dy+t[2]*dz<0))s=-1;
+    cellN[bo]+=s*t[0];cellN[bo+1]+=s*t[1];cellN[bo+2]+=s*t[2]; }
+  for(let c=0;c<keys.length;c++){ const bo=c*3,L=Math.hypot(cellN[bo],cellN[bo+1],cellN[bo+2])||1; cellN[bo]/=L;cellN[bo+1]/=L;cellN[bo+2]/=L; }
+  const parent=new Int32Array(keys.length); for(let i=0;i<keys.length;i++) parent[i]=i;
+  const find=a=>{ while(parent[a]!==a){ parent[a]=parent[parent[a]]; a=parent[a]; } return a; };
+  const NC=0.80; // unite neighbours only if their normals agree within ~37° (bends break)
+  for(let c=0;c<keys.length;c++){ const k0=keys[c], bo=c*3;
+    for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(let dz=-1;dz<=1;dz++){ if(!dx&&!dy&&!dz)continue;
+      const id=cellOf.get(kf(k0[0]+dx,k0[1]+dy,k0[2]+dz)); if(id===undefined)continue;
+      if(facetSplit){ const b2=id*3; if(Math.abs(cellN[bo]*cellN[b2]+cellN[bo+1]*cellN[b2+1]+cellN[bo+2]*cellN[b2+2])<NC) continue; }
+      const a=find(c),b=find(id); if(a!==b)parent[a]=b; } }
+  const remap=new Map(); let nc=0; const comp0=new Int32Array(idxs.length);
+  for(let k=0;k<idxs.length;k++){ const r=find(cell[k]); let m=remap.get(r); if(m===undefined){ m=nc++; remap.set(r,m); } comp0[k]=m; }
+  // per-comp0 centroid/size + averaged normal; merge tiny specks into nearest COMPATIBLE facet
+  const cent=Array.from({length:nc},()=>[0,0,0,0]); const cN=new Float32Array(nc*3);
+  for(let k=0;k<idxs.length;k++){ const i=idxs[k],c=comp0[k]; cent[c][0]+=p[i*3];cent[c][1]+=p[i*3+1];cent[c][2]+=p[i*3+2];cent[c][3]++;
+    const bo=c*3,dx=cN[bo],dy=cN[bo+1],dz=cN[bo+2]; let s=1; if((dx||dy||dz)&&(nrm[k*3]*dx+nrm[k*3+1]*dy+nrm[k*3+2]*dz<0))s=-1;
+    cN[bo]+=s*nrm[k*3];cN[bo+1]+=s*nrm[k*3+1];cN[bo+2]+=s*nrm[k*3+2]; }
+  for(let c=0;c<nc;c++){ const m=cent[c][3]||1; cent[c][0]/=m;cent[c][1]/=m;cent[c][2]/=m; const bo=c*3,L=Math.hypot(cN[bo],cN[bo+1],cN[bo+2])||1; cN[bo]/=L;cN[bo+1]/=L;cN[bo+2]/=L; }
+  const MIN=facetSplit?150:400, bigs=[]; for(let c=0;c<nc;c++) if(cent[c][3]>=MIN) bigs.push(c); if(!bigs.length) bigs.push(0);
+  const toBig=new Int32Array(nc);
+  for(let c=0;c<nc;c++){ if(cent[c][3]>=MIN){ toBig[c]=c; continue; }
+    let bd=Infinity,bc=-1; for(const q of bigs){ if(facetSplit && Math.abs(cN[c*3]*cN[q*3]+cN[c*3+1]*cN[q*3+1]+cN[c*3+2]*cN[q*3+2])<0.7) continue;
+      const dx=cent[c][0]-cent[q][0],dy=cent[c][1]-cent[q][1],dz=cent[c][2]-cent[q][2],d=dx*dx+dy*dy+dz*dz; if(d<bd){bd=d;bc=q;} } toBig[c]= bc>=0?bc:c; }
+  const idMap=new Map(); let K=0; const comp=new Int32Array(idxs.length); const groups=[], fN=[];
+  for(let k=0;k<idxs.length;k++){ const c=toBig[comp0[k]]; let m=idMap.get(c); if(m===undefined){ m=K++; idMap.set(c,m); groups.push([]); fN.push([0,0,0]); } comp[k]=m; groups[m].push(idxs[k]);
+    const acc=fN[m]; let s=1; if((acc[0]||acc[1]||acc[2])&&(nrm[k*3]*acc[0]+nrm[k*3+1]*acc[1]+nrm[k*3+2]*acc[2]<0))s=-1; acc[0]+=s*nrm[k*3];acc[1]+=s*nrm[k*3+1];acc[2]+=s*nrm[k*3+2]; }
+  const facetN=fN.map(a=>{const L=Math.hypot(a[0],a[1],a[2])||1;return [a[0]/L,a[1]/L,a[2]/L];});
+  // --- shading field: average luminance of nearby NON-pink splats (room light + shadows) ---
+  const GC=0.22, grid=new Map();
+  for(let i=0;i<n;i++){ if(selected[i]||scene.alphasU8[i]<40) continue;
+    const L=0.2126*originalColors[i*3]+0.7152*originalColors[i*3+1]+0.0722*originalColors[i*3+2];
+    const kk=Math.floor(p[i*3]/GC)+','+Math.floor(p[i*3+1]/GC)+','+Math.floor(p[i*3+2]/GC);
+    let e=grid.get(kk); if(!e){ e=[0,0]; grid.set(kk,e); } e[0]+=L; e[1]++; }
+  const localL=new Float32Array(idxs.length);
+  const sSum=new Float64Array(K), sCnt=new Float64Array(K);
+  for(let k=0;k<idxs.length;k++){ const i=idxs[k];
+    const gx=Math.floor(p[i*3]/GC),gy=Math.floor(p[i*3+1]/GC),gz=Math.floor(p[i*3+2]/GC);
+    let s=0,cn=0;
+    for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(let dz=-1;dz<=1;dz++){ const e=grid.get((gx+dx)+','+(gy+dy)+','+(gz+dz)); if(e){ s+=e[0]; cn+=e[1]; } }
+    const L=cn>0?s/cn:-1; localL[k]=L; if(L>=0){ const c=comp[k]; sSum[c]+=L; sCnt[c]++; } }
+  const surfMeanL=new Float32Array(K);
+  for(let c=0;c<K;c++) surfMeanL[c]=sCnt[c]>0?sSum[c]/sCnt[c]:0.5;
+  for(let k=0;k<idxs.length;k++) if(localL[k]<0) localL[k]=surfMeanL[comp[k]];
+  // equirect back-projection of each splat to the source panorama (yaw applied at sample time)
+  // World Labs convention: +X right, +Y up, -Z forward, origin (0,0,0)
+  const panoUbase=new Float32Array(idxs.length), panoV=new Float32Array(idxs.length);
+  for(let k=0;k<idxs.length;k++){ const i=idxs[k], X=p[i*3],Y=p[i*3+1],Z=p[i*3+2], r=Math.hypot(X,Y,Z)||1e-6;
+    let u=0.5+Math.atan2(X,-Z)/(2*Math.PI); u-=Math.floor(u);
+    panoUbase[k]=u; panoV[k]=0.5-Math.asin(clamp(Y/r,-1,1))/Math.PI; }
+  // --- ORIGINAL-SPLAT lighting: sample the clean cloud at each splat's own position ---
+  let origL=null, origCh=null, facetMeanOrigL=null;
+  if(orig.grid){
+    const GC=orig.cell, g=orig.grid; origL=new Float32Array(idxs.length); origCh=new Float32Array(idxs.length*3);
+    const fSum=new Float64Array(K), fCnt=new Float64Array(K);
+    for(let k=0;k<idxs.length;k++){ const i=idxs[k];
+      const bx=Math.floor(p[i*3]/GC),by=Math.floor(p[i*3+1]/GC),bz=Math.floor(p[i*3+2]/GC);
+      let e=g.get(bx+','+by+','+bz), sL=0,cn=0,sr=0,sg=0,sb=0;
+      if(e){ sL=e[0];cn=e[1];sr=e[2];sg=e[3];sb=e[4]; }
+      else { for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(let dz=-1;dz<=1;dz++){ const e2=g.get((bx+dx)+','+(by+dy)+','+(bz+dz)); if(e2){ sL+=e2[0];cn+=e2[1];sr+=e2[2];sg+=e2[3];sb+=e2[4]; } } }
+      if(cn>0){ const L=sL/cn; origL[k]=L; origCh[k*3]=sr/cn; origCh[k*3+1]=sg/cn; origCh[k*3+2]=sb/cn; const c2=comp[k]; fSum[c2]+=L; fCnt[c2]++; }
+      else origL[k]=-1; }
+    facetMeanOrigL=new Float32Array(K);
+    for(let c=0;c<K;c++) facetMeanOrigL[c]=fCnt[c]>0?fSum[c]/fCnt[c]:0.5;
+    for(let k=0;k<idxs.length;k++) if(origL[k]<0){ const m=facetMeanOrigL[comp[k]]; origL[k]=m; origCh[k*3]=origCh[k*3+1]=origCh[k*3+2]=m; }
+  }
+  segData={idxs:Int32Array.from(idxs), comp, fits:groups.map((g,c)=>fitPlane(g,facetN[c])), ncomp:K, localL, surfMeanL, panoUbase, panoV, origL, origCh, facetMeanOrigL};
+}
+const fract=x=>x-Math.floor(x);
+function applyMaterial(reuse,skipGPU){
+  if(!scene||selCount===0||!material.data) return;
+  if(!segData||!reuse) buildSegments();
+  const p=scene.positions, {idxs,comp,fits,localL,surfMeanL,origL,origCh,facetMeanOrigL}=segData;
+  const useOrig=!!origL;   // original-splat lighting overrides panorama/neighbour
+  const tile=parseInt($('tilesize').value)/100, rot=parseInt($('texrot').value)*Math.PI/180;
+  const grain=parseInt($('grainvar').value)/100;
+  const mcell=parseInt($('mosaic').value)/100;          // 0 = continuous slab
+  const contrast=parseInt($('contrast').value)/100;
+  const shadeS=parseInt($('shading').value)/100;
+  const keep=parseInt($('keeplight').value)/100;
+  const panoColorAmt=parseInt($('panocolor').value)/100;
+  const match=parseInt($('matchlight').value)/100;
+  const tR=1+(sceneLight.tint[0]-1)*match, tG=1+(sceneLight.tint[1]-1)*match, tB=1+(sceneLight.tint[2]-1)*match;
+  const W=material.w,H=material.h,D=material.data;
+  // --- sample the ORIGINAL panorama per splat: real shadows/highlights + colour of light ---
+  let panoL=null,panoCh=null,panoMean=1;
+  const usePano=!useOrig && !!pano.data && (shadeS>0||panoColorAmt>0);
+  if(usePano){
+    const Pd=pano.data,PW=pano.w,PH=pano.h, Ub=segData.panoUbase,Vb=segData.panoV;
+    const yt=parseInt($('panoyaw').value)/360;
+    panoL=segData._pL||(segData._pL=new Float32Array(idxs.length));
+    panoCh=segData._pC||(segData._pC=new Float32Array(idxs.length*3));
+    let s=0;
+    for(let k=0;k<idxs.length;k++){
+      let u=Ub[k]+yt; u-=Math.floor(u);
+      const px=Math.min(PW-1,(u*PW)|0), py=Math.min(PH-1,(Vb[k]*PH)|0), o=(py*PW+px)*4;
+      const pr=Pd[o]/255,pg=Pd[o+1]/255,pb=Pd[o+2]/255, L=0.2126*pr+0.7152*pg+0.0722*pb+1e-4;
+      panoL[k]=L; s+=L;
+      panoCh[k*3]=clamp(pr/L,0.25,3); panoCh[k*3+1]=clamp(pg/L,0.25,3); panoCh[k*3+2]=clamp(pb/L,0.25,3);
+    }
+    panoMean=s/idxs.length||1;
+  }
+  // per-surface base grain angle (cos/sin) + gentle brightness anchor (soft, so dark stays dark)
+  const ca=[],sa=[],bS=[];
+  for(let c=0;c<fits.length;c++){ const f=fits[c];
+    const ja=grain*fract(Math.abs(Math.sin((c+1)*12.9898)*43758.5453))*Math.PI, a=rot+ja;
+    ca[c]=Math.cos(a); sa[c]=Math.sin(a);
+    // anchor the marble's level to the REAL original surface brightness when available, else flat pink
+    const anchor=facetMeanOrigL?Math.max(facetMeanOrigL[c],0.05):Math.max(f.meanLum,0.18);
+    bS[c]=1+(clamp(anchor/Math.max(material.meanLum,0.05),0.5,1.4)-1)*match;
+  }
+  for(let k=0;k<idxs.length;k++){
+    const i=idxs[k], c=comp[k], f=fits[c];
+    const a=p[i*3]-f.c[0],b=p[i*3+1]-f.c[1],cc=p[i*3+2]-f.c[2];
+    // surface-plane coords (metres)
+    const su=a*f.U[0]+b*f.U[1]+cc*f.U[2], sv=a*f.V[0]+b*f.V[1]+cc*f.V[2];
+    let ru,rv;
+    if(mcell>0){ // mosaic: per-tile rotation + offset → laid-stone look
+      const ci=Math.floor(su/mcell), cj=Math.floor(sv/mcell);
+      const ang=fract(Math.sin((ci*127.1+cj*311.7+c*7.3))*43758.5)*Math.PI;
+      const off=fract(Math.sin((ci*269.5+cj*183.3+c*11.1))*43758.5)*7.0;
+      const lu=su-(ci+0.5)*mcell, lv=sv-(cj+0.5)*mcell, mc=Math.cos(ang), ms=Math.sin(ang);
+      ru=(lu*mc-lv*ms)+off; rv=(lu*ms+lv*mc);
+    }else{ ru=su*ca[c]-sv*sa[c]; rv=su*sa[c]+sv*ca[c]; }
+    const col=sampleBilinear(D,W,H,ru/tile,rv/tile);
+    // contrast around mid → deepens blacks, pops veins (cures the washed-out look)
+    let r=(col[0]-0.5)*contrast+0.5, g=(col[1]-0.5)*contrast+0.5, bl=(col[2]-0.5)*contrast+0.5;
+    // shading: real shadows/highlights — from the original splat if loaded, else panorama, else neighbours
+    const sf = useOrig
+      ? 1+shadeS*(clamp(origL[k]/Math.max(facetMeanOrigL[c],1e-3),0.25,3.0)-1)
+      : usePano
+        ? 1+shadeS*(clamp(panoL[k]/panoMean,0.3,2.6)-1)
+        : 1+shadeS*(clamp(localL[k]/Math.max(surfMeanL[c],1e-3),0.4,2.0)-1);
+    // keep lighting from the splat's OWN original brightness (subtle on flat-painted regions)
+    const lum=0.2126*originalColors[i*3]+0.7152*originalColors[i*3+1]+0.0722*originalColors[i*3+2];
+    const fl=1+keep*(clamp(lum/f.meanLum,0,2.4)-1);
+    const light=clamp(sf*fl,0.04,3.5);
+    // colour of light (per-channel cast) — from the original splat if loaded, else panorama
+    let pcr=1,pcg=1,pcb=1;
+    if(panoColorAmt>0){
+      if(useOrig){ const L=Math.max(origL[k],1e-3); pcr=1+(clamp(origCh[k*3]/L,0.25,3)-1)*panoColorAmt; pcg=1+(clamp(origCh[k*3+1]/L,0.25,3)-1)*panoColorAmt; pcb=1+(clamp(origCh[k*3+2]/L,0.25,3)-1)*panoColorAmt; }
+      else if(usePano){ pcr=1+(panoCh[k*3]-1)*panoColorAmt; pcg=1+(panoCh[k*3+1]-1)*panoColorAmt; pcb=1+(panoCh[k*3+2]-1)*panoColorAmt; }
+    }
+    const m=tR*bS[c]*light*pcr, mg=tG*bS[c]*light*pcg, mb=tB*bS[c]*light*pcb;
+    scene.colors[i*3]=clamp(r*m,0,1); scene.colors[i*3+1]=clamp(g*mg,0,1); scene.colors[i*3+2]=clamp(bl*mb,0,1);
+    if(!skipGPU){ const row=i>>10,col2=(i&1023)<<1; texData[(row*2048+col2)*4+3]=colorWord(i); }
+  }
+  lastApply=segData; if(!skipGPU) colorDirty=true; try{ updateCombineBtns(); }catch(e){}
+}
+$('btn-apply').onclick=()=>{ if(viewingCombined){ recombineLook(); toast('Re-applied '+(editTarget==='cab'?'cabinet':'worktop')+' look'); return; }
+  lastApply=null; applyMaterial(false);
+  $('hl').checked=false; gl.uniform1f(uSelMix,0.0);
+  toast('Material projected onto '+selCount.toLocaleString()+' splats'); };
+
+/* ---- analyse scene + material, auto-set hue / lighting / contrast for realism ---- */
+function setCtl(id,val,label){ const e=$(id); e.value=val; const l=$(id+'-v'); if(l) l.textContent=label; }
+function autoMatch(){
+  if(!scene||!material.data||selCount===0){ toast('Load a scene + material first',true); return; }
+  if(!segData) buildSegments();
+  // material luminance distribution (how contrasty the texture already is)
+  const D=material.data; let mS=0,mS2=0,mN=0;
+  for(let o=0;o<D.length;o+=16){ const L=(0.2126*D[o]+0.7152*D[o+1]+0.0722*D[o+2])/255; mS+=L;mS2+=L*L;mN++; }
+  const matStd=Math.sqrt(Math.max(1e-6,mS2/mN-(mS/mN)*(mS/mN)));
+  // how much real shadow/highlight variation the surface has (original splat preferred, else neighbours)
+  const sd=segData,N=sd.idxs.length, src=sd.origL||sd.localL;
+  let sS=0,sS2=0; for(let k=0;k<N;k++){ sS+=src[k]; sS2+=src[k]*src[k]; }
+  const srcMean=Math.max(1e-4,sS/N), relVar=Math.sqrt(Math.max(0,sS2/N-srcMean*srcMean))/srcMean;
+  // colour cast of the room light (distance of the scene tint from neutral grey)
+  const t=sceneLight.tint, cast=Math.max(Math.abs(t[0]-t[1]),Math.abs(t[1]-t[2]),Math.abs(t[0]-t[2]));
+  const hasSrc=!!sd.origL;
+  // derive settings (target a natural stone contrast; scale shading/colour by measured variation)
+  const contrast=Math.round(100*clamp(0.15/Math.max(matStd,0.04),0.55,1.6));
+  const shading=Math.round(clamp(relVar*(hasSrc?130:90),10,75));
+  const srcColour=Math.round(clamp(hasSrc?relVar*70+15:cast*240,0,55));
+  const matchl=Math.round(clamp(70+cast*400,75,100));
+  setCtl('contrast',contrast,(contrast/100).toFixed(2)+'×');
+  setCtl('shading',shading,shading+'%');
+  setCtl('panocolor',srcColour,srcColour+'%');
+  setCtl('matchlight',matchl,matchl+'%');
+  lastApply=null; applyMaterial(false);
+  $('hl').checked=false; gl.uniform1f(uSelMix,0.0);
+  toast(`Auto-matched · contrast ${(contrast/100).toFixed(2)}× · shading ${shading}% · colour ${srcColour}% · match ${matchl}%`+(hasSrc?' · from original splat':''));
+}
+$('btn-auto').onclick=()=>{ if(viewingCombined) withChannel(editTarget,()=>autoMatch()); else autoMatch(); };
+
+/* ---- saveable presets (cab / wt), persisted to localStorage ---- */
+const PRESET_DEFAULTS={
+  cab:{hueLo:'75',hueHi:'155',sat:'10',val:'24',tilesize:'63',texrot:'0',grainvar:'11',facetsplit:true,mosaic:'0',contrast:'68',shading:'18',panocolor:'21',keeplight:'101',matchlight:'100'},   /* GREEN mask = cabinets */
+  wt :{hueLo:'304',hueHi:'352',sat:'14',val:'20',tilesize:'101',texrot:'0',grainvar:'11',facetsplit:true,mosaic:'0',contrast:'66',shading:'36',panocolor:'25',keeplight:'101',matchlight:'100'}  /* PINK mask = worktops */
+};
+function loadPreset(key){ try{ const s=localStorage.getItem('pm_preset_'+key); if(s) return Object.assign({},PRESET_DEFAULTS[key],JSON.parse(s)); }catch(e){} return Object.assign({},PRESET_DEFAULTS[key]); }
+const presets={ cab:loadPreset('cab'), wt:loadPreset('wt') };
+function resetColors(){ if(!scene)return; scene.colors.set(originalColors);
+  for(let i=0;i<scene.n;i++){ const row=i>>10,col=(i&1023)<<1; texData[(row*2048+col)*4+3]=colorWord(i); } colorDirty=true; }
+function applyPreset(key){
+  writeSettings(presets[key]);
+  if(scene){ resetColors(); detectPink(); }
+  segData=null; lastApply=null;
+  if(scene&&material.data&&selCount>0){ applyMaterial(false); $('hl').checked=false; gl.uniform1f(uSelMix,0.0); }
+  toast((key==='cab'?'Cabinet':'Worktop')+' preset loaded');
+}
+function savePreset(key){ let s;
+  if(viewingCombined){ s=Object.assign({},chan[key].settings); const p=readSettings(); for(const k of LOOK_KEYS) s[k]=p[k]; }
+  else s=readSettings();
+  presets[key]=s; try{ localStorage.setItem('pm_preset_'+key, JSON.stringify(s)); }catch(e){}
+  toast((key==='cab'?'Cabinet':'Worktop')+' preset saved'); }
+function presetInCtx(key){
+  if(viewingCombined){ setEditTarget(key); chan[key].settings=Object.assign({},presets[key]);
+    withChannel(key,()=>{ if(scene){ resetColors(); detectPink(); } segData=null; lastApply=null; if(material.data&&selCount>0) applyMaterial(false); });
+    toast((key==='cab'?'Cabinet':'Worktop')+' preset applied'); }
+  else applyPreset(key);
+}
+$('btn-cabinet').onclick=()=>presetInCtx('cab');
+$('btn-counter').onclick=()=>presetInCtx('wt');
+$('btn-save-cab').onclick=()=>savePreset('cab');
+$('btn-save-wt').onclick=()=>savePreset('wt');
+$('btn-revert').onclick=()=>{ resetColors(); lastApply=null; $('hl').checked=true; gl.uniform1f(uSelMix,0.6); toast('Reverted to original colours'); };
+
+let sliderTimer=null;
+for(const id of ['tilesize','texrot','grainvar','mosaic','contrast','shading','panocolor','keeplight','panoyaw','matchlight']){
+  $(id).addEventListener('input',()=>{
+    $('tilesize-v').textContent=(parseInt($('tilesize').value)/100).toFixed(2)+' m';
+    $('texrot-v').textContent=$('texrot').value+'°';
+    $('grainvar-v').textContent=$('grainvar').value+'%';
+    $('mosaic-v').textContent=+$('mosaic').value===0?'off':(parseInt($('mosaic').value)/100).toFixed(2)+' m';
+    $('contrast-v').textContent=(parseInt($('contrast').value)/100).toFixed(2)+'×';
+    $('shading-v').textContent=$('shading').value+'%';
+    $('panocolor-v').textContent=$('panocolor').value+'%';
+    $('keeplight-v').textContent=$('keeplight').value+'%';
+    $('panoyaw-v').textContent=$('panoyaw').value+'°';
+    $('matchlight-v').textContent=$('matchlight').value+'%';
+    if(viewingCombined){ clearTimeout(sliderTimer); sliderTimer=setTimeout(recombineLook,280); }
+    else if(lastApply){ clearTimeout(sliderTimer); sliderTimer=setTimeout(()=>applyMaterial(true),120); }
+  });
+}
+let detectTimer=null;
+for(const id of ['hueLo','hueHi','sat','val']){
+  $(id).addEventListener('input',()=>{
+    $('sat-v').textContent=(+$('sat').value/100).toFixed(2); $('val-v').textContent=(+$('val').value/100).toFixed(2);
+    clearTimeout(detectTimer); detectTimer=setTimeout(()=>{ resetColors(); detectPink(); if(material.data){ lastApply=null; applyMaterial(false); } },130);
+  });
+}
+// toggling facet split changes segmentation → rebuild from scratch
+$('facetsplit').addEventListener('change',()=>{ if(viewingCombined){ recombineLook(); return; } segData=null; if(scene&&material.data&&selCount>0) applyMaterial(false); });
+
+/* ---- file load / export ---- */
+async function loadFile(file){
+  try{
+    toast('Loading '+file.name+'…');
+    if(!file.name.toLowerCase().endsWith('.spz')) throw new Error('Use a .spz file');
+    const s=parseSPZ(await gunzip(file));
+    scene=s; originalColors=s.colors.slice(); lastApply=null;
+    computeSceneLight();
+    sceneName=file.name; baseName=file.name.replace(/\.spz$/i,'');
+    buildGPUData();
+    let cx=0,cy=0,cz=0,m=0;
+    for(let i=0;i<s.n;i+=7){ cx+=s.positions[i*3];cy+=s.positions[i*3+1];cz+=s.positions[i*3+2];m++; }
+    cx/=m;cy/=m;cz/=m;
+    const dists=[]; for(let i=0;i<s.n;i+=23) dists.push(Math.hypot(s.positions[i*3]-cx,s.positions[i*3+1]-cy,s.positions[i*3+2]-cz));
+    dists.sort((a,b)=>a-b); const ext=dists[Math.floor(dists.length*0.7)]||3;
+    cam.target=[cx,cy,cz]; cam.radius=clamp(ext*0.9,0.8,30); cam.theta=0.6; cam.phi=1.05; pickKey='';
+    $('filemeta').textContent=file.name+' · '+(file.size/1048576).toFixed(1)+' MB';
+    $('stat-pts').textContent=s.n.toLocaleString();
+    $('dropzone').classList.add('hidden');
+    $('hl').checked=true; gl.uniform1f(uSelMix,0.6);
+    detectPink();
+    if(material.data){ applyMaterial(false); }
+    toast(s.n.toLocaleString()+' gaussians · '+selCount.toLocaleString()+' pink detected');
+  }catch(err){ console.error(err); toast('Load failed: '+err.message,true); }
+}
+$('btn-open').onclick=()=>$('fileinput').click();
+$('fileinput').addEventListener('change',e=>{ if(e.target.files[0]) loadFile(e.target.files[0]); e.target.value=''; });
+for(const ev of ['dragover','dragenter']) window.addEventListener(ev,e=>{ e.preventDefault(); $('dropzone').classList.add('drag'); });
+window.addEventListener('dragleave',e=>{ if(!e.relatedTarget) $('dropzone').classList.remove('drag'); });
+window.addEventListener('drop',e=>{ e.preventDefault(); $('dropzone').classList.remove('drag');
+  const f=e.dataTransfer.files[0]; if(!f) return;
+  if(/\.(png|jpe?g|webp|gif|bmp)$/i.test(f.name)) loadMaterialFile(f); else loadFile(f); });
+
+function download(blob,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); }
+$('btn-spz').onclick=async()=>{ try{ toast('Encoding .spz…'); const blob=await gzip(encodeSPZ(scene));
+  download(blob,baseName+'-marble.spz'); toast('Saved '+baseName+'-marble.spz ('+(blob.size/1048576).toFixed(1)+' MB)'); }
+  catch(err){ toast('Export failed: '+err.message,true); } };
+
+/* paint the applied material onto the CLEAN original splat (pink only locates the region).
+   Original file is never modified — this builds a fresh cloud and downloads it. */
+$('btn-spz-orig').onclick=async()=>{
+  try{
+    if(!orig.scene){ toast('Load the original splat first',true); return; }
+    if(!scene||selCount===0){ toast('Detect a region first',true); return; }
+    if(!lastApply){ toast('Apply the material first',true); return; }
+    toast('Painting onto original…');
+    const os=orig.scene;
+    const out={n:os.n,shDegree:os.shDegree,flags:os.flags,positions:os.positions,alphasU8:os.alphasU8,
+               scalesLog:os.scalesLog,quats:os.quats,shBytes:os.shBytes,colors:os.colors.slice()};
+    let painted=0;
+    // same count is NOT enough — verify the splats are in the SAME ORDER before index-aligning,
+    // otherwise the material would land on geometrically-scattered splats
+    let aligned=false;
+    if(os.n===scene.n){
+      const op=os.positions, sp=scene.positions; const step=Math.max(1,(scene.n/2000)|0); let d=0,ns=0;
+      for(let i=0;i<scene.n;i+=step){ d+=Math.abs(op[i*3]-sp[i*3])+Math.abs(op[i*3+1]-sp[i*3+1])+Math.abs(op[i*3+2]-sp[i*3+2]); ns++; }
+      aligned = (d/ns) < 0.1;
+    }
+    if(aligned){
+      // same cloud, same order → index-aligned: copy the applied material colour onto each selected splat
+      for(let i=0;i<scene.n;i++) if(selected[i]){ out.colors[i*3]=scene.colors[i*3]; out.colors[i*3+1]=scene.colors[i*3+1]; out.colors[i*3+2]=scene.colors[i*3+2]; painted++; }
+    } else {
+      // different cloud → spatial: grid the painted region, recolour nearby original splats
+      const GC=0.06, grid=new Map(), p=scene.positions;
+      for(let i=0;i<scene.n;i++){ if(!selected[i])continue; const k=Math.floor(p[i*3]/GC)+','+Math.floor(p[i*3+1]/GC)+','+Math.floor(p[i*3+2]/GC);
+        let e=grid.get(k); if(!e){ e=[0,0,0,0]; grid.set(k,e); } e[0]+=scene.colors[i*3];e[1]+=scene.colors[i*3+1];e[2]+=scene.colors[i*3+2];e[3]++; }
+      const op=os.positions;
+      for(let j=0;j<os.n;j++){ const bx=Math.floor(op[j*3]/GC),by=Math.floor(op[j*3+1]/GC),bz=Math.floor(op[j*3+2]/GC);
+        let e=grid.get(bx+','+by+','+bz);
+        if(!e){ outer: for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(let dz=-1;dz<=1;dz++){ const e2=grid.get((bx+dx)+','+(by+dy)+','+(bz+dz)); if(e2){ e=e2; break outer; } } }
+        if(e&&e[3]>0){ out.colors[j*3]=e[0]/e[3]; out.colors[j*3+1]=e[1]/e[3]; out.colors[j*3+2]=e[2]/e[3]; painted++; }
+      }
+    }
+    const blob=await gzip(encodeSPZ(out));
+    const nm=(orig.name||'original').replace(/\.spz$/i,'')+'_painted.spz';
+    download(blob,nm);
+    toast(`Painted ${painted.toLocaleString()} splats onto original (${aligned?'index-aligned':'spatial match'}) → ${nm} (${(blob.size/1048576).toFixed(1)} MB)`);
+  }catch(err){ console.error(err); toast('Paint-onto-original failed: '+err.message,true); }
+};
+
+/* ===================== two-channel (Cabinets / Worktops) editor ===================== */
+const SETTING_IDS=['hueLo','hueHi','sat','val','tilesize','texrot','grainvar','facetsplit','mosaic','contrast','shading','panocolor','keeplight','matchlight'];
+function readSettings(){ const o={}; for(const id of SETTING_IDS){ const e=$(id); o[id]=e.type==='checkbox'?e.checked:e.value; } return o; }
+function lblFor(id,v){ switch(id){
+  case 'tilesize': return (v/100).toFixed(2)+' m';
+  case 'texrot': return v+'°';
+  case 'grainvar': case 'shading': case 'panocolor': case 'keeplight': case 'matchlight': return v+'%';
+  case 'mosaic': return (+v===0)?'off':(v/100).toFixed(2)+' m';
+  case 'contrast': return (v/100).toFixed(2)+'×';
+  case 'sat': case 'val': return (v/100).toFixed(2);
+  default: return null; } }
+function writeSettings(o){ for(const id of SETTING_IDS){ if(!(id in o))continue; const e=$(id);
+  if(e.type==='checkbox') e.checked=o[id]; else { e.value=o[id]; const l=$(id+'-v'),t=lblFor(id,o[id]); if(l&&t!=null)l.textContent=t; } } }
+function newChan(name,settings){ return {name,settings:Object.assign({},settings),scene:null,originalColors:null,selected:null,selCount:0,segData:null,lastApply:null,
+  material:{img:null,data:null,w:0,h:0,name:'no material',meanLum:0.5}, orig:{grid:null,cell:0.08,name:'',scene:null}, sceneName:name,baseName:name}; }
+const chan={cab:newChan('Cabinets',presets.cab), wt:newChan('Worktops',presets.wt)};
+let active='cab', viewingCombined=false, editTarget='cab';
+const LOOK_KEYS=['tilesize','texrot','grainvar','facetsplit','mosaic','contrast','shading','panocolor','keeplight','panoyaw','matchlight'];
+function setEditTarget(k){ editTarget=k; const e=$('edittarget'); if(e) e.textContent=(k==='cab'?'Cabinets':'Worktops'); }
+/* run fn() with globals pointing at chan[key] (out of combined view), then rebuild the combined kitchen */
+function withChannel(key,fn){ setEditTarget(key); viewingCombined=false; active=key; loadChanInto(chan[key]); try{ fn&&fn(); }catch(e){ console.error(e); } showCombined(); }
+/* swap a region's material from the Combined tab — paints chan[key], then re-merges */
+async function combinedApplyMat(key,name){
+  setEditTarget(key);
+  const c=chan[key]; if(!c.scene){ toast('Load the splat first',true); return; }
+  let img;
+  try{ img=await loadImg(MAT_FOLDER[key]+encodeURIComponent(name)); }
+  catch(e){ console.error(e); toast('Could not load '+name,true); return; }
+  // Paint the new material onto THIS channel only, WITHOUT touching the on-screen merge — the other
+  // region keeps its material (no flash back to the pink/green mask). Then rebuild the merge in a single
+  // atomic GPU upload, so the view goes straight from old material → new material.
+  const G={scene,originalColors,selected,selCount,segData,lastApply,material,orig};
+  scene=c.scene; originalColors=c.originalColors; selected=c.selected; selCount=c.selCount;
+  segData=c.segData; lastApply=c.lastApply; material=c.material; orig=c.orig;
+  writeSettings(c.settings);
+  setMaterial(img,name); c.matSel=name;          // mutates c.material in place (global material === c.material here)
+  if(selCount>0) applyMaterial(true,true);        // reuse geometry, skipGPU → only c.scene.colors changes, screen untouched
+  c.segData=segData; c.lastApply=lastApply;
+  scene=G.scene; originalColors=G.originalColors; selected=G.selected; selCount=G.selCount;
+  segData=G.segData; lastApply=G.lastApply; material=G.material; orig=G.orig;
+  showCombined();                                 // one rebuild + upload: old merge → new merge, no intermediate frame
+}
+/* live look tuning from the Combined tab — copy the look sliders onto editTarget, re-apply, re-merge */
+function recombineLook(){ const key=editTarget, c=chan[key]; if(!c||!c.scene) return;
+  const panel=readSettings(); for(const k of LOOK_KEYS) c.settings[k]=panel[k];
+  withChannel(key,()=>{ if(material.data&&selCount>0){ lastApply=null; applyMaterial(false); } }); }
+
+function chanApplied(key){ if(key===active) return !!scene && !!lastApply; const c=chan[key]; return !!c.scene && !!c.lastApply; }
+function updateCombineBtns(){ const cab=chanApplied('cab'), wt=chanApplied('wt');
+  $('btn-combined').disabled=!(cab&&wt); $('btn-exp-cab').disabled=!cab; $('btn-exp-wt').disabled=!wt;
+  const cs=$('chan-status'); if(cs) cs.textContent = (!viewingCombined&&scene)?(sceneName+' · '+scene.n.toLocaleString()+' splats'):(viewingCombined?cs.textContent:'no splat loaded for this channel'); }
+function saveActive(){ if(viewingCombined) return;   /* globals hold the merged scene in combined view — never write it back into a channel */
+  const c=chan[active];
+  c.scene=scene;c.originalColors=originalColors;c.selected=selected;c.selCount=selCount;c.segData=segData;c.lastApply=lastApply;
+  c.material=material;c.orig=orig;c.sceneName=sceneName;c.baseName=baseName;c.settings=readSettings(); }
+function loadChanInto(c){
+  scene=c.scene;originalColors=c.originalColors;selected=c.selected;selCount=c.selCount;segData=c.segData;lastApply=c.lastApply;
+  material=c.material;orig=c.orig;sceneName=c.sceneName;baseName=c.baseName;
+  writeSettings(c.settings);
+  if(scene){ buildGPUData(); if(c.selected){ selected=c.selected; selDirty=true; } $('dropzone').classList.add('hidden'); $('stat-pts').textContent=scene.n.toLocaleString(); }
+  else { scene=null; drawCount=0; gl.clear(gl.COLOR_BUFFER_BIT); $('dropzone').classList.remove('hidden'); $('stat-pts').textContent='–'; }
+  drawMatChip(); $('matname').textContent=material.name; $('matname3').textContent=orig.name||'none';
+  updateSelLabel();
+}
+function setTab(t){ for(const k of ['cab','wt','combined']) $('tab-'+k).classList.toggle('active',k===t);
+  const cw=(t!=='combined');
+  document.querySelectorAll('[data-vis="cw"]').forEach(e=>e.style.display=cw?'':'none');
+  document.querySelectorAll('[data-vis="comb"]').forEach(e=>e.style.display=cw?'none':'');
+  document.querySelectorAll('[data-vis="setup"]').forEach(e=>e.style.display=(t==='cab')?'':'none');
+  // preset / save buttons are channel-specific (they carry that channel's detection): show only the
+  // active channel's on its own tab, both on Combined.
+  const showCab=(t!=='wt'), showWt=(t!=='cab');
+  for(const id of ['btn-cabinet','btn-save-cab']){ const e=$(id); if(e) e.style.display=showCab?'':'none'; }
+  for(const id of ['btn-counter','btn-save-wt']){ const e=$(id); if(e) e.style.display=showWt?'':'none'; }
+}
+function switchTab(to){
+  if(!viewingCombined && to===active) return;
+  if(!viewingCombined) saveActive(); viewingCombined=false;
+  active=to; const c=chan[to]; $('chan-head').textContent=c.name+' — pink splat';
+  loadChanInto(c); setTab(to);
+  try{ renderGallery(); }catch(e){}
+}
+$('tab-cab').onclick=()=>switchTab('cab');
+$('tab-wt').onclick=()=>switchTab('wt');
+$('btn-openchan').onclick=()=>$('fileinput').click();
+
+/* merge both channels into one de-duplicated kitchen */
+function buildCombined(){
+  saveActive();
+  const A=chan.cab,B=chan.wt;
+  if(!(A.scene&&A.lastApply&&B.scene&&B.lastApply)){ toast('Apply a material in BOTH Cabinets and Worktops first',true); return null; }
+  // SAME CLOUD (e.g. one MaskSplat in both channels, cabinets=green + worktops=pink) → index merge, no dedup
+  let same=A.scene.n===B.scene.n;
+  if(same){ const ap=A.scene.positions,bp2=B.scene.positions,step=Math.max(1,(A.scene.n/2000)|0); let d=0,ns=0;
+    for(let i=0;i<A.scene.n;i+=step){ d+=Math.abs(ap[i*3]-bp2[i*3])+Math.abs(ap[i*3+1]-bp2[i*3+1])+Math.abs(ap[i*3+2]-bp2[i*3+2]); ns++; } same=(d/ns)<0.1; }
+  if(same){
+    const n=A.scene.n, oc=A.originalColors, asel=A.selected, bsel0=B.selected, ac=A.scene.colors, bc=B.scene.colors;
+    const out={n,shDegree:0,flags:A.scene.flags|0,positions:A.scene.positions,colors:new Float32Array(n*3),scalesLog:A.scene.scalesLog,quats:A.scene.quats,alphasU8:A.scene.alphasU8,shBytes:null};
+    for(let i=0;i<n;i++){ let s,si=i*3;
+      if(asel&&asel[i]) s=ac;            // cabinet (green) region → cabinet material
+      else if(bsel0&&bsel0[i]) s=bc;     // worktop (pink) region → worktop material
+      else s=oc;                          // everything else → real surface (mask's own colour)
+      out.colors[si]=s[si]; out.colors[si+1]=s[si+1]; out.colors[si+2]=s[si+2]; }
+    return out;
+  }
+  const GC=0.06, occ=new Set(), bp=B.scene.positions, bsel=B.selected; let nB=0;
+  for(let i=0;i<B.scene.n;i++){ if(bsel&&bsel[i]){ occ.add(Math.floor(bp[i*3]/GC)+','+Math.floor(bp[i*3+1]/GC)+','+Math.floor(bp[i*3+2]/GC)); nB++; } }
+  const ap=A.scene.positions, keepA=new Uint8Array(A.scene.n); let nA=0;
+  for(let i=0;i<A.scene.n;i++){ if(!occ.has(Math.floor(ap[i*3]/GC)+','+Math.floor(ap[i*3+1]/GC)+','+Math.floor(ap[i*3+2]/GC))){ keepA[i]=1; nA++; } }
+  const N=nA+nB;
+  const out={n:N,shDegree:0,flags:A.scene.flags|0,positions:new Float32Array(N*3),colors:new Float32Array(N*3),scalesLog:new Float32Array(N*3),quats:new Float32Array(N*4),alphasU8:new Uint8Array(N),shBytes:null};
+  let k=0; const cp=(s,si)=>{ out.positions[k*3]=s.positions[si*3];out.positions[k*3+1]=s.positions[si*3+1];out.positions[k*3+2]=s.positions[si*3+2];
+    out.colors[k*3]=s.colors[si*3];out.colors[k*3+1]=s.colors[si*3+1];out.colors[k*3+2]=s.colors[si*3+2];
+    out.scalesLog[k*3]=s.scalesLog[si*3];out.scalesLog[k*3+1]=s.scalesLog[si*3+1];out.scalesLog[k*3+2]=s.scalesLog[si*3+2];
+    out.quats[k*4]=s.quats[si*4];out.quats[k*4+1]=s.quats[si*4+1];out.quats[k*4+2]=s.quats[si*4+2];out.quats[k*4+3]=s.quats[si*4+3];
+    out.alphasU8[k]=s.alphasU8[si]; k++; };
+  for(let i=0;i<A.scene.n;i++) if(keepA[i]) cp(A.scene,i);
+  for(let i=0;i<B.scene.n;i++) if(bsel&&bsel[i]) cp(B.scene,i);
+  return out;
+}
+function showCombined(){
+  if(!viewingCombined) saveActive();
+  const out=buildCombined(); if(!out){ setTab(active); return; }
+  viewingCombined=true; scene=out; originalColors=out.colors.slice(); selected=new Uint8Array(out.n); selCount=0; segData=null; lastApply=null;
+  buildGPUData(); $('dropzone').classList.add('hidden'); $('stat-pts').textContent=out.n.toLocaleString(); $('stat-sel').textContent='—';
+  setTab('combined'); $('chan-head').textContent='Combined kitchen'; $('chan-status').textContent='Combined view · '+out.n.toLocaleString()+' splats (read-only)';
+  try{ renderGallery(); }catch(e){}
+  toast('Combined view — '+out.n.toLocaleString()+' splats');
+}
+$('tab-combined').onclick=showCombined;
+$('btn-combined').onclick=async()=>{ try{ const out=buildCombined(); if(!out)return; toast('Encoding combined…'); const blob=await gzip(encodeSPZ(out)); download(blob,'kitchen-combined.spz'); toast('Saved kitchen-combined.spz ('+(blob.size/1048576).toFixed(1)+' MB · '+out.n.toLocaleString()+' splats)'); }catch(e){ console.error(e); toast('Combined export failed: '+e.message,true);} };
+async function exportChan(key){ if(key===active) saveActive(); const c=chan[key];
+  if(!c.scene||!c.lastApply){ toast('Apply a material in '+c.name+' first',true); return; }
+  try{ toast('Encoding '+c.name+'…'); const blob=await gzip(encodeSPZ(c.scene)); download(blob,c.name.toLowerCase()+'-restyled.spz'); toast('Saved '+c.name.toLowerCase()+'-restyled.spz ('+(blob.size/1048576).toFixed(1)+' MB)'); }catch(e){ console.error(e); toast('Export failed: '+e.message,true);} }
+$('btn-exp-cab').onclick=()=>exportChan('cab');
+$('btn-exp-wt').onclick=()=>exportChan('wt');
+
+/* ===== similarity registration: align source cloud onto the cabinets (target) ===== */
+function subPos(pos,n){ const N=pos.length/3, step=Math.max(1,(N/n)|0), o=[]; for(let i=0;i<N;i+=step) o.push(pos[i*3],pos[i*3+1],pos[i*3+2]); return new Float64Array(o); }
+function centroidF(p){ const n=p.length/3; let x=0,y=0,z=0; for(let i=0;i<n;i++){x+=p[i*3];y+=p[i*3+1];z+=p[i*3+2];} return [x/n,y/n,z/n]; }
+function centerF(p,c){ const n=p.length/3,o=new Float64Array(p.length); for(let i=0;i<n;i++){o[i*3]=p[i*3]-c[0];o[i*3+1]=p[i*3+1]-c[1];o[i*3+2]=p[i*3+2]-c[2];} return o; }
+function covAxes(p){ const n=p.length/3; let xx=0,xy=0,xz=0,yy=0,yz=0,zz=0,r2=0;
+  for(let i=0;i<n;i++){ const a=p[i*3],b=p[i*3+1],d=p[i*3+2]; xx+=a*a;xy+=a*b;xz+=a*d;yy+=b*b;yz+=b*d;zz+=d*d; r2+=a*a+b*b+d*d; }
+  const eig=eigenSym3([xx/n,xy/n,xz/n,yy/n,yz/n,zz/n]); const ord=[0,1,2].sort((i,j)=>eig.evals[j]-eig.evals[i]);
+  return {axes:ord.map(k=>eig.evecs[k]), rms:Math.sqrt(r2/n)}; }
+function mul3(A,B){ const o=new Array(9); for(let r=0;r<3;r++)for(let c=0;c<3;c++){let s=0;for(let k=0;k<3;k++)s+=A[r*3+k]*B[k*3+c];o[r*3+c]=s;} return o; }
+const tr3=A=>[A[0],A[3],A[6],A[1],A[4],A[7],A[2],A[5],A[8]];
+const det3=A=>A[0]*(A[4]*A[8]-A[5]*A[7])-A[1]*(A[3]*A[8]-A[5]*A[6])+A[2]*(A[3]*A[7]-A[4]*A[6]);
+const axes2mat=a=>[a[0][0],a[1][0],a[2][0],a[0][1],a[1][1],a[2][1],a[0][2],a[1][2],a[2][2]];
+function jacobi4(M){ let a=[[M[0],M[1],M[2],M[3]],[M[4],M[5],M[6],M[7]],[M[8],M[9],M[10],M[11]],[M[12],M[13],M[14],M[15]]];
+  let v=[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];
+  for(let sw=0;sw<60;sw++){ let off=0; for(let p=0;p<4;p++)for(let q=p+1;q<4;q++)off+=a[p][q]*a[p][q]; if(off<1e-18)break;
+    for(let p=0;p<4;p++)for(let q=p+1;q<4;q++){ if(Math.abs(a[p][q])<1e-20)continue; const th=(a[q][q]-a[p][p])/(2*a[p][q]); const t=Math.sign(th||1)/(Math.abs(th)+Math.sqrt(th*th+1)); const c=1/Math.sqrt(t*t+1),s=t*c;
+      for(let k=0;k<4;k++){ const kp=a[k][p],kq=a[k][q]; a[k][p]=c*kp-s*kq; a[k][q]=s*kp+c*kq; }
+      for(let k=0;k<4;k++){ const pk=a[p][k],qk=a[q][k]; a[p][k]=c*pk-s*qk; a[q][k]=s*pk+c*qk; const vp=v[k][p],vq=v[k][q]; v[k][p]=c*vp-s*vq; v[k][q]=s*vp+c*vq; } } }
+  let b=0; for(let i=1;i<4;i++) if(a[i][i]>a[b][b])b=i; return [v[0][b],v[1][b],v[2][b],v[3][b]]; }
+const quat2mat=q=>{ const w=q[0],x=q[1],y=q[2],z=q[3]; return [1-2*(y*y+z*z),2*(x*y-w*z),2*(x*z+w*y), 2*(x*y+w*z),1-2*(x*x+z*z),2*(y*z-w*x), 2*(x*z-w*y),2*(y*z+w*x),1-2*(x*x+y*y)]; };
+function mat2quat(R){ const tr=R[0]+R[4]+R[8]; let w,x,y,z;
+  if(tr>0){ const S=Math.sqrt(tr+1)*2; w=.25*S; x=(R[7]-R[5])/S; y=(R[2]-R[6])/S; z=(R[3]-R[1])/S; }
+  else if(R[0]>R[4]&&R[0]>R[8]){ const S=Math.sqrt(1+R[0]-R[4]-R[8])*2; w=(R[7]-R[5])/S; x=.25*S; y=(R[1]+R[3])/S; z=(R[2]+R[6])/S; }
+  else if(R[4]>R[8]){ const S=Math.sqrt(1+R[4]-R[0]-R[8])*2; w=(R[2]-R[6])/S; x=(R[1]+R[3])/S; y=.25*S; z=(R[5]+R[7])/S; }
+  else { const S=Math.sqrt(1+R[8]-R[0]-R[4])*2; w=(R[3]-R[1])/S; x=(R[2]+R[6])/S; y=(R[5]+R[7])/S; z=.25*S; }
+  const l=Math.hypot(w,x,y,z)||1; return [w/l,x/l,y/l,z/l]; }
+function hornQuat(S,T){ let Sxx=0,Sxy=0,Sxz=0,Syx=0,Syy=0,Syz=0,Szx=0,Szy=0,Szz=0; const n=S.length/3;
+  for(let i=0;i<n;i++){ const bx=S[i*3],by=S[i*3+1],bz=S[i*3+2],ax=T[i*3],ay=T[i*3+1],az=T[i*3+2]; Sxx+=bx*ax;Sxy+=bx*ay;Sxz+=bx*az;Syx+=by*ax;Syy+=by*ay;Syz+=by*az;Szx+=bz*ax;Szy+=bz*ay;Szz+=bz*az; }
+  return jacobi4([Sxx+Syy+Szz,Syz-Szy,Szx-Sxz,Sxy-Syx, Syz-Szy,Sxx-Syy-Szz,Sxy+Syx,Szx+Sxz, Szx-Sxz,Sxy+Syx,-Sxx+Syy-Szz,Syz+Szy, Sxy-Syx,Szx+Sxz,Syz+Szy,-Sxx-Syy+Szz]); }
+function registerSim(srcPos,tgtPos){
+  const S=subPos(srcPos,9000), T=subPos(tgtPos,9000);
+  const sc=centroidF(S), tc=centroidF(T), S0=centerF(S,sc), T0=centerF(T,tc);
+  const Sa=covAxes(S0), Ta=covAxes(T0), scale0=Ta.rms/Math.max(Sa.rms,1e-6);
+  const GC=0.18, grid=new Map(), nt=T0.length/3;
+  for(let i=0;i<nt;i++){ const k=Math.floor(T0[i*3]/GC)+','+Math.floor(T0[i*3+1]/GC)+','+Math.floor(T0[i*3+2]/GC); let e=grid.get(k); if(!e){e=[];grid.set(k,e);} e.push(i); }
+  const nearest=(x,y,z)=>{ const bx=Math.floor(x/GC),by=Math.floor(y/GC),bz=Math.floor(z/GC); let bi=-1,bd=Infinity;
+    for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(let dz=-1;dz<=1;dz++){ const e=grid.get((bx+dx)+','+(by+dy)+','+(bz+dz)); if(!e)continue; for(const j of e){ const a=T0[j*3]-x,b=T0[j*3+1]-y,c=T0[j*3+2]-z,d=a*a+b*b+c*c; if(d<bd){bd=d;bi=j;} } } return [bi,bd]; };
+  const ns=S0.length/3;
+  const errOf=(R,s)=>{ let e=0,c=0; for(let i=0;i<ns;i+=2){ const x=s*(R[0]*S0[i*3]+R[1]*S0[i*3+1]+R[2]*S0[i*3+2]), y=s*(R[3]*S0[i*3]+R[4]*S0[i*3+1]+R[5]*S0[i*3+2]), z=s*(R[6]*S0[i*3]+R[7]*S0[i*3+1]+R[8]*S0[i*3+2]); const nn=nearest(x,y,z); if(nn[0]>=0){ e+=Math.min(nn[1],1); c++; } } return c?e/c:1e9; };
+  const Rs=axes2mat(Sa.axes), Rt=axes2mat(Ta.axes); let R=[1,0,0,0,1,0,0,0,1], best=1e18;
+  for(const sg of [[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]]){ const D=[sg[0],0,0,0,sg[1],0,0,0,sg[2]]; const Rc=mul3(Rt,mul3(D,tr3(Rs))); if(det3(Rc)<0)continue; const e=errOf(Rc,scale0); if(e<best){best=e;R=Rc;} }
+  let s=scale0, t=[0,0,0];
+  for(let it=0;it<10;it++){ const cs=[],ct=[];
+    for(let i=0;i<ns;i++){ const x=s*(R[0]*S0[i*3]+R[1]*S0[i*3+1]+R[2]*S0[i*3+2])+t[0], y=s*(R[3]*S0[i*3]+R[4]*S0[i*3+1]+R[5]*S0[i*3+2])+t[1], z=s*(R[6]*S0[i*3]+R[7]*S0[i*3+1]+R[8]*S0[i*3+2])+t[2]; const nn=nearest(x,y,z); if(nn[0]>=0&&nn[1]<1.2){ cs.push(S0[i*3],S0[i*3+1],S0[i*3+2]); ct.push(T0[nn[0]*3],T0[nn[0]*3+1],T0[nn[0]*3+2]); } }
+    if(cs.length<300) break; const CS=new Float64Array(cs), CT=new Float64Array(ct), mS=centroidF(CS), mT=centroidF(CT), CS0=centerF(CS,mS), CT0=centerF(CT,mT);
+    R=quat2mat(hornQuat(CS0,CT0)); let num=0,den=0,m=CS0.length/3;
+    for(let i=0;i<m;i++){ const rx=R[0]*CS0[i*3]+R[1]*CS0[i*3+1]+R[2]*CS0[i*3+2],ry=R[3]*CS0[i*3]+R[4]*CS0[i*3+1]+R[5]*CS0[i*3+2],rz=R[6]*CS0[i*3]+R[7]*CS0[i*3+1]+R[8]*CS0[i*3+2]; num+=CT0[i*3]*rx+CT0[i*3+1]*ry+CT0[i*3+2]*rz; den+=CS0[i*3]**2+CS0[i*3+1]**2+CS0[i*3+2]**2; }
+    s=num/Math.max(den,1e-9); const rmx=R[0]*mS[0]+R[1]*mS[1]+R[2]*mS[2],rmy=R[3]*mS[0]+R[4]*mS[1]+R[5]*mS[2],rmz=R[6]*mS[0]+R[7]*mS[1]+R[8]*mS[2]; t=[mT[0]-s*rmx,mT[1]-s*rmy,mT[2]-s*rmz]; }
+  return { s, R, q:mat2quat(R), srcC:sc, off:[t[0]+tc[0],t[1]+tc[1],t[2]+tc[2]] };
+}
+function applyTransform(sc,T){ const n=sc.n,p=sc.positions,q=sc.quats,sl=sc.scalesLog,R=T.R,s=T.s,c=T.srcC,o=T.off,qR=T.q,lns=Math.log(Math.max(s,1e-6));
+  for(let i=0;i<n;i++){ const x=p[i*3]-c[0],y=p[i*3+1]-c[1],z=p[i*3+2]-c[2];
+    p[i*3]=s*(R[0]*x+R[1]*y+R[2]*z)+o[0]; p[i*3+1]=s*(R[3]*x+R[4]*y+R[5]*z)+o[1]; p[i*3+2]=s*(R[6]*x+R[7]*y+R[8]*z)+o[2];
+    const w1=qR[0],x1=qR[1],y1=qR[2],z1=qR[3],w2=q[i*4],x2=q[i*4+1],y2=q[i*4+2],z2=q[i*4+3];
+    q[i*4]=w1*w2-x1*x2-y1*y2-z1*z2; q[i*4+1]=w1*x2+x1*w2+y1*z2-z1*y2; q[i*4+2]=w1*y2-x1*z2+y1*w2+z1*x2; q[i*4+3]=w1*z2+x1*y2-y1*x2+z1*w2;
+    sl[i*3]+=lns; sl[i*3+1]+=lns; sl[i*3+2]+=lns; } }
+function rebuildOrigGrid(o){ if(!o.scene)return; const s=o.scene,GC=o.cell,grid=new Map(),p=s.positions,c=s.colors;
+  for(let i=0;i<s.n;i++){ if(s.alphasU8[i]<40)continue; const r=c[i*3],g=c[i*3+1],bl=c[i*3+2],L=0.2126*r+0.7152*g+0.0722*bl; const kk=Math.floor(p[i*3]/GC)+','+Math.floor(p[i*3+1]/GC)+','+Math.floor(p[i*3+2]/GC); let e=grid.get(kk); if(!e){e=[0,0,0,0,0];grid.set(kk,e);} e[0]+=L;e[1]++;e[2]+=r;e[3]+=g;e[4]+=bl; } o.grid=grid; }
+let aligned=false;
+async function alignAll(){
+  if(viewingCombined) switchTab('cab');
+  saveActive();
+  if(!chan.cab.scene){ toast('Cabinets must be loaded (it is the alignment target)',true); return; }
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  const tgt=chan.cab.scene.positions;
+  try{
+    $('btn-align').disabled=true; $('btn-align').textContent='Aligning…';
+    if(chan.wt.scene){ toast('Aligning worktops → cabinets…'); await sleep(30); applyTransform(chan.wt.scene, registerSim(chan.wt.scene.positions,tgt)); chan.wt.segData=null; }
+    if(chan.cab.orig&&chan.cab.orig.scene){ toast('Aligning original → cabinets…'); await sleep(30); applyTransform(chan.cab.orig.scene, registerSim(chan.cab.orig.scene.positions,tgt)); rebuildOrigGrid(chan.cab.orig); }
+    aligned=true;
+    if(active==='wt'){ const c=chan[active]; scene=c.scene; buildGPUData(); if(c.selected){selected=c.selected;selDirty=true;} }  // refresh aligned worktops view
+    $('btn-align').disabled=false; $('btn-align').textContent='✓ Aligned — re-apply materials';
+    toast('Aligned worktops + original to cabinets. Re-apply the material in each tab (click a swatch) for a clean projection, then Combine.');
+  }catch(e){ console.error(e); $('btn-align').disabled=false; $('btn-align').textContent='⛓ Align worktops + original → cabinets'; toast('Align failed: '+e.message,true); }
+}
+$('btn-align').onclick=alignAll;
+
+/* ===== material galleries (per-channel folder) + auto-load ===== */
+const MAT_FOLDER={cab:'./CabinetMaterials/', wt:'./WorktopMaterials/'};
+async function scanFolder(url){
+  try{ const r=await fetch(url); if(!r.ok) return [];
+    const html=await r.text();
+    const names=[...html.matchAll(/href="([^"?]+\.(?:jpg|jpeg|png|webp|avif))"/gi)].map(m=>decodeURIComponent(m[1].split('/').pop()));
+    return [...new Set(names)].filter(n=>!/^\./.test(n));
+  }catch(e){ return []; }
+}
+function renderGallery(){
+  for(const key of ['cab','wt']){
+    const g=$('matgallery-'+key); if(!g) continue;
+    const names=chan[key].matNames||[], folder=MAT_FOLDER[key];
+    if(!names.length){ g.innerHTML='<div class="galempty">No materials in '+folder+' — drop images there &amp; reload.</div>'; continue; }
+    g.innerHTML='';
+    for(const name of names){ const d=document.createElement('div'); d.className='matthumb'+(name===chan[key].matSel?' sel':'');
+      const im=document.createElement('img'); im.loading='lazy'; im.src=folder+encodeURIComponent(name);
+      const s=document.createElement('span'); s.textContent=name.replace(/\.[^.]+$/,'');
+      d.appendChild(im); d.appendChild(s); d.onclick=()=>combinedApplyMat(key,name); g.appendChild(d); }
+  }
+}
+/* image load with retry — a freshly-started server can drop image requests under the splat-load crunch */
+function loadImg(url,tries=6){ return new Promise((res,rej)=>{ let a=0;
+  const go=()=>{ const im=new Image(); im.onload=()=>res(im);
+    im.onerror=()=>{ if(++a<tries) setTimeout(go,450); else rej(new Error('decode')); };
+    im.src = a ? (url+(url.includes('?')?'&':'?')+'r='+a) : url; };   // cache-bust on retry to force a fresh fetch
+  go(); }); }
+async function applyFolderMaterial(name){
+  try{ const url=MAT_FOLDER[active]+encodeURIComponent(name);
+    const img=await loadImg(url);
+    setMaterial(img,name); chan[active].matSel=name; renderGallery();
+    if(selCount>0){ lastApply=null; applyMaterial(false); $('hl').checked=false; gl.uniform1f(uSelMix,0.0); toast('Applied '+name); }
+    else toast('Material set: '+name);
+  }catch(e){ console.error(e); toast('Could not load '+name+': '+e.message,true); }
+}
+async function refreshGalleries(){ chan.cab.matNames=await scanFolder(MAT_FOLDER.cab); chan.wt.matNames=await scanFolder(MAT_FOLDER.wt); renderGallery(); }
+
+async function fetchFile(url){ let last='?';
+  for(let a=0;a<7;a++){ try{ const r=await fetch(url,{cache:'no-store'}); if(r.ok){ const b=await r.blob(); return new File([b], decodeURIComponent(url.split('/').pop())); } last='HTTP '+r.status; }catch(e){ last=e.message; }
+    await new Promise(r=>setTimeout(r,600)); }
+  throw new Error(url.split('/').pop()+' → '+last); }
+const splash=(msg,pct)=>{ const m=$('loadsplash-msg'); if(m&&msg!=null)m.textContent=msg; const b=$('loadsplash-bar'); if(b&&pct!=null)b.style.width=pct+'%'; };
+const DEFAULTS={ cabPink:'./Splats/MaskSplat.spz', wtPink:'./Splats/MaskSplat.spz', orig:'./Splats/YinanOriginalKitchen.spz', pano:'./Panoramas/YinanKitchenOriginal.png' };
+/* Aim the camera so EVERY masked splat — pink worktops + lime-green cabinets — is in frame:
+   target their centroid, view from the open room-interior side, elevated ~3/4, fit the whole spread. */
+function frameMaskRegions(){
+  if(!scene) return false;
+  const p=scene.positions,n=scene.n,csel=chan.cab.selected,wsel=chan.wt.selected;
+  if(!csel&&!wsel) return false;
+  let sx=0,sy=0,sz=0,cnt=0;
+  for(let i=0;i<n;i++){ if((csel&&csel[i])||(wsel&&wsel[i])){ sx+=p[i*3];sy+=p[i*3+1];sz+=p[i*3+2];cnt++; } }
+  if(cnt<20) return false;
+  const cx=sx/cnt, cy=sy/cnt, cz=sz/cnt;
+  // robust radius = 95th-percentile distance from the centroid (a few stray splats can't blow the framing out)
+  const ds=[]; for(let i=0;i<n;i++){ if((csel&&csel[i])||(wsel&&wsel[i])){ const a=p[i*3]-cx,b=p[i*3+1]-cy,c=p[i*3+2]-cz; ds.push(Math.hypot(a,b,c)); } }
+  ds.sort((u,v)=>u-v); const rad=ds[Math.floor(ds.length*0.95)]||1;
+  // room centroid (all splats); the regions hug a wall, so (room − region) points to the open interior
+  let scx=0,scy=0,scz=0,mc=0; for(let i=0;i<n;i+=11){ scx+=p[i*3];scy+=p[i*3+1];scz+=p[i*3+2];mc++; } scx/=mc;scy/=mc;scz/=mc;
+  let dx=scx-cx,dz=scz-cz; if(Math.hypot(dx,dz)<0.3){ dx=Math.sin(0.7);dz=Math.cos(0.7); }
+  cam.target=[cx,cy,cz];
+  cam.theta=Math.atan2(dx,dz);   // azimuth looking from the room interior back toward the wall
+  cam.phi=1.1;                   // ~27° above horizontal: catches cabinet fronts AND worktop tops
+  const aspect=Math.max(0.2,(canvas.clientWidth||canvas.width||16)/(canvas.clientHeight||canvas.height||9));
+  const halfV=cam.fov/2, halfH=Math.atan(Math.tan(halfV)*aspect), halfFov=Math.min(halfV,halfH);
+  cam.radius=clamp(rad/Math.max(Math.sin(halfFov),0.05)*1.12, 1.0, 60);
+  pickKey='';
+  return true;
+}
+async function autoload(){
+  try{
+    $('dropzone').classList.add('hidden');
+    splash('Loading cabinets pink splat…',8);  await loadFile(await fetchFile(DEFAULTS.cabPink));
+    splash('Loading original splat (shading)…',30); await loadOrigSpz(await fetchFile(DEFAULTS.orig));
+    const sharedOrig=orig;
+    splash('Loading panorama…',44); try{ loadPanoFile(await fetchFile(DEFAULTS.pano)); }catch(e){}
+    saveActive();
+    splash('Loading worktops pink splat…',56); switchTab('wt'); await loadFile(await fetchFile(DEFAULTS.wtPink));
+    orig=sharedOrig; chan.wt.orig=sharedOrig;
+    saveActive();
+    splash('Scanning material folders…',84); await refreshGalleries();
+    if(chan.wt.matNames&&chan.wt.matNames.length) await applyFolderMaterial(chan.wt.matNames[0]);
+    switchTab('cab');
+    if(chan.cab.matNames&&chan.cab.matNames.length) await applyFolderMaterial(chan.cab.matNames[0]);
+    try{ const sc=loadSavedCam(); if(sc) applySavedCam(sc); else frameMaskRegions(); }catch(e){ console.error(e); }   // restore last camera, else frame all regions
+    camSaveEnabled=true;   // from here on, camera moves persist across sessions
+    splash('Ready',100); setTimeout(()=>$('loadsplash').classList.add('hidden'),400);
+    toast('Auto-loaded: cabinets + worktops + original + panorama');
+  }catch(e){ console.error(e); splash('Auto-load failed: '+e.message,100);
+    toast('Auto-load failed: '+e.message+' — load files manually',true); setTimeout(()=>$('loadsplash').classList.add('hidden'),2600); }
+}
+
+writeSettings(presets.cab); chan.cab.settings=Object.assign({},presets.cab); setTab('cab'); updateCombineBtns();
+autoload();
+</script>
+</body>
+</html>

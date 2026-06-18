@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kitchen — appliance boxes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#14161a;--panel:#1b1e24;--panel2:#22262e;--line:#2e333d;--text:#e9e7e1;--muted:#9097a3;--accent:#5be08a;--mono:'IBM Plex Mono',ui-monospace,monospace;--ui:'Space Grotesk',system-ui,sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0}html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--ui);font-size:13px}
+#app{display:grid;grid-template-rows:52px 1fr;grid-template-columns:1fr 300px;height:100%}
+#topbar{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+#wordmark{font-weight:600;letter-spacing:.12em}#wordmark em{font-style:normal;color:var(--accent)}
+#filemeta{font-family:var(--mono);font-size:11px;color:var(--muted);flex:1}
+#stats{font-family:var(--mono);font-size:11px;color:var(--muted)}#stats b{color:var(--text)}
+#viewwrap{position:relative;overflow:hidden;background:radial-gradient(1200px 700px at 45% 30%,#1a1d23 0%,#101216 70%)}
+canvas#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#hint{position:absolute;left:14px;bottom:12px;font-family:var(--mono);font-size:10.5px;color:var(--muted);pointer-events:none;line-height:1.7}
+kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;padding:0 4px;font-family:var(--mono);font-size:10px;color:var(--text);background:var(--panel2)}
+#dropzone{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(16,18,22,.92);z-index:20}
+#dropzone.hidden{display:none}
+#dropcard{max-width:440px;text-align:center;padding:42px 38px;border:1px dashed var(--line);border-radius:10px;background:var(--panel)}
+#dropcard h1{font-size:19px;font-weight:600;margin-bottom:10px}#dropcard h1 em{font-style:normal;color:var(--accent)}
+#dropcard p{color:var(--muted);line-height:1.65;margin-bottom:6px}
+#dropzone.drag #dropcard{border-color:var(--accent)}
+#panel{border-left:1px solid var(--line);background:var(--panel);overflow-y:auto}
+.sec{padding:14px 16px;border-bottom:1px solid var(--line)}
+.sec h2{font-size:10.5px;letter-spacing:.18em;color:var(--muted);font-weight:600;margin-bottom:11px;text-transform:uppercase}
+.row{display:flex;align-items:center;gap:8px;margin-bottom:9px}.row:last-child{margin-bottom:0}
+.row label{flex:1;color:var(--muted)}
+.val{font-family:var(--mono);font-size:11px;color:var(--text)}
+.sw{width:12px;height:12px;border-radius:3px;flex:none}
+input[type=number]{width:56px;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:5px;padding:4px 5px;font-family:var(--mono);font-size:11px}
+input[type=range]{flex:1.4;appearance:none;height:3px;background:var(--line);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;border-radius:50%;background:var(--accent);border:2px solid var(--panel);cursor:pointer}
+button{font-family:var(--ui);font-size:12.5px;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:7px 11px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+.check{display:flex;align-items:center;gap:8px;color:var(--muted);cursor:pointer;user-select:none}.check input{accent-color:var(--accent)}
+.note{font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:10px}.note b{color:var(--text)}
+</style></head>
+<body>
+<div id="app">
+  <div id="topbar"><div id="wordmark">APPLIANCE<em> boxes</em></div><div id="filemeta">no scene loaded</div><div id="stats"><b id="stat-pts">–</b> splats</div></div>
+  <div id="viewwrap"><canvas id="gl"></canvas>
+    <div id="hint">drag orbit · <kbd>shift</kbd>/right-drag pan · scroll zoom · double-click pivot · click node → N/S/E/W · hover+<kbd>K</kbd> drop nodes on surface · <kbd>L</kbd> shoot from all K-nodes · <kbd>F</kbd> frame all</div>
+    <div id="dropzone"><div id="dropcard"><h1>APPLIANCE<em> boxes</em></h1>
+      <p>Separate 3D bounding boxes for the fridge, oven and microwave, detected with the Boxer pipeline. Floaters are hidden by default.</p>
+      <p style="margin-top:12px">Drop <b style="color:var(--text)">.spz / .ply</b> to view.</p>
+      <div style="margin-top:18px"><button id="btn-open">Open scene .spz / .ply</button><input type="file" id="fileinput" accept=".spz,.ply" style="display:none"></div>
+    </div></div>
+  </div>
+  <div id="panel">
+    <div class="sec"><h2>Objects</h2><div id="objlist"></div>
+      <button id="btn-frame" style="width:100%;margin-top:6px">Frame all</button></div>
+    <div class="sec"><h2>Box fit</h2>
+      <div class="row"><label>Front gap (m)</label><input type="range" id="boxgap" min="0" max="0.3" step="0.01" value="0.05"><input type="number" id="boxgap-n" min="0" max="0.3" step="0.01" value="0.05"></div>
+      <p class="note">Nudges each box's left, right and front faces inward until they sit this far from the nearest (non-floater) splat. Updates all boxes live. Floaters are excluded from the test.</p>
+    </div>
+    <div class="sec"><h2>Camera</h2>
+      <div class="row"><label>Position</label><span class="val" id="campos">–</span></div>
+      <div class="row"><label>Looking at</label><span class="val" id="camtgt">–</span></div>
+      <div class="btnrow"><button id="camsave">Save camera</button><button id="camreset">Reset view</button></div>
+      <p class="note">Save stores this camera in the browser; it restores automatically next time you open the app. <span id="camstatus" style="color:var(--accent)"></span></p>
+    </div>
+    <div class="sec"><h2>Room crop box</h2>
+      <div class="row"><label class="check"><input type="checkbox" id="cropshow" checked> Show box</label></div>
+      <div class="row"><label class="check"><input type="checkbox" id="crophide"> Hide splats outside</label></div>
+      <div class="row"><label>Center X</label><input type="number" id="ccx" step="0.1"></div>
+      <div class="row"><label>Center Y</label><input type="number" id="ccy" step="0.1"></div>
+      <div class="row"><label>Center Z</label><input type="number" id="ccz" step="0.1"></div>
+      <div class="row"><label>Size X</label><input type="number" id="csx" step="0.1" min="0.1"></div>
+      <div class="row"><label>Size Y</label><input type="number" id="csy" step="0.1" min="0.1"></div>
+      <div class="row"><label>Size Z</label><input type="number" id="csz" step="0.1" min="0.1"></div>
+      <div class="btnrow"><button id="cropreset">Reset to room</button><button id="cropsave">Save crop ⬇</button></div>
+      <p class="note">Adjust center &amp; size on each axis to fit the room, then tick <b>Hide splats outside</b> to clip everything beyond the box. <b>Save crop</b> downloads room_crop.json.</p>
+    </div>
+    <div class="sec"><h2>Floor node grid</h2>
+      <div class="row"><label class="check"><input type="checkbox" id="ndshow"> Show nodes (blue)</label></div>
+      <div class="row"><label>Height above floor</label><input type="number" id="ndheight" step="0.05" value="0.5"></div>
+      <div class="row"><label>Spacing (m)</label><input type="number" id="ndspacing" step="0.05" min="0.1" value="0.4"></div>
+      <div class="row"><label>Clearance (m)</label><input type="number" id="ndclear" step="0.01" min="0.02" value="0.1"></div>
+      <div class="row"><label>Nodes</label><span class="val" id="ndcount">–</span></div>
+      <div class="row"><label>Floor level</label><span class="val" id="ndfloor">–</span></div>
+      <p class="note">Grid of free-space waypoints at <b>floor + height</b> inside the crop box, spaced evenly. A point is a node if it isn't inside a splat and has clear space (no splat within <b>clearance</b>) in at least one of N/S/E/W.</p>
+    </div>
+    <div class="sec"><h2>Detection backend</h2>
+      <div id="det-tabs" style="display:flex;gap:4px;margin-bottom:8px">
+        <button class="det-tab"        data-det="owlv2"    style="flex:1;padding:5px 4px;border-radius:5px;border:1px solid #444;background:#222;color:var(--text);font-size:11px;cursor:pointer">OWLv2</button>
+        <button class="det-tab"        data-det="gdino"    style="flex:1;padding:5px 4px;border-radius:5px;border:1px solid #444;background:#222;color:var(--text);font-size:11px;cursor:pointer">Grounding DINO</button>
+        <button class="det-tab active" data-det="yoloworld" style="flex:1;padding:5px 4px;border-radius:5px;border:1px solid var(--accent);background:var(--accent);color:#000;font-size:11px;cursor:pointer">YOLO World</button>
+        <button class="det-tab"        data-det="roboflow"  style="flex:1;padding:5px 4px;border-radius:5px;border:1px solid #444;background:#222;color:var(--text);font-size:11px;cursor:pointer">Roboflow</button>
+      </div>
+      <p class="note" id="det-note" style="margin:0">YOLO World: fast real-time detector, open-vocab classes.</p>
+    </div>
+    <div class="sec"><h2>K-node placement</h2>
+      <div class="row"><label>Radius (m)</label><input type="number" id="kradius" step="0.05" min="0.05" value="1"></div>
+      <div class="row"><label>Max placement (m)</label><input type="number" id="kmaxplace" step="0.05" min="0.05" value="0.5"></div>
+      <div class="row"><label>Count</label><input type="number" id="knum" step="1" min="1" value="8"></div>
+      <div class="row"><label>Arc span (deg)</label><input type="number" id="karc" step="10" min="0" max="360" value="180"></div>
+      <div class="row"><label>K-nodes</label><span class="val" id="kcount">0</span></div>
+      <div class="btnrow"><button id="kclearbtn">Clear K-nodes</button></div>
+      <p class="note">Hover a surface and press <b>K</b>: drops <b>count</b> green nodes on a half-circle (<b>arc span</b>) at a constant distance from the hit point. The radius grows from <b>Radius</b> outward until a node hits a splat, capped at <b>Max placement</b>. Pressing K again moves them; editing any value re-places them at the last K spot.</p>
+    </div>
+    <div class="sec"><h2>Floaters</h2>
+      <div class="row"><label class="check"><input type="checkbox" id="floaterhide" checked> Hide floaters</label></div>
+      <div class="row"><label class="check"><input type="checkbox" id="floaters"> Highlight (yellow)</label></div>
+      <div class="row"><label>Max density</label><input type="range" id="floaterdens" min="5" max="80" value="15"><input type="number" id="floaterdens-n" min="5" max="80" value="15"></div>
+      <div class="row"><label>Neighbourhood (m)</label><input type="range" id="floatercell" min="5" max="500" value="60"><input type="number" id="floatercell-n" min="0.005" max="0.5" step="0.005" value="0.06"></div>
+      <div class="row"><label>Found</label><span class="val" id="floatct">–</span></div>
+    </div>
+    <div class="sec"><h2>View</h2>
+      <div class="row"><label>Splat size</label><input type="range" id="splatscale" min="40" max="300" value="220"><span class="val" id="splatscale-v">2.20×</span></div>
+      <div class="row"><label>Edge width</label><input type="range" id="edgew" min="1" max="8" value="4"></div>
+    </div>
+  </div>
+</div>
+<div id="snaps" style="display:none;position:fixed;inset:0;background:rgba(8,9,11,.86);z-index:60;display:none;align-items:center;justify-content:center">
+  <div style="background:#1b1e24;border:1px solid #2e333d;border-radius:10px;padding:16px;max-width:760px">
+    <div style="display:flex;align-items:center;margin-bottom:10px"><b style="flex:1">Views from <span id="snaploc" style="font-family:var(--mono);color:var(--accent)"></span></b><button id="snapclose">Close</button></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin:2px">North</div><img id="snapN" style="width:340px;display:block;border-radius:6px"></div>
+      <div><div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin:2px">East</div><img id="snapE" style="width:340px;display:block;border-radius:6px"></div>
+      <div><div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin:2px">South</div><img id="snapS" style="width:340px;display:block;border-radius:6px"></div>
+      <div><div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin:2px">West</div><img id="snapW" style="width:340px;display:block;border-radius:6px"></div>
+    </div>
+    <p style="color:var(--muted);font-size:11px;margin-top:8px">Click any blue floor node to capture N/S/E/W from it.</p>
+  </div>
+</div>
+<div id="lshots" style="display:none;position:fixed;inset:0;background:rgba(8,9,11,.9);z-index:60;align-items:center;justify-content:center">
+  <div style="background:#1b1e24;border:1px solid #2e333d;border-radius:10px;padding:16px;max-width:92vw;max-height:90vh;overflow:auto">
+    <div style="display:flex;align-items:center;margin-bottom:10px"><b style="flex:1">Views from <span id="lcount" style="color:var(--accent)"></span> K-nodes, facing the K target</b><button id="lclose">Close</button></div>
+    <div id="lgrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"></div>
+  </div>
+</div>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
+const SH_C0=0.28209479177387814;
+const BOXES=[];
+const EDGES=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+function lookAt(eye,t,up){let zx=eye[0]-t[0],zy=eye[1]-t[1],zz=eye[2]-t[2];let zl=Math.hypot(zx,zy,zz)||1;zx/=zl;zy/=zl;zz/=zl;
+ let xx=up[1]*zz-up[2]*zy,xy=up[2]*zx-up[0]*zz,xz=up[0]*zy-up[1]*zx;let xl=Math.hypot(xx,xy,xz)||1;xx/=xl;xy/=xl;xz/=xl;
+ const yx=zy*xz-zz*xy,yy=zz*xx-zx*xz,yz=zx*xy-zy*xx;
+ return new Float32Array([xx,yx,zx,0,xy,yy,zy,0,xz,yz,zz,0,-(xx*eye[0]+xy*eye[1]+xz*eye[2]),-(yx*eye[0]+yy*eye[1]+yz*eye[2]),-(zx*eye[0]+zy*eye[1]+zz*eye[2]),1]);}
+function perspective(f0,a,n,f){const g=1/Math.tan(f0/2),nf=1/(n-f);return new Float32Array([g/a,0,0,0,0,g,0,0,0,0,(f+n)*nf,-1,0,0,2*f*n*nf,0]);}
+const _fb=new Float32Array(1),_ib=new Int32Array(_fb.buffer);
+function toHalf(v){_fb[0]=v;const x=_ib[0];let b=(x>>16)&0x8000,m=(x>>12)&0x07ff;const e=(x>>23)&0xff;
+ if(e<103)return b;if(e>142){b|=0x7c00;b|=(e===255?0:1)&&(x&0x007fffff);return b;}if(e<113){m|=0x0800;b|=(m>>(114-e))+((m>>(113-e))&1);return b;}b|=((e-112)<<10)|(m>>1);b+=m&1;return b;}
+const packHalf2x16=(a,b)=>(toHalf(a)|(toHalf(b)<<16))>>>0;
+const SPZ_MAGIC=0x5053474e;
+function parseSPZ(bytes){const dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+ if(dv.getUint32(0,true)!==SPZ_MAGIC)throw new Error('Not an SPZ file');
+ const version=dv.getUint32(4,true);if(version!==2&&version!==1)throw new Error('Bad SPZ version');
+ const n=dv.getUint32(8,true),frac=dv.getUint8(13);let off=16;
+ const positions=new Float32Array(n*3),div=1/(1<<frac);
+ for(let i=0;i<n*3;i++){let v=bytes[off]|(bytes[off+1]<<8)|(bytes[off+2]<<16);if(v&0x800000)v-=0x1000000;positions[i]=v*div;off+=3;}
+ const alphasU8=bytes.slice(off,off+n);off+=n;
+ const cb=bytes.slice(off,off+n*3);off+=n*3;const colors=new Float32Array(n*3);
+ for(let i=0;i<n*3;i++)colors[i]=clamp(0.5+((cb[i]/255-0.5)/0.15)*SH_C0,0,1);
+ const scalesLog=new Float32Array(n*3);for(let i=0;i<n*3;i++)scalesLog[i]=bytes[off+i]/16-10;off+=n*3;
+ const quats=new Float32Array(n*4);
+ for(let i=0;i<n;i++){const x=bytes[off]/127.5-1,y=bytes[off+1]/127.5-1,z=bytes[off+2]/127.5-1;off+=3;const w=Math.sqrt(Math.max(0,1-x*x-y*y-z*z));quats[i*4]=w;quats[i*4+1]=x;quats[i*4+2]=y;quats[i*4+3]=z;}
+ return {n,positions,alphasU8,colors,scalesLog,quats};}
+function parsePLY(bytes){
+ // find end_header
+ let hEnd=0;
+ for(let i=0;i<bytes.length-11;i++){
+  if(bytes[i]===101&&bytes[i+1]===110&&bytes[i+2]===100&&bytes[i+3]===95&&bytes[i+4]===104&&
+     bytes[i+5]===101&&bytes[i+6]===97&&bytes[i+7]===100&&bytes[i+8]===101&&bytes[i+9]===114){
+   hEnd=i+10; while(hEnd<bytes.length&&(bytes[hEnd]===10||bytes[hEnd]===13))hEnd++; break;
+  }
+ }
+ if(!hEnd)throw new Error('PLY end_header not found');
+ const hdr=new TextDecoder().decode(bytes.slice(0,hEnd));
+ const lines=hdr.split('\n').map(l=>l.trim()).filter(l=>l.length);
+ if(!lines[0].startsWith('ply'))throw new Error('Not a PLY file');
+ const fmt=lines.find(l=>l.startsWith('format'));
+ if(!fmt||!fmt.includes('binary_little_endian'))throw new Error('Only binary_little_endian PLY supported');
+ const vl=lines.find(l=>l.startsWith('element vertex'));
+ if(!vl)throw new Error('No vertex element in PLY');
+ const n=parseInt(vl.split(/\s+/)[2]);
+ const TS={char:1,uchar:1,short:2,ushort:2,int:4,uint:4,float:4,double:8,int8:1,uint8:1,int16:2,uint16:2,int32:4,uint32:4,float32:4,float64:8};
+ const props=[];let off=0,inV=false;
+ for(const l of lines){
+  if(l.startsWith('element')){inV=l.startsWith('element vertex');continue;}
+  if(!inV||!l.startsWith('property')||l.startsWith('property list'))continue;
+  const parts=l.split(/\s+/);props.push({nm:parts[2],off,sz:TS[parts[1]]||4});off+=TS[parts[1]]||4;
+ }
+ const stride=off;const idx={};props.forEach(p=>idx[p.nm]=p);
+ const positions=new Float32Array(n*3),alphasU8=new Uint8Array(n);
+ const colors=new Float32Array(n*3),scalesLog=new Float32Array(n*3),quats=new Float32Array(n*4);
+ const SH0=0.28209479177387814;
+ const dv=new DataView(bytes.buffer,bytes.byteOffset+hEnd);
+ const gf=(nm,row)=>{const p=idx[nm];if(!p)return 0;return dv.getFloat32(row*stride+p.off,true);};
+ for(let i=0;i<n;i++){
+  positions[i*3]=gf('x',i);positions[i*3+1]=gf('y',i);positions[i*3+2]=gf('z',i);
+  const op=gf('opacity',i);alphasU8[i]=Math.round(255/(1+Math.exp(-op)));
+  colors[i*3]=Math.max(0,Math.min(1,0.5+SH0*gf('f_dc_0',i)));
+  colors[i*3+1]=Math.max(0,Math.min(1,0.5+SH0*gf('f_dc_1',i)));
+  colors[i*3+2]=Math.max(0,Math.min(1,0.5+SH0*gf('f_dc_2',i)));
+  scalesLog[i*3]=gf('scale_0',i);scalesLog[i*3+1]=gf('scale_1',i);scalesLog[i*3+2]=gf('scale_2',i);
+  const qw=gf('rot_0',i),qx=gf('rot_1',i),qy=gf('rot_2',i),qz=gf('rot_3',i);
+  const ql=Math.sqrt(qw*qw+qx*qx+qy*qy+qz*qz)||1;
+  quats[i*4]=qw/ql;quats[i*4+1]=qx/ql;quats[i*4+2]=qy/ql;quats[i*4+3]=qz/ql;
+ }
+ return {n,positions,alphasU8,colors,scalesLog,quats};}
+async function gunzip(buf){return new Uint8Array(await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer());}
+
+const canvas=$('gl');const gl=canvas.getContext('webgl2',{antialias:false,alpha:true,premultipliedAlpha:true});
+if(!gl){document.body.innerHTML='WebGL2 required';throw new Error('no webgl2');}
+const VS=`#version 300 es
+precision highp float;precision highp int;precision highp usampler2D;
+uniform usampler2D u_data;uniform usampler2D u_sel;uniform mat4 u_view,u_proj;uniform vec2 u_focal,u_viewport;
+uniform float u_splatScale,u_exposure,u_floaterHL,u_floaterHide,u_cropOn;uniform vec3 u_cropC,u_cropH;
+in vec2 a_corner;in int a_index;out vec4 vColor;out vec2 vPos;
+void main(){int ix=(a_index&1023)<<1;int iy=a_index>>10;uvec4 t0=texelFetch(u_data,ivec2(ix,iy),0);
+ vec3 p=vec3(uintBitsToFloat(t0.x),uintBitsToFloat(t0.y),uintBitsToFloat(t0.z));
+ if(u_cropOn>0.5){vec3 q=abs(p-u_cropC);if(q.x>u_cropH.x||q.y>u_cropH.y||q.z>u_cropH.z){gl_Position=vec4(0.,0.,2.,1.);return;}}
+ vec4 cam=u_view*vec4(p,1.0);vec4 cp=u_proj*cam;float clip=1.2*cp.w;
+ if(cp.z<-clip||cp.x<-clip||cp.x>clip||cp.y<-clip||cp.y>clip){gl_Position=vec4(0.,0.,2.,1.);return;}
+ uvec4 t1=texelFetch(u_data,ivec2(ix|1,iy),0);
+ vec2 c0=unpackHalf2x16(t1.x),c1=unpackHalf2x16(t1.y),c2=unpackHalf2x16(t1.z);
+ mat3 S=mat3(c0.x,c0.y,c1.x,c0.y,c1.y,c2.x,c1.x,c2.x,c2.y);float tz=cam.z;
+ mat3 J=mat3(-u_focal.x/tz,0.,0.,0.,-u_focal.y/tz,0.,u_focal.x*cam.x/(tz*tz),u_focal.y*cam.y/(tz*tz),0.);
+ mat3 M=J*mat3(u_view);mat3 C=M*S*transpose(M);
+ float cxx=C[0][0]+0.3,cyy=C[1][1]+0.3,cxy=C[1][0];float mid=0.5*(cxx+cyy),rad=length(vec2(0.5*(cxx-cyy),cxy));
+ float l1=mid+rad,l2=mid-rad;if(l2<0.){gl_Position=vec4(0.,0.,2.,1.);return;}
+ vec2 dir=normalize(vec2(cxy,l1-cxx));vec2 major=min(sqrt(2.*l1),1024.)*u_splatScale*dir;vec2 minor=min(sqrt(2.*l2),1024.)*u_splatScale*vec2(dir.y,-dir.x);
+ uint col=t0.w;vec3 rgb=vec3(float(col&255u),float((col>>8)&255u),float((col>>16)&255u))/255.;
+ float a=float((col>>24)&255u)/255.;rgb*=u_exposure;
+ uint sel=texelFetch(u_sel,ivec2(a_index&1023,iy),0).x;
+ if((sel&2u)!=0u&&u_floaterHide>0.5){gl_Position=vec4(0.,0.,2.,1.);return;}
+ if((sel&2u)!=0u&&u_floaterHL>0.5){rgb=vec3(1.,0.92,0.12);a=max(a,0.85);}
+ vColor=vec4(rgb,a);vPos=a_corner;vec2 ndc=cp.xy/cp.w;
+ gl_Position=vec4(ndc+a_corner.x*major/u_viewport+a_corner.y*minor/u_viewport,0.,1.);}`;
+const FS=`#version 300 es
+precision highp float;in vec4 vColor;in vec2 vPos;out vec4 frag;
+void main(){float A=-dot(vPos,vPos);if(A<-4.)discard;float B=exp(A)*vColor.a;frag=vec4(B*vColor.rgb,B);}`;
+function compile(t,s){const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(sh));return sh;}
+const prog=gl.createProgram();gl.attachShader(prog,compile(gl.VERTEX_SHADER,VS));gl.attachShader(prog,compile(gl.FRAGMENT_SHADER,FS));gl.linkProgram(prog);
+if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(prog));
+const U=n=>gl.getUniformLocation(prog,n);
+const uView=U('u_view'),uProj=U('u_proj'),uFocal=U('u_focal'),uVp=U('u_viewport'),uSplatScale=U('u_splatScale'),uExposure=U('u_exposure'),uFloaterHL=U('u_floaterHL'),uFloaterHide=U('u_floaterHide');
+const uCropOn=U('u_cropOn'),uCropC=U('u_cropC'),uCropH=U('u_cropH');
+const LVS=`#version 300 es
+precision highp float;uniform mat4 u_view,u_proj;uniform vec2 u_viewport;uniform float u_halfpx;
+in float a_t;in float a_side;in vec3 a_A;in vec3 a_B;
+void main(){vec4 cA=u_proj*u_view*vec4(a_A,1.),cB=u_proj*u_view*vec4(a_B,1.);vec4 c=mix(cA,cB,a_t);
+ vec2 sA=cA.xy/cA.w,sB=cB.xy/cB.w;vec2 d=normalize((sB-sA)*u_viewport);vec2 nrm=vec2(-d.y,d.x);
+ c.xy+=a_side*nrm/u_viewport*u_halfpx*2.*c.w;gl_Position=c;}`;
+const LFS=`#version 300 es
+precision highp float;uniform vec3 u_color;out vec4 frag;void main(){frag=vec4(u_color,1.);}`;
+const lprog=gl.createProgram();gl.attachShader(lprog,compile(gl.VERTEX_SHADER,LVS));gl.attachShader(lprog,compile(gl.FRAGMENT_SHADER,LFS));gl.linkProgram(lprog);
+const luView=gl.getUniformLocation(lprog,'u_view'),luProj=gl.getUniformLocation(lprog,'u_proj'),luVp=gl.getUniformLocation(lprog,'u_viewport'),luHalf=gl.getUniformLocation(lprog,'u_halfpx'),luColor=gl.getUniformLocation(lprog,'u_color');
+// points program for floor grid nodes (round blue dots)
+const PVS=`#version 300 es
+precision highp float;uniform mat4 u_view,u_proj;uniform float u_psize;in vec3 a_pos;
+void main(){vec4 c=u_proj*u_view*vec4(a_pos,1.0);gl_Position=c;gl_PointSize=clamp(u_psize/max(c.w,0.05),3.0,22.0);}`;
+const PFS=`#version 300 es
+precision highp float;uniform vec3 u_color;out vec4 frag;void main(){vec2 d=gl_PointCoord-0.5;if(dot(d,d)>0.25)discard;frag=vec4(u_color,1.0);}`;
+const pprog=gl.createProgram();gl.attachShader(pprog,compile(gl.VERTEX_SHADER,PVS));gl.attachShader(pprog,compile(gl.FRAGMENT_SHADER,PFS));gl.linkProgram(pprog);
+const puView=gl.getUniformLocation(pprog,'u_view'),puProj=gl.getUniformLocation(pprog,'u_proj'),puSize=gl.getUniformLocation(pprog,'u_psize'),puColor=gl.getUniformLocation(pprog,'u_color');
+const paPos=gl.getAttribLocation(pprog,'a_pos');
+const nodeBuf=gl.createBuffer();const nodeVAO=gl.createVertexArray();gl.bindVertexArray(nodeVAO);
+gl.bindBuffer(gl.ARRAY_BUFFER,nodeBuf);gl.enableVertexAttribArray(paPos);gl.vertexAttribPointer(paPos,3,gl.FLOAT,false,0,0);gl.bindVertexArray(null);
+const knodeBuf=gl.createBuffer();const knodeVAO=gl.createVertexArray();gl.bindVertexArray(knodeVAO);
+gl.bindBuffer(gl.ARRAY_BUFFER,knodeBuf);gl.enableVertexAttribArray(paPos);gl.vertexAttribPointer(paPos,3,gl.FLOAT,false,0,0);gl.bindVertexArray(null);
+let nodeCount=0, knodeCount=0, knodesArr=[];
+const stripBuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,stripBuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([0,-1,0,1,1,-1,1,1]),gl.STATIC_DRAW);
+const laT=gl.getAttribLocation(lprog,'a_t'),laS=gl.getAttribLocation(lprog,'a_side'),laA=gl.getAttribLocation(lprog,'a_A'),laB=gl.getAttribLocation(lprog,'a_B');
+// per-box edge geometry + VAO
+function buildBoxVAO(bx){
+ if(bx.vao)gl.deleteVertexArray(bx.vao);if(bx._buf)gl.deleteBuffer(bx._buf);
+ const ab=new Float32Array(EDGES.length*6);
+ for(let e=0;e<EDGES.length;e++){const[i,j]=EDGES[e];ab.set(bx.corners[i],e*6);ab.set(bx.corners[j],e*6+3);}
+ const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,ab,gl.STATIC_DRAW);
+ const vao=gl.createVertexArray();gl.bindVertexArray(vao);
+ gl.bindBuffer(gl.ARRAY_BUFFER,stripBuf);gl.enableVertexAttribArray(laT);gl.vertexAttribPointer(laT,1,gl.FLOAT,false,8,0);gl.enableVertexAttribArray(laS);gl.vertexAttribPointer(laS,1,gl.FLOAT,false,8,4);
+ gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.enableVertexAttribArray(laA);gl.vertexAttribPointer(laA,3,gl.FLOAT,false,24,0);gl.vertexAttribDivisor(laA,1);gl.enableVertexAttribArray(laB);gl.vertexAttribPointer(laB,3,gl.FLOAT,false,24,12);gl.vertexAttribDivisor(laB,1);
+ gl.bindVertexArray(null);bx.vao=vao;bx._buf=buf;if(bx.show===undefined)bx.show=true;}
+for(const bx of BOXES)buildBoxVAO(bx);
+// ── Box fit: nudge each box's left/right/front faces in to `gap` m from real splats ──
+let _sceneCentroid=null;
+function sceneCentroid(){if(_sceneCentroid)return _sceneCentroid;const p=scene.positions,n=scene.n;let sx=0,sy=0,sz=0,c=0;for(let i=0;i<n;i+=20){sx+=p[i*3];sy+=p[i*3+1];sz+=p[i*3+2];c++;}_sceneCentroid=[sx/c,sy/c,sz/c];return _sceneCentroid;}
+function boxFrame(cor){
+ const C=[0,0,0];for(const q of cor)for(let k=0;k<3;k++)C[k]+=q[k]/8;
+ const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],len=v=>Math.hypot(v[0],v[1],v[2]),nrm=v=>{const l=len(v)||1;return[v[0]/l,v[1]/l,v[2]/l];};
+ return {C,u:nrm(sub(cor[3],cor[0])),w:nrm(sub(cor[1],cor[0])),hu:len(sub(cor[3],cor[0]))/2,hw:len(sub(cor[1],cor[0]))/2,hy:len(sub(cor[4],cor[0]))/2};
+}
+const PROUD=0.30;        // front-slab thickness: splats this close to the front face define the appliance
+function pct(arr,q){if(!arr.length)return 0;arr.sort((a,b)=>a-b);return arr[Math.min(arr.length-1,Math.max(0,Math.floor(q*(arr.length-1))))];}
+function nudgeBoxFaces(bx,gap){
+ if(!scene)return;
+ if(!bx.corners0)bx.corners0=bx.corners.map(c=>c.slice());
+ const f=boxFrame(bx.corners0),C=f.C,u=f.u,w=f.w,hu=f.hu,hw=f.hw,hy=f.hy;
+ bx.corners=bx.corners0.map(c=>c.slice());           // start from the original fit
+ const p=scene.positions,op=scene.alphasU8,n=scene.n,sel=selected;
+ const ctd=sceneCentroid(),fs=Math.sign((ctd[0]-C[0])*w[0]+(ctd[1]-C[1])*w[1]+(ctd[2]-C[2])*w[2])||1;
+ // collect in-box, non-floater splats in box-local coords
+ const DU=[],DW=[],DY=[]; const IB=[];
+ for(let i=0;i<n;i++){
+  if(op[i]<120)continue; if(sel&&(sel[i]&2))continue;          // skip faint + floaters
+  const dx=p[i*3]-C[0],dy=p[i*3+1]-C[1],dz=p[i*3+2]-C[2];
+  if(Math.abs(dy)>hy)continue;                                  // within height band
+  const du=dx*u[0]+dz*u[2]; if(du<-hu||du>hu)continue;
+  const dw=dx*w[0]+dz*w[2]; if(dw<-hw||dw>hw)continue;
+  DU.push(du);DW.push(dw);DY.push(dy);
+ }
+ if(DU.length<30)return;
+ // front face = outermost splat toward the room (the proud face), as a signed w coord
+ const frontW = fs>0 ? pct(DW.slice(),0.98) : pct(DW.slice(),0.02);
+ // FRONT SLAB: only splats within PROUD of the front face → excludes the RECESSED side cabinets
+ const su=[],sy=[];
+ for(let k=0;k<DU.length;k++){ if(fs*DW[k] > fs*frontW - PROUD){ su.push(DU[k]); sy.push(DY[k]); } }
+ if(su.length<20)return;
+ // left/right (width) and top from the proud front slab; pull each face to splat ± gap
+ const uLo=Math.max(-hu, pct(su.slice(),0.01)-gap), uHi=Math.min(hu, pct(su.slice(),0.99)+gap);
+ const yHi=Math.min(hy, pct(sy.slice(),0.99)+gap);   // top nudges DOWN to the front-edge top
+ // front depth face to the proud surface + gap; keep the back face as originally fit
+ let wLo=-hw,wHi=hw; if(fs>0) wHi=Math.min(hw,frontW+gap); else wLo=Math.max(-hw,frontW-gap);
+ const cu=(uLo+uHi)/2,cw=(wLo+wHi)/2,cy=(-hy+yHi)/2,nhu=(uHi-uLo)/2,nhw=(wHi-wLo)/2,nhy=(yHi-(-hy))/2;
+ const nC=[C[0]+u[0]*cu+w[0]*cw, C[1]+cy, C[2]+u[2]*cu+w[2]*cw];
+ const mk=(sx,sw,syy)=>[nC[0]+u[0]*sx*nhu+w[0]*sw*nhw, nC[1]+syy*nhy, nC[2]+u[2]*sx*nhu+w[2]*sw*nhw];
+ bx.corners=[mk(-1,-1,-1),mk(-1,1,-1),mk(1,1,-1),mk(1,-1,-1),mk(-1,-1,1),mk(-1,1,1),mk(1,1,1),mk(1,-1,1)];
+}
+let _gapPending=false;
+function applyBoxGap(){
+ if(!scene){return;} const gap=parseFloat($('boxgap').value)||0;
+ for(const bx of BOXES){nudgeBoxFaces(bx,gap);delete bx.size;buildBoxVAO(bx);}
+ if(typeof renderObjList==='function')renderObjList();
+}
+function scheduleBoxGap(){if(_gapPending)return;_gapPending=true;requestAnimationFrame(()=>{_gapPending=false;applyBoxGap();});}
+// poll for boxes detected server-side (after an L-key evaluation) and add them live, no reload
+const _seenBoxes=new Set();
+async function pollDetected(){try{const r=await fetch('detected_boxes.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const list=await r.json();
+  let added=false;
+  for(const b of list){const id=b.id||JSON.stringify(b.corners);if(_seenBoxes.has(id))continue;_seenBoxes.add(id);
+   const bx={id:b.id,name:b.name||'detected',color:b.color||[1,0.85,0.1],corners:b.corners,show:true};buildBoxVAO(bx);BOXES.push(bx);added=true;
+   console.log('added detected box',bx.name);}
+  if(added)applyBoxGap();}catch(e){}}
+setInterval(pollDetected,2000);
+// marker spheres (drawn as 3 great-circle wireframes via the line program)
+const MARKERS=[{pos:[-0.27,2.30,1.70],r:0.06,color:[1.0,0.92,0.12]},
+               {pos:[0,0,0],r:0.08,color:[1.0,1.0,1.0]}];  // white = world origin (0,0,0)
+function sphereAB(cx,cy,cz,r,n){const out=[];
+ for(let pl=0;pl<3;pl++)for(let i=0;i<n;i++){const a0=i/n*6.2831853,a1=(i+1)/n*6.2831853;
+  const f=a=>{const cs=Math.cos(a),sn=Math.sin(a);return pl===0?[0,cs,sn]:pl===1?[cs,0,sn]:[cs,sn,0];};
+  const A=f(a0),B=f(a1);out.push(cx+A[0]*r,cy+A[1]*r,cz+A[2]*r,cx+B[0]*r,cy+B[1]*r,cz+B[2]*r);}
+ return new Float32Array(out);}
+for(const m of MARKERS){const ab=sphereAB(m.pos[0],m.pos[1],m.pos[2],m.r,28);m.nseg=ab.length/6;
+ const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,ab,gl.STATIC_DRAW);
+ const vao=gl.createVertexArray();gl.bindVertexArray(vao);
+ gl.bindBuffer(gl.ARRAY_BUFFER,stripBuf);gl.enableVertexAttribArray(laT);gl.vertexAttribPointer(laT,1,gl.FLOAT,false,8,0);gl.enableVertexAttribArray(laS);gl.vertexAttribPointer(laS,1,gl.FLOAT,false,8,4);
+ gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.enableVertexAttribArray(laA);gl.vertexAttribPointer(laA,3,gl.FLOAT,false,24,0);gl.vertexAttribDivisor(laA,1);gl.enableVertexAttribArray(laB);gl.vertexAttribPointer(laB,3,gl.FLOAT,false,24,12);gl.vertexAttribDivisor(laB,1);
+ gl.bindVertexArray(null);m.vao=vao;}
+// adjustable room crop box (axis-aligned): hide splats outside it
+const CROP = {c:[0,1,0], h:[5,3,5]};
+const cropAB = new Float32Array(EDGES.length*6);
+const cropBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, cropBuf); gl.bufferData(gl.ARRAY_BUFFER, cropAB, gl.DYNAMIC_DRAW);
+const cropVAO = gl.createVertexArray(); gl.bindVertexArray(cropVAO);
+gl.bindBuffer(gl.ARRAY_BUFFER, stripBuf); gl.enableVertexAttribArray(laT); gl.vertexAttribPointer(laT,1,gl.FLOAT,false,8,0); gl.enableVertexAttribArray(laS); gl.vertexAttribPointer(laS,1,gl.FLOAT,false,8,4);
+gl.bindBuffer(gl.ARRAY_BUFFER, cropBuf); gl.enableVertexAttribArray(laA); gl.vertexAttribPointer(laA,3,gl.FLOAT,false,24,0); gl.vertexAttribDivisor(laA,1); gl.enableVertexAttribArray(laB); gl.vertexAttribPointer(laB,3,gl.FLOAT,false,24,12); gl.vertexAttribDivisor(laB,1);
+// yellow sphere drawn at the K hit point
+const kSphBuf = gl.createBuffer(); let kSphSeg = 0;
+const kSphVAO = gl.createVertexArray(); gl.bindVertexArray(kSphVAO);
+gl.bindBuffer(gl.ARRAY_BUFFER, stripBuf); gl.enableVertexAttribArray(laT); gl.vertexAttribPointer(laT,1,gl.FLOAT,false,8,0); gl.enableVertexAttribArray(laS); gl.vertexAttribPointer(laS,1,gl.FLOAT,false,8,4);
+gl.bindBuffer(gl.ARRAY_BUFFER, kSphBuf); gl.enableVertexAttribArray(laA); gl.vertexAttribPointer(laA,3,gl.FLOAT,false,24,0); gl.vertexAttribDivisor(laA,1); gl.enableVertexAttribArray(laB); gl.vertexAttribPointer(laB,3,gl.FLOAT,false,24,12); gl.vertexAttribDivisor(laB,1);
+gl.bindVertexArray(null);
+gl.bindVertexArray(null);
+function rebuildCrop(){
+ const c=CROP.c,h=CROP.h;
+ const mk=(sx,sz,sy)=>[c[0]+sx*h[0], c[1]+sy*h[1], c[2]+sz*h[2]];
+ const cor=[mk(-1,-1,-1),mk(1,-1,-1),mk(1,1,-1),mk(-1,1,-1),mk(-1,-1,1),mk(1,-1,1),mk(1,1,1),mk(-1,1,1)];
+ for(let e=0;e<EDGES.length;e++){const[i,j]=EDGES[e];cropAB.set(cor[i],e*6);cropAB.set(cor[j],e*6+3);}
+ gl.bindBuffer(gl.ARRAY_BUFFER,cropBuf); gl.bufferData(gl.ARRAY_BUFFER,cropAB,gl.DYNAMIC_DRAW);
+ gl.useProgram(prog); gl.uniform3f(uCropC,c[0],c[1],c[2]); gl.uniform3f(uCropH,h[0],h[1],h[2]); gl.uniform1f(uCropOn,$('crophide').checked?1:0);}
+let floorY=0, nodesArr=[];
+function detectFloorY(){const n=scene.n,p=scene.positions,op=scene.alphasU8;let ymin=Infinity,ymax=-Infinity;
+ for(let i=0;i<n;i++){if(op[i]<128)continue;const y=p[i*3+1];if(y<ymin)ymin=y;if(y>ymax)ymax=y;}
+ const NB=140,h=new Float64Array(NB),sc=NB/Math.max(1e-6,ymax-ymin);
+ for(let i=0;i<n;i++){if(op[i]<128)continue;let b=((p[i*3+1]-ymin)*sc)|0;if(b<0)b=0;if(b>=NB)b=NB-1;h[b]++;}
+ let bst=0,bc=-1;for(let b=0;b<Math.ceil(NB*0.4);b++)if(h[b]>bc){bc=h[b];bst=b;}floorY=ymin+(bst+0.5)/sc;return floorY;}
+// node grid: at floorY+height, over the crop XZ, spaced evenly; a cell is a node if it is
+// free (no splat in its own cell) AND >=1 of N/S/E/W has no splat within `clearance`.
+function computeNodes(){if(!scene)return;detectFloorY();
+ const H=+$('ndheight').value, S=+$('ndspacing').value, CL=+$('ndclear').value;
+ const y=floorY+H, n=scene.n, p=scene.positions, op=scene.alphasU8;
+ const occ=new Set(); const kf=(a,b)=>a+'_'+b;
+ for(let i=0;i<n;i++){if(op[i]<128)continue;const py=p[i*3+1];if(Math.abs(py-y)>CL)continue;
+  occ.add(kf(Math.floor(p[i*3]/CL),Math.floor(p[i*3+2]/CL)));}
+ const x0=CROP.c[0]-CROP.h[0],x1=CROP.c[0]+CROP.h[0],z0=CROP.c[2]-CROP.h[2],z1=CROP.c[2]+CROP.h[2];
+ const pts=[]; const ci=v=>Math.floor(v/CL);
+ for(let x=x0+S/2;x<x1;x+=S)for(let z=z0+S/2;z<z1;z+=S){
+   if(occ.has(kf(ci(x),ci(z))))continue;                        // inside an object -> skip
+   let clear=0;
+   if(!occ.has(kf(ci(x),ci(z+CL))))clear++;                     // N
+   if(!occ.has(kf(ci(x),ci(z-CL))))clear++;                     // S
+   if(!occ.has(kf(ci(x+CL),ci(z))))clear++;                     // E
+   if(!occ.has(kf(ci(x-CL),ci(z))))clear++;                     // W
+   if(clear>=1)pts.push(x,y,z);
+ }
+ nodeCount=pts.length/3; nodesArr=pts;
+ gl.bindBuffer(gl.ARRAY_BUFFER,nodeBuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(pts),gl.DYNAMIC_DRAW);
+ $('ndcount').textContent=nodeCount+' nodes';$('ndfloor').textContent=floorY.toFixed(2)+' m';}
+const svao=gl.createVertexArray();gl.bindVertexArray(svao);
+const quadBuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,quadBuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-2,-2,2,-2,-2,2,2,2]),gl.STATIC_DRAW);
+const aCorner=gl.getAttribLocation(prog,'a_corner');gl.enableVertexAttribArray(aCorner);gl.vertexAttribPointer(aCorner,2,gl.FLOAT,false,0,0);
+const idxBuf=gl.createBuffer();const aIndex=gl.getAttribLocation(prog,'a_index');gl.bindBuffer(gl.ARRAY_BUFFER,idxBuf);gl.enableVertexAttribArray(aIndex);gl.vertexAttribIPointer(aIndex,1,gl.INT,0,0);gl.vertexAttribDivisor(aIndex,1);
+gl.bindVertexArray(null);
+const dataTex=gl.createTexture(),selTex=gl.createTexture();
+for(const[u,t] of [[0,dataTex],[1,selTex]]){gl.activeTexture(gl.TEXTURE0+u);gl.bindTexture(gl.TEXTURE_2D,t);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);}
+gl.pixelStorei(gl.UNPACK_ALIGNMENT,1);
+let scene=null,texRows=0,texData=null,selected=null,sortIdx=null,drawCount=0;
+const cam={target:[0,1,0],theta:0.6,phi:1.35,radius:6,fov:60*Math.PI/180};
+let viewMat=null,projMat=null,needSort=true;
+function quatToCov(qw,qx,qy,qz,sx,sy,sz,o){const r00=1-2*(qy*qy+qz*qz),r01=2*(qx*qy-qw*qz),r02=2*(qx*qz+qw*qy),r10=2*(qx*qy+qw*qz),r11=1-2*(qx*qx+qz*qz),r12=2*(qy*qz-qw*qx),r20=2*(qx*qz-qw*qy),r21=2*(qy*qz+qw*qx),r22=1-2*(qx*qx+qy*qy);
+ const m00=r00*sx,m01=r01*sy,m02=r02*sz,m10=r10*sx,m11=r11*sy,m12=r12*sz,m20=r20*sx,m21=r21*sy,m22=r22*sz;
+ o[0]=m00*m00+m01*m01+m02*m02;o[1]=m00*m10+m01*m11+m02*m12;o[2]=m00*m20+m01*m21+m02*m22;o[3]=m10*m10+m11*m11+m12*m12;o[4]=m10*m20+m11*m21+m12*m22;o[5]=m20*m20+m21*m21+m22*m22;}
+function colorWord(i){const r=clamp(Math.round(scene.colors[i*3]*255),0,255),g=clamp(Math.round(scene.colors[i*3+1]*255),0,255),b=clamp(Math.round(scene.colors[i*3+2]*255),0,255);return(r|(g<<8)|(b<<16)|(scene.alphasU8[i]<<24))>>>0;}
+function buildGPUData(){const n=scene.n;texRows=Math.ceil(n/1024);texData=new Uint32Array(2048*texRows*4);const f2u=new Uint32Array(1),f2f=new Float32Array(f2u.buffer),cov=new Float32Array(6);selected=new Uint8Array(1024*texRows);
+ for(let i=0;i<n;i++){const row=i>>10,col=(i&1023)<<1,base=(row*2048+col)*4;
+  f2f[0]=scene.positions[i*3];texData[base]=f2u[0];f2f[0]=scene.positions[i*3+1];texData[base+1]=f2u[0];f2f[0]=scene.positions[i*3+2];texData[base+2]=f2u[0];texData[base+3]=colorWord(i);
+  const sx=Math.exp(scene.scalesLog[i*3]),sy=Math.exp(scene.scalesLog[i*3+1]),sz=Math.exp(scene.scalesLog[i*3+2]);
+  quatToCov(scene.quats[i*4],scene.quats[i*4+1],scene.quats[i*4+2],scene.quats[i*4+3],sx,sy,sz,cov);
+  texData[base+4]=packHalf2x16(cov[0],cov[1]);texData[base+5]=packHalf2x16(cov[2],cov[3]);texData[base+6]=packHalf2x16(cov[4],cov[5]);texData[base+7]=0;}
+ gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,dataTex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA32UI,2048,texRows,0,gl.RGBA_INTEGER,gl.UNSIGNED_INT,texData);
+ gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,selTex);gl.texImage2D(gl.TEXTURE_2D,0,gl.R8UI,1024,texRows,0,gl.RED_INTEGER,gl.UNSIGNED_BYTE,selected);needSort=true;}
+function uploadSel(){gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,selTex);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,1024,texRows,gl.RED_INTEGER,gl.UNSIGNED_BYTE,selected);}
+function detectFloaters(){if(!scene||!selected)return;const n=scene.n,p=scene.positions,op=scene.alphasU8;const CELL=parseFloat($('floatercell').value)/1000,OFF=1024,SP=4096;
+ const vx=new Int32Array(n),vy=new Int32Array(n),vz=new Int32Array(n),counts=new Map();
+ for(let i=0;i<n;i++){const a=Math.floor(p[i*3]/CELL),b=Math.floor(p[i*3+1]/CELL),c=Math.floor(p[i*3+2]/CELL);vx[i]=a;vy[i]=b;vz[i]=c;if(op[i]>=51){const k=((a+OFF)*SP+(b+OFF))*SP+(c+OFF);counts.set(k,(counts.get(k)||0)+1);}}
+ const MIN=parseInt($('floaterdens').value);let cnt=0;
+ for(let i=0;i<n;i++){const a=vx[i],b=vy[i],c=vz[i];let dens=0;for(let dx=-1;dx<=1;dx++){const A=(a+dx+OFF)*SP;for(let dy=-1;dy<=1;dy++){const AB=(A+(b+dy+OFF))*SP+(c+OFF);dens+=(counts.get(AB-1)||0)+(counts.get(AB)||0)+(counts.get(AB+1)||0);}}
+  const fl=dens<MIN?2:0;selected[i]=fl;if(fl)cnt++;}
+ uploadSel();$('floatct').textContent=cnt.toLocaleString()+' splats';}
+function eyePos(){return[cam.target[0]+cam.radius*Math.sin(cam.phi)*Math.sin(cam.theta),cam.target[1]+cam.radius*Math.cos(cam.phi),cam.target[2]+cam.radius*Math.sin(cam.phi)*Math.cos(cam.theta)];}
+function updateMatrices(){const dpr=Math.min(window.devicePixelRatio||1,2);const W=Math.max(1,Math.round(canvas.clientWidth*dpr)),H=Math.max(1,Math.round(canvas.clientHeight*dpr));
+ if(canvas.width!==W||canvas.height!==H){canvas.width=W;canvas.height=H;}
+ viewMat=lookAt(eyePos(),cam.target,[0,1,0]);projMat=perspective(cam.fov,W/H,0.05,600);gl.viewport(0,0,W,H);const f=(H/2)/Math.tan(cam.fov/2);
+ gl.useProgram(prog);gl.uniformMatrix4fv(uView,false,viewMat);gl.uniformMatrix4fv(uProj,false,projMat);gl.uniform2f(uFocal,f,f);gl.uniform2f(uVp,W,H);
+ gl.useProgram(lprog);gl.uniformMatrix4fv(luView,false,viewMat);gl.uniformMatrix4fv(luProj,false,projMat);gl.uniform2f(luVp,W,H);}
+let mtD=null,mtC=null,mtS=null,lastKey='';
+function sortSplats(zx,zy,zz){const n=scene.n,p=scene.positions;if(!mtD||mtD.length!==n)mtD=new Int32Array(n);if(!mtC){mtC=new Uint32Array(65536);mtS=new Uint32Array(65536);}
+ let mn=Infinity,mx=-Infinity;for(let i=0;i<n;i++){const v=-(zx*p[i*3]+zy*p[i*3+1]+zz*p[i*3+2]);const q=(v*4096)|0;mtD[i]=q;if(q<mn)mn=q;if(q>mx)mx=q;}
+ mtC.fill(0);const sc=65535/Math.max(1,mx-mn);for(let i=0;i<n;i++){const b=((mtD[i]-mn)*sc)|0;mtD[i]=b;mtC[b]++;}mtS[0]=0;for(let i=1;i<65536;i++)mtS[i]=mtS[i-1]+mtC[i-1];
+ const out=new Int32Array(n);for(let i=0;i<n;i++)out[mtS[mtD[i]]++]=i;sortIdx=out;gl.bindVertexArray(svao);gl.bindBuffer(gl.ARRAY_BUFFER,idxBuf);gl.bufferData(gl.ARRAY_BUFFER,sortIdx,gl.DYNAMIC_DRAW);gl.bindVertexArray(null);drawCount=n;}
+gl.clearColor(0,0,0,0);
+let camTick=0;
+function frame(){requestAnimationFrame(frame);if(!scene)return;updateMatrices();
+ if((++camTick%8)===0){const e=eyePos(),t=cam.target;$('campos').textContent=`${e[0].toFixed(2)}, ${e[1].toFixed(2)}, ${e[2].toFixed(2)}`;$('camtgt').textContent=`${t[0].toFixed(2)}, ${t[1].toFixed(2)}, ${t[2].toFixed(2)}`;}
+ const zk=viewMat[2].toFixed(3)+','+viewMat[6].toFixed(3)+','+viewMat[10].toFixed(3);if(needSort||zk!==lastKey){needSort=false;lastKey=zk;sortSplats(viewMat[2],viewMat[6],viewMat[10]);}
+ gl.clear(gl.COLOR_BUFFER_BIT);gl.useProgram(prog);gl.disable(gl.DEPTH_TEST);gl.enable(gl.BLEND);gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA,gl.ONE,gl.ONE_MINUS_DST_ALPHA,gl.ONE);
+ gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,dataTex);gl.uniform1i(U('u_data'),0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,selTex);gl.uniform1i(U('u_sel'),1);
+ if(drawCount>0){gl.bindVertexArray(svao);gl.drawArraysInstanced(gl.TRIANGLE_STRIP,0,4,drawCount);gl.bindVertexArray(null);}
+ gl.useProgram(lprog);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.uniform1f(luHalf,parseFloat($('edgew').value));
+ for(const bx of BOXES){if(!bx.show)continue;gl.uniform3f(luColor,bx.color[0],bx.color[1],bx.color[2]);gl.bindVertexArray(bx.vao);gl.drawArraysInstanced(gl.TRIANGLE_STRIP,0,4,EDGES.length);gl.bindVertexArray(null);}
+ for(const m of MARKERS){gl.uniform3f(luColor,m.color[0],m.color[1],m.color[2]);gl.bindVertexArray(m.vao);gl.drawArraysInstanced(gl.TRIANGLE_STRIP,0,4,m.nseg);gl.bindVertexArray(null);}
+ if($('cropshow').checked){gl.uniform3f(luColor,0.85,0.85,0.95);gl.bindVertexArray(cropVAO);gl.drawArraysInstanced(gl.TRIANGLE_STRIP,0,4,EDGES.length);gl.bindVertexArray(null);}
+ if(kSphSeg>0&&kAnchor){gl.uniform3f(luColor,1.0,0.9,0.1);gl.bindVertexArray(kSphVAO);gl.drawArraysInstanced(gl.TRIANGLE_STRIP,0,4,kSphSeg);gl.bindVertexArray(null);}
+ if(($('ndshow').checked&&nodeCount>0)||knodeCount>0){gl.useProgram(pprog);gl.uniformMatrix4fv(puView,false,viewMat);gl.uniformMatrix4fv(puProj,false,projMat);gl.uniform1f(puSize,420.0);
+  if(nodeCount>0&&$('ndshow').checked){gl.uniform3f(puColor,0.25,0.55,1.0);gl.bindVertexArray(nodeVAO);gl.drawArrays(gl.POINTS,0,nodeCount);gl.bindVertexArray(null);}
+  if(knodeCount>0){gl.uniform3f(puColor,0.3,1.0,0.4);gl.bindVertexArray(knodeVAO);gl.drawArrays(gl.POINTS,0,knodeCount);gl.bindVertexArray(null);}}}
+requestAnimationFrame(frame);
+let drag=null;canvas.addEventListener('contextmenu',e=>e.preventDefault());
+let downXY=null,moved=false;
+canvas.addEventListener('pointerdown',e=>{if(!scene)return;canvas.setPointerCapture(e.pointerId);const pan=e.button===2||e.button===1||e.shiftKey;drag={mode:pan?'pan':'orbit',x:e.clientX,y:e.clientY};downXY=[e.clientX,e.clientY];moved=false;});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;if(Math.abs(e.clientX-downXY[0])+Math.abs(e.clientY-downXY[1])>5)moved=true;if(drag.mode==='orbit'){cam.theta-=(e.clientX-drag.x)*0.006;cam.phi=clamp(cam.phi-(e.clientY-drag.y)*0.006,0.05,Math.PI-0.05);drag.x=e.clientX;drag.y=e.clientY;}
+ else{const dx=e.clientX-drag.x,dy=e.clientY-drag.y,s=cam.radius*0.0016;cam.target[0]-=(viewMat[0]*dx-viewMat[1]*dy)*s;cam.target[1]-=(viewMat[4]*dx-viewMat[5]*dy)*s;cam.target[2]-=(viewMat[8]*dx-viewMat[9]*dy)*s;drag.x=e.clientX;drag.y=e.clientY;}});
+window.addEventListener('pointerup',e=>{drag=null;});  // no auto-capture on click; pictures only on L
+function pickNode(clientX,clientY){if(!nodesArr.length)return;const rect=canvas.getBoundingClientRect(),mx=clientX-rect.left,my=clientY-rect.top;
+ const W=canvas.clientWidth,H=canvas.clientHeight,vm=viewMat,pm=projMat;let best=-1,bd=18*18;
+ for(let i=0;i<nodesArr.length;i+=3){const x=nodesArr[i],y=nodesArr[i+1],z=nodesArr[i+2];
+  const cz=vm[2]*x+vm[6]*y+vm[10]*z+vm[14];if(cz>=-0.05)continue;const cx=vm[0]*x+vm[4]*y+vm[8]*z+vm[12],cy=vm[1]*x+vm[5]*y+vm[9]*z+vm[13],w=-cz;
+  const sx=((pm[0]*cx)/w*0.5+0.5)*W,sy=(0.5-(pm[5]*cy)/w*0.5)*H,dd=(sx-mx)*(sx-mx)+(sy-my)*(sy-my);
+  if(dd<bd){bd=dd;best=i;}}
+ if(best>=0)captureNode([nodesArr[best],nodesArr[best+1],nodesArr[best+2]]);}
+function drawSceneFrom(eye,target){const dpr=Math.min(window.devicePixelRatio||1,2);const W=canvas.width,H=canvas.height;
+ const vm=lookAt(eye,target,[0,1,0]),pm=perspective(cam.fov,W/H,0.05,600);const f=(H/2)/Math.tan(cam.fov/2);
+ gl.useProgram(prog);gl.uniformMatrix4fv(uView,false,vm);gl.uniformMatrix4fv(uProj,false,pm);gl.uniform2f(uFocal,f,f);gl.uniform2f(uVp,W,H);
+ sortSplats(vm[2],vm[6],vm[10]);gl.viewport(0,0,W,H);gl.disable(gl.DEPTH_TEST);gl.enable(gl.BLEND);gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA,gl.ONE,gl.ONE_MINUS_DST_ALPHA,gl.ONE);
+ gl.clear(gl.COLOR_BUFFER_BIT);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,dataTex);gl.uniform1i(U('u_data'),0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,selTex);gl.uniform1i(U('u_sel'),1);
+ gl.bindVertexArray(svao);gl.drawArraysInstanced(gl.TRIANGLE_STRIP,0,4,drawCount);gl.bindVertexArray(null);}
+function snap(){const w=canvas.width,h=canvas.height,px=new Uint8Array(w*h*4);gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,px);
+ const cv=document.createElement('canvas');cv.width=w;cv.height=h;const ctx=cv.getContext('2d');ctx.fillStyle='#101216';ctx.fillRect(0,0,w,h);
+ const id=ctx.createImageData(w,h);for(let y=0;y<h;y++){const sR=(h-1-y)*w*4,d=y*w*4;for(let x=0;x<w*4;x+=4){id.data[d+x]=px[sR+x];id.data[d+x+1]=px[sR+x+1];id.data[d+x+2]=px[sR+x+2];id.data[d+x+3]=255;}}
+ ctx.putImageData(id,0,0);return cv.toDataURL('image/png');}
+function captureNode(node){const dirs=[['N',[0,0,-1]],['E',[1,0,0]],['S',[0,0,1]],['W',[-1,0,0]]];
+ for(const [lab,d] of dirs){drawSceneFrom(node,[node[0]+d[0]*3,node[1],node[2]+d[2]*3]);$('snap'+lab).src=snap();}
+ $('snaploc').textContent=`node (${node[0].toFixed(2)}, ${node[1].toFixed(2)}, ${node[2].toFixed(2)})`;
+ $('snaps').style.display='flex';needSort=true;}
+$('snapclose').onclick=()=>{$('snaps').style.display='none';};
+canvas.addEventListener('wheel',e=>{if(!scene)return;e.preventDefault();cam.radius=clamp(cam.radius*Math.exp(e.deltaY*0.0011),0.3,80);},{passive:false});
+canvas.addEventListener('dblclick',e=>{if(!scene)return;const rect=canvas.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;
+ const W=canvas.clientWidth,H=canvas.clientHeight,vm=viewMat,pm=projMat,p=scene.positions,op=scene.alphasU8;let best=-1,bz=Infinity;
+ for(let i=0;i<scene.n;i++){if(op[i]<60||(selected&&(selected[i]&2)))continue;const x=p[i*3],y=p[i*3+1],z=p[i*3+2];
+  const cz=vm[2]*x+vm[6]*y+vm[10]*z+vm[14];if(cz>=-0.05)continue;const cx=vm[0]*x+vm[4]*y+vm[8]*z+vm[12],cy=vm[1]*x+vm[5]*y+vm[9]*z+vm[13],w=-cz;
+  const sx=((pm[0]*cx)/w*0.5+0.5)*W,sy=(0.5-(pm[5]*cy)/w*0.5)*H,ddx=sx-mx,ddy=sy-my;if(ddx*ddx+ddy*ddy>121)continue;if(w<bz){bz=w;best=i;}}
+ if(best>=0){const eye=eyePos(),t=[p[best*3],p[best*3+1],p[best*3+2]];cam.target=t;const vx=eye[0]-t[0],vy=eye[1]-t[1],vz=eye[2]-t[2];
+  cam.radius=Math.hypot(vx,vy,vz);cam.phi=clamp(Math.acos(vy/cam.radius),0.05,Math.PI-0.05);cam.theta=Math.atan2(vx,vz);}});
+function frameAll(){let mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];for(const bx of BOXES)for(const c of bx.corners)for(let k=0;k<3;k++){mn[k]=Math.min(mn[k],c[k]);mx[k]=Math.max(mx[k],c[k]);}
+ cam.target=[(mn[0]+mx[0])/2,(mn[1]+mx[1])/2,(mn[2]+mx[2])/2];cam.radius=Math.max(mx[0]-mn[0],mx[1]-mn[1],mx[2]-mn[2])*1.7+1.5;}
+$('btn-frame').onclick=frameAll;
+function restoreCam(){try{const s=localStorage.getItem('kbx_cam');if(!s)return false;const c=JSON.parse(s);
+ cam.target=c.t.slice();cam.theta=c.th;cam.phi=c.ph;cam.radius=c.r;return true;}catch(e){return false;}}
+$('camsave').onclick=()=>{localStorage.setItem('kbx_cam',JSON.stringify({t:cam.target,th:cam.theta,ph:cam.phi,r:cam.radius}));
+ const e=$('camstatus');e.textContent='saved — will reopen here';setTimeout(()=>e.textContent='',2000);};
+$('camreset').onclick=()=>{localStorage.removeItem('kbx_cam');frameAll();const e=$('camstatus');e.textContent='cleared';setTimeout(()=>e.textContent='',2000);};
+let lastMouse=[0,0];
+canvas.addEventListener('mousemove',e=>{const r=canvas.getBoundingClientRect();lastMouse=[e.clientX-r.left,e.clientY-r.top];});
+function pickSplatAt(mx,my){if(!scene)return null;const W=canvas.clientWidth,H=canvas.clientHeight,vm=viewMat,pm=projMat,p=scene.positions,op=scene.alphasU8;let best=-1,bz=1e9;
+ for(let i=0;i<scene.n;i++){if(op[i]<60)continue;const x=p[i*3],y=p[i*3+1],z=p[i*3+2];
+  const cz=vm[2]*x+vm[6]*y+vm[10]*z+vm[14];if(cz>=-0.05)continue;const cx=vm[0]*x+vm[4]*y+vm[8]*z+vm[12],cy=vm[1]*x+vm[5]*y+vm[9]*z+vm[13],w=-cz;
+  const sx=((pm[0]*cx)/w*0.5+0.5)*W,sy=(0.5-(pm[5]*cy)/w*0.5)*H;if((sx-mx)*(sx-mx)+(sy-my)*(sy-my)>100)continue;if(w<bz){bz=w;best=i;}}
+ return best>=0?[p[best*3],p[best*3+1],p[best*3+2]]:null;}
+let kAnchor=null;                                                  // last K hit {P,out,side}
+function placeKNodes(){const P=pickSplatAt(lastMouse[0],lastMouse[1]);if(!P)return;
+ const eye=eyePos();let dh=[P[0]-eye[0],0,P[2]-eye[2]];const L=Math.hypot(dh[0],dh[2])||1;dh=[dh[0]/L,0,dh[2]/L];
+ kAnchor={P:P.slice(), out:[-dh[0],0,-dh[2]], side:[dh[2],0,-dh[0]]}; updateKNodes();}   // K = move (replace), not add
+function updateKNodes(){if(!kAnchor)return;const {P,out,side}=kAnchor,y=P[1];
+ const rMin=+$('kradius').value, rMax=Math.max(rMin,+$('kmaxplace').value), n=Math.max(1,parseInt($('knum').value)||5), span=(+$('karc').value)*Math.PI/180;
+ const dir=a=>[Math.cos(a)*out[0]+Math.sin(a)*side[0], Math.cos(a)*out[2]+Math.sin(a)*side[2]];
+ // occupancy at this height -> grow radius until a node hits a splat, capped at Max placement
+ const occ=new Set(),CL=0.06,kf=(a,b)=>a+'_'+b,p=scene.positions,op=scene.alphasU8;
+ for(let i=0;i<scene.n;i++){if(op[i]<128)continue;if(Math.abs(p[i*3+1]-y)>0.12)continue;occ.add(kf(Math.floor(p[i*3]/CL),Math.floor(p[i*3+2]/CL)));}
+ const angs=[];for(let i=0;i<n;i++)angs.push(n===1?0:(-span/2+span*i/(n-1)));
+ const hitAt=r=>angs.some(a=>{const d=dir(a);return occ.has(kf(Math.floor((P[0]+d[0]*r)/CL),Math.floor((P[2]+d[1]*r)/CL)));});
+ let r=rMin;for(let rr=rMin;rr<=rMax+1e-6;rr+=0.05){if(hitAt(rr))break;r=rr;}
+ // per-node line-of-sight: cast a ray from the K point (yellow sphere) toward each node;
+ // if a splat blocks the path within Max placement, drop that node.
+ const blocked=a=>{const d=dir(a);for(let t=2*CL;t<=rMax+1e-6;t+=0.05){if(occ.has(kf(Math.floor((P[0]+d[0]*t)/CL),Math.floor((P[2]+d[1]*t)/CL))))return true;}return false;};
+ knodesArr=[];for(const a of angs){if(blocked(a))continue;const d=dir(a);knodesArr.push(P[0]+d[0]*r, y, P[2]+d[1]*r);}
+ knodeCount=knodesArr.length/3; $('kcount').textContent=knodeCount;
+ gl.bindBuffer(gl.ARRAY_BUFFER,knodeBuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(knodesArr),gl.DYNAMIC_DRAW);
+ // yellow marker sphere at the K hit point
+ const ab=sphereAB(P[0],P[1],P[2],0.06,22);kSphSeg=ab.length/6;
+ gl.bindBuffer(gl.ARRAY_BUFFER,kSphBuf);gl.bufferData(gl.ARRAY_BUFFER,ab,gl.DYNAMIC_DRAW);}
+function saveKVals(){localStorage.setItem('kbx_kvals',JSON.stringify({r:$('kradius').value,m:$('kmaxplace').value,n:$('knum').value,a:$('karc').value}));}
+function restoreKVals(){try{const s=localStorage.getItem('kbx_kvals');if(!s)return;const v=JSON.parse(s);$('kradius').value=v.r;$('kmaxplace').value=v.m;$('knum').value=v.n;$('karc').value=v.a;}catch(e){}}
+restoreKVals();
+['kradius','kmaxplace','knum','karc'].forEach(id=>$(id).addEventListener('input',()=>{saveKVals();updateKNodes();}));
+function captureFromNodes(){if(!scene||!kAnchor||!knodesArr.length)return;const grid=$('lgrid');grid.innerHTML='';let cnt=0;
+ for(let i=0;i<knodesArr.length;i+=3){drawSceneFrom([knodesArr[i],knodesArr[i+1],knodesArr[i+2]],kAnchor.P);
+  const im=document.createElement('img');im.src=snap();im.style.cssText='width:200px;display:block;border-radius:6px';grid.appendChild(im);cnt++;}
+ $('lcount').textContent=cnt;$('lshots').style.display='flex';needSort=true;detectFromNodes();}
+// detector tab switching
+const DET_NOTES={owlv2:'OWLv2: open-vocab transformer, best general accuracy.',gdino:'Grounding DINO: text-grounded detection, good on named objects.',yoloworld:'YOLO World: fast real-time detector, open-vocab classes.',roboflow:'Roboflow Kitchen: custom-trained kitchen model (API)'};
+let activeDetector='yoloworld';
+document.querySelectorAll('.det-tab').forEach(btn=>{btn.addEventListener('click',()=>{
+ activeDetector=btn.dataset.det;
+ document.querySelectorAll('.det-tab').forEach(b=>{b.style.background=b===btn?'var(--accent)':'#222';b.style.color=b===btn?'#000':'var(--text)';b.style.borderColor=b===btn?'var(--accent)':'#444';});
+ $('det-note').textContent=DET_NOTES[activeDetector]||'';});});
+function showToast(msg,kind){let t=$('toast');if(!t){t=document.createElement('div');t.id='toast';
+  t.style.cssText='position:fixed;left:50%;bottom:26px;transform:translateX(-50%);padding:10px 16px;border-radius:8px;font:600 13px system-ui;color:#fff;z-index:9999;box-shadow:0 4px 14px rgba(0,0,0,.4);transition:opacity .3s';document.body.appendChild(t);}
+ t.style.background=kind==='ok'?'#1f9d55':kind==='warn'?'#b8860b':kind==='err'?'#c0392b':'#333';t.textContent=msg;t.style.opacity='1';
+ if(t._h)clearTimeout(t._h);if(kind!=='busy')t._h=setTimeout(()=>{t.style.opacity='0';},4000);}
+async function detectFromNodes(){if(!kAnchor||!knodesArr.length)return;
+ const exclude=BOXES.map(b=>(b.name||'').toLowerCase().split(' ')[0]).filter(Boolean);
+ console.log('detecting from',knodesArr.length/3,'nodes, exclude=',exclude);
+ showToast('🔍 Detecting from '+(knodesArr.length/3)+' views… (~40–60s)','busy');
+ try{const r=await fetch('http://localhost:8777/detect',{method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({anchor:kAnchor.P,nodes:knodesArr,fov:cam.fov,exclude:exclude,detector:activeDetector})});
+  if(!r.ok){showToast('⚠ Detect server error '+r.status,'err');console.warn('detect server error',r.status);return;}
+  const res=await r.json();
+  if(res.shots&&res.shots.length){const g=$('lgrid');g.innerHTML='';res.shots.forEach(s=>{const im=document.createElement('img');im.src=s;im.style.cssText='width:240px;display:block;border-radius:6px';g.appendChild(im);});$('lcount').textContent=res.shots.length;$('lshots').style.display='flex';}
+  const b=res.box;
+  if(!b||!b.corners){showToast('No object detected in the pictures','warn');console.log('no object found');return;}
+  // the server wrote this box to detected_boxes.json; pollDetected adds it + applies the gap nudge
+  showToast('✓ Detected: '+b.name,'ok');console.log('detected object:',b.name);
+ }catch(e){showToast('⚠ Detect server unreachable — is detect_server.py running?','err');console.warn('detect server unreachable',e);}}
+$('lclose').onclick=()=>{$('lshots').style.display='none';};
+$('kclearbtn').onclick=()=>{kAnchor=null;knodesArr=[];knodeCount=0;kSphSeg=0;$('kcount').textContent='0';gl.bindBuffer(gl.ARRAY_BUFFER,knodeBuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(0),gl.DYNAMIC_DRAW);};
+window.addEventListener('keydown',e=>{if(e.key==='f'||e.key==='F')frameAll();else if(e.key==='k'||e.key==='K')placeKNodes();else if(e.key==='l'||e.key==='L')captureFromNodes();});
+$('splatscale').addEventListener('input',()=>{const v=parseInt($('splatscale').value)/100;gl.useProgram(prog);gl.uniform1f(uSplatScale,v);$('splatscale-v').textContent=v.toFixed(2)+'×';});
+$('floaterhide').addEventListener('change',()=>{gl.useProgram(prog);gl.uniform1f(uFloaterHide,$('floaterhide').checked?1:0);if($('floaters').checked||$('floaterhide').checked)detectFloaters();});
+$('floaters').addEventListener('change',()=>{gl.useProgram(prog);gl.uniform1f(uFloaterHL,$('floaters').checked?1:0);if($('floaters').checked||$('floaterhide').checked)detectFloaters();});
+const reDet=()=>{if($('floaters').checked||$('floaterhide').checked)detectFloaters();};
+$('floaterdens').addEventListener('input',()=>{$('floaterdens-n').value=$('floaterdens').value;reDet();});
+$('floaterdens-n').addEventListener('change',()=>{let v=clamp(parseInt($('floaterdens-n').value)||15,5,80);$('floaterdens-n').value=v;$('floaterdens').value=v;reDet();});
+$('floatercell').addEventListener('input',()=>{$('floatercell-n').value=(parseInt($('floatercell').value)/1000).toFixed(3);reDet();});
+$('floatercell-n').addEventListener('change',()=>{let v=Math.min(0.5,Math.max(0.005,parseFloat($('floatercell-n').value)||0.06));$('floatercell-n').value=v.toFixed(3);$('floatercell').value=Math.round(v*1000);reDet();});
+// room crop box wiring
+const CIDS=['ccx','ccy','ccz','csx','csy','csz'];
+function setCropInputs(){$('ccx').value=CROP.c[0].toFixed(2);$('ccy').value=CROP.c[1].toFixed(2);$('ccz').value=CROP.c[2].toFixed(2);
+ $('csx').value=(CROP.h[0]*2).toFixed(2);$('csy').value=(CROP.h[1]*2).toFixed(2);$('csz').value=(CROP.h[2]*2).toFixed(2);}
+function applyCrop(){CROP.c=[+$('ccx').value,+$('ccy').value,+$('ccz').value];
+ CROP.h=[Math.max(0.05,+$('csx').value/2),Math.max(0.05,+$('csy').value/2),Math.max(0.05,+$('csz').value/2)];rebuildCrop();}
+function cropToScene(){if(!scene)return;const p=scene.positions,n=scene.n;let mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];
+ for(let i=0;i<n;i+=7){if(scene.alphasU8[i]<60)continue;for(let k=0;k<3;k++){const v=p[i*3+k];if(v<mn[k])mn[k]=v;if(v>mx[k])mx[k]=v;}}
+ CROP.c=[(mn[0]+mx[0])/2,(mn[1]+mx[1])/2,(mn[2]+mx[2])/2];CROP.h=[(mx[0]-mn[0])/2,(mx[1]-mn[1])/2,(mx[2]-mn[2])/2];setCropInputs();rebuildCrop();}
+CIDS.forEach(id=>$(id).addEventListener('input',applyCrop));
+$('crophide').addEventListener('change',()=>{gl.useProgram(prog);gl.uniform1f(uCropOn,$('crophide').checked?1:0);});
+// Box fit: front-gap slider <-> number, live re-nudge of all boxes
+(function(){const s=$('boxgap'),nb=$('boxgap-n');
+ s.addEventListener('input',()=>{nb.value=s.value;scheduleBoxGap();});
+ nb.addEventListener('input',()=>{let v=Math.max(0,Math.min(0.3,parseFloat(nb.value)||0));s.value=v;scheduleBoxGap();});})();
+$('cropreset').onclick=cropToScene;
+['ndheight','ndspacing','ndclear'].forEach(id=>$(id).addEventListener('change',computeNodes));
+$('cropsave').onclick=()=>{const data=JSON.stringify({center:CROP.c.map(v=>+v.toFixed(4)),size:CROP.h.map(v=>+(v*2).toFixed(4))});
+ const b=new Blob([data],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='room_crop.json';a.click();
+ const e=$('cropsave');e.textContent='Saved!';setTimeout(()=>e.textContent='Save crop ⬇',1200);};
+// object list UI (rebuildable; supports static + dynamically-detected boxes, with delete)
+const ol=$('objlist');
+function boxSize(bx){if(bx.size)return bx.size;const c=bx.corners,d=(a,b)=>Math.hypot(c[a][0]-c[b][0],c[a][1]-c[b][1],c[a][2]-c[b][2]);return [d(0,3),d(0,4),d(0,1)];}
+function deleteBox(bx){const i=BOXES.indexOf(bx);if(i<0)return;BOXES.splice(i,1);if(bx.id){_seenBoxes.add(bx.id);fetch('http://localhost:8777/forget?id='+encodeURIComponent(bx.id)).catch(()=>{});}renderObjList();}
+function renderObjList(){ol.innerHTML='';BOXES.forEach(bx=>{const d=document.createElement('div');d.className='row';
+ const cc='rgb('+bx.color.map(v=>Math.round(v*255)).join(',')+')';const nm=bx.label||bx.name||'object';const sz=boxSize(bx);
+ d.innerHTML=`<span class="sw" style="background:${cc}"></span><label class="check" style="flex:1"><input type="checkbox" checked> ${nm}</label><span class="val">${sz.map(v=>(+v).toFixed(2)).join('×')} m</span><button class="del" title="delete" style="margin-left:6px;background:none;border:none;color:#e66;cursor:pointer;font-size:14px">✕</button>`;
+ ol.appendChild(d);d.querySelector('input').addEventListener('change',e=>{bx.show=e.target.checked;});
+ d.querySelector('.del').addEventListener('click',()=>deleteBox(bx));});}
+renderObjList();
+async function loadSPZ(file){try{const raw=await file.arrayBuffer();let buf=new Uint8Array(raw);if(buf[0]===0x1f&&buf[1]===0x8b)buf=await gunzip(buf);
+ scene=(buf[0]===0x70&&buf[1]===0x6c&&buf[2]===0x79)?parsePLY(buf):parseSPZ(buf);buildGPUData();gl.useProgram(prog);gl.uniform1f(uSplatScale,2.2);gl.uniform1f(uExposure,1.15);
+ gl.uniform1f(uFloaterHL,$('floaters').checked?1:0);gl.uniform1f(uFloaterHide,$('floaterhide').checked?1:0);
+ if($('floaters').checked||$('floaterhide').checked)detectFloaters();
+ cropToScene();gl.useProgram(prog);gl.uniform1f(uCropOn,$('crophide').checked?1:0);computeNodes();
+ $('dropzone').classList.add('hidden');$('filemeta').textContent=file.name;$('stat-pts').textContent=scene.n.toLocaleString();frameAll();restoreCam();
+ _sceneCentroid=null;applyBoxGap();   // re-nudge boxes against the freshly loaded splats
+ fetch('http://localhost:8777/load-spz',{method:'POST',headers:{'Content-Type':'application/octet-stream'},body:raw})
+  .then(r=>{
+    if(!r.ok){showToast('Detect server error on load','warn');return null;}
+    showToast('Scene loaded — scanning 36 views with OWLv2 for fridge/oven/microwave…','busy');
+    return fetch('http://localhost:8777/auto-detect',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}',signal:AbortSignal.timeout?AbortSignal.timeout(600000):undefined});
+  })
+  .then(r=>r?r.json():null)
+  .then(res=>{
+    if(!res)return;
+    const n=res.boxes?res.boxes.length:0;
+    showToast(n?`Auto-detect: found ${n} object(s) — see OBJECTS panel`:`Auto-detect: nothing found`,(n?'ok':'warn'));
+    // boxes are added by pollDetected (single source of truth) to avoid duplicates; just show shots
+    const lg=$('lgrid');lg.innerHTML='';
+    (res.shots||[]).slice(0,14).forEach(src=>{const img=document.createElement('img');img.src=src;img.style.cssText='width:120px;height:90px;object-fit:cover;border-radius:4px;cursor:default;';lg.appendChild(img);});
+  })
+  .catch(()=>showToast('Detect server not running — upload worked but no auto-detect','warn'));
+ }catch(err){alert('Could not load: '+err.message);}}
+$('btn-open').onclick=()=>$('fileinput').click();
+$('fileinput').addEventListener('change',e=>{if(e.target.files[0])loadSPZ(e.target.files[0]);});
+const dz=$('dropzone');window.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});window.addEventListener('dragleave',e=>{if(e.relatedTarget===null)dz.classList.remove('drag');});
+window.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');const f=[...e.dataTransfer.files].find(f=>f.name.endsWith('.spz')||f.name.endsWith('.ply'));if(f)loadSPZ(f);});
+
+</script></body></html>

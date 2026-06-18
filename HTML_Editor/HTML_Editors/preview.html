@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SPZ Pink Region Selector → Yellow Splats</title>
+  <style>
+    :root{
+      --bg:#0b0f17; --panel:#121826; --panel2:#0f1522; --text:#e9eefb; --muted:#9aa6bd;
+      --accent:#ff2da6; --yellow:#ffd900; --line:#263248; --good:#42d392; --warn:#ffcc66; --bad:#ff6b6b;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#0b0f17,#090c12);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
+    header{padding:28px 22px 16px;max-width:1180px;margin:auto;}
+    h1{font-size:clamp(24px,3vw,40px);line-height:1.05;margin:0 0 10px;font-weight:800;letter-spacing:-.03em}
+    p{color:var(--muted);line-height:1.55;margin:8px 0}
+    main{max-width:1180px;margin:0 auto 40px;padding:0 22px;display:grid;gap:16px;grid-template-columns:1.02fr .98fr;}
+    @media(max-width:920px){main{grid-template-columns:1fr}}
+    .card{background:rgba(18,24,38,.92);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.24)}
+    .card h2{font-size:17px;margin:0 0 14px;letter-spacing:-.01em}.card h3{font-size:14px;margin:18px 0 10px;color:#d7def1}
+    .grid{display:grid;gap:12px}.cols2{grid-template-columns:1fr 1fr}.cols3{grid-template-columns:repeat(3,1fr)}
+    @media(max-width:620px){.cols2,.cols3{grid-template-columns:1fr}}
+    label{font-size:12px;color:#c3ccdf;display:block;margin:0 0 7px;font-weight:650}
+    input[type=file],select,input[type=number],input[type=text]{width:100%;background:var(--panel2);color:var(--text);border:1px solid #2a3650;border-radius:12px;padding:11px 12px;outline:none}
+    input[type=file]::file-selector-button{margin-right:10px;border:0;background:#222d44;color:var(--text);border-radius:9px;padding:8px 10px;cursor:pointer}
+    input[type=range]{width:100%}.row{display:flex;align-items:center;gap:10px}.row input[type=checkbox]{transform:scale(1.1)}
+    button{appearance:none;border:0;border-radius:13px;padding:12px 14px;background:#26344f;color:white;font-weight:800;cursor:pointer;transition:.15s transform,.15s opacity,.15s background}
+    button:hover{transform:translateY(-1px);background:#314466}button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+    .primary{background:linear-gradient(135deg,var(--accent),#8f4dff)}.primary:hover{background:linear-gradient(135deg,#ff4db3,#9d64ff)}
+    .green{background:#1e6b4c}.green:hover{background:#257f5b}.small{padding:8px 10px;font-size:12px;border-radius:10px}.danger{background:#5d2630}.danger:hover{background:#71303b}
+    .hint{font-size:12px;color:#95a2b8}.pill{display:inline-flex;gap:7px;align-items:center;background:#182136;border:1px solid #2a3650;border-radius:999px;padding:7px 10px;font-size:12px;color:#cbd5e9;margin:3px 6px 3px 0}
+    .dot{width:9px;height:9px;border-radius:99px;background:var(--muted)}.dot.good{background:var(--good)}.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}
+    .log{height:190px;overflow:auto;background:#080b12;border:1px solid #202a3d;border-radius:14px;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;white-space:pre-wrap;color:#c9d3e7}
+    .progressWrap{height:12px;background:#07101a;border:1px solid #22304a;border-radius:99px;overflow:hidden}.bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--yellow));transition:width .12s}
+    canvas{width:100%;background:#070a10;border:1px solid #202a3d;border-radius:14px;display:block}.downloadBox{display:none;background:#0b1813;border:1px solid #1d6648;border-radius:14px;padding:14px;margin-top:12px}
+    a.download{display:inline-flex;text-decoration:none;background:#1e6b4c;color:white;border-radius:12px;padding:12px 13px;font-weight:800;margin:8px 8px 0 0}
+    .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#0c111d;border:1px solid #2a3650;border-radius:6px;padding:1px 5px;color:#dce5fa}.split{height:1px;background:#243048;margin:15px 0}
+  </style>
+</head>
+<body>
+<header>
+  <h1>SPZ Pink Region Selector → Yellow Splats</h1>
+  <p>Upload a World Labs / Marble <span class="kbd">.spz</span>, a panorama where the target areas are painted pink, and this tool recolors all splats whose 3D direction lands inside the pink region.</p>
+  <p class="hint">Everything runs locally in your browser. The original geometry, opacity, scale and rotation are kept unchanged.</p>
+</header>
+<main>
+  <section class="card">
+    <h2>1. Files</h2>
+    <div class="grid">
+      <div>
+        <label>SPZ file</label>
+        <input id="spzFile" type="file" accept=".spz,application/octet-stream" />
+        <div id="spzStatus" class="pill"><span class="dot"></span>No SPZ loaded</div>
+      </div>
+      <div class="cols2 grid">
+        <div>
+          <label>Pink mask panorama</label>
+          <input id="maskFile" type="file" accept="image/*" />
+          <div id="maskStatus" class="pill"><span class="dot"></span>No mask loaded</div>
+        </div>
+        <div>
+          <label>Original panorama (optional, for preview + auto-align)</label>
+          <input id="origFile" type="file" accept="image/*" />
+          <div id="origStatus" class="pill"><span class="dot"></span>No original loaded</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="split"></div>
+    <h2>2. Projection / alignment</h2>
+    <div class="grid cols2">
+      <div>
+        <label>Coordinate preset</label>
+        <select id="preset">
+          <option value="wl-opencv" selected>World Labs / OpenCV: +X left, +Y down, +Z forward</option>
+          <option value="wl-opengl">World Labs / OpenGL export: +X left, +Y up, +Z back</option>
+          <option value="spz-rub">SPZ RUB / Three.js: +X right, +Y up, +Z back</option>
+          <option value="opencv-xright">OpenCV common: +X right, +Y down, +Z forward</option>
+          <option value="alt-fwd-z">Alternative: +X right, +Y up, +Z forward</option>
+          <option value="alt-fwd-negz">Alternative: +X right, +Y up, -Z forward</option>
+        </select>
+        <p class="hint">For your uploaded World Labs SPZ v2 file, the first preset is the one that matches the pink panorama best.</p>
+      </div>
+      <div>
+        <label>Yaw offset: <span id="yawLabel">0°</span></label>
+        <input id="yaw" type="range" min="-180" max="180" step="0.5" value="0" />
+        <p class="hint">Use this only if the selected splats look horizontally shifted.</p>
+      </div>
+    </div>
+    <div class="grid cols3" style="margin-top:12px">
+      <button id="autoAlign" class="small">Auto-align from original</button>
+      <button id="quickPreview" class="small">Preview mask projection</button>
+      <button id="reset" class="small danger">Reset settings</button>
+    </div>
+
+    <div class="split"></div>
+    <h2>3. Pink detection</h2>
+    <div class="grid cols3">
+      <div><label>Minimum saturation: <span id="satLabel">0.35</span></label><input id="sat" type="range" min="0" max="1" step="0.01" value="0.35" /></div>
+      <div><label>Minimum brightness: <span id="valLabel">0.45</span></label><input id="val" type="range" min="0" max="1" step="0.01" value="0.45" /></div>
+      <div><label>Dilate mask edge: <span id="dilateLabel">2 px</span></label><input id="dilate" type="range" min="0" max="12" step="1" value="2" /></div>
+    </div>
+    <div class="grid cols3" style="margin-top:12px">
+      <div><label>Min red</label><input id="minR" type="number" value="150" min="0" max="255" /></div>
+      <div><label>Max green</label><input id="maxG" type="number" value="140" min="0" max="255" /></div>
+      <div><label>Min blue</label><input id="minB" type="number" value="80" min="0" max="255" /></div>
+    </div>
+
+    <div class="split"></div>
+    <h2>4. Output</h2>
+    <div class="grid cols3">
+      <div><label>Selected splat color</label><input id="yellowColor" type="text" value="#ffff00" /></div>
+      <div><label>Minimum distance from origin</label><input id="minDist" type="number" value="0.01" step="0.01" min="0" /></div>
+      <div class="row" style="align-items:end;padding-bottom:9px"><input id="neutralizeSH" type="checkbox" checked /><label for="neutralizeSH" style="margin:0">Neutralize SH on selected</label></div>
+    </div>
+    <p class="hint">Neutralizing SH keeps yellow stable on SPZ files with view-dependent spherical harmonics. Your uploaded file is SPZ v2 with SH degree 0, so this has no visual downside.</p>
+    <div class="grid cols2" style="margin-top:12px">
+      <button id="process" class="primary">Select pink-region splats and download yellow SPZ</button>
+      <button id="savePreview" class="green" disabled>Save preview PNG</button>
+    </div>
+    <div class="downloadBox" id="downloads"></div>
+  </section>
+
+  <section class="card">
+    <h2>Preview</h2>
+    <canvas id="preview" width="1024" height="512"></canvas>
+    <div class="progressWrap" style="margin-top:12px"><div id="bar" class="bar"></div></div>
+    <p id="summary" class="hint">Load files, then click preview or process.</p>
+    <h3>Log</h3>
+    <div id="log" class="log"></div>
+    <h3>How it works</h3>
+    <p class="hint">Each splat position is treated as a direction from the panorama camera origin. That direction is projected into the equirectangular pink-mask panorama. If the pixel is pink, the tool changes only that splat’s packed RGB color to yellow and writes a new gzip SPZ.</p>
+  </section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const TAU = Math.PI * 2;
+const state = { spzFile:null, spz:null, mask:null, original:null, lastPreviewBlob:null };
+const presets = {
+  'wl-opencv': { right:[-1,0,0], up:[0,-1,0], forward:[0,0,1], name:'World Labs / OpenCV' },
+  'wl-opengl': { right:[-1,0,0], up:[0,1,0], forward:[0,0,-1], name:'World Labs / OpenGL export' },
+  'spz-rub': { right:[1,0,0], up:[0,1,0], forward:[0,0,-1], name:'SPZ RUB / Three.js' },
+  'opencv-xright': { right:[1,0,0], up:[0,-1,0], forward:[0,0,1], name:'OpenCV common' },
+  'alt-fwd-z': { right:[1,0,0], up:[0,1,0], forward:[0,0,1], name:'Alternative +Z forward' },
+  'alt-fwd-negz': { right:[1,0,0], up:[0,1,0], forward:[0,0,-1], name:'Alternative -Z forward' },
+};
+function log(msg){ $('log').textContent += msg + '\n'; $('log').scrollTop = $('log').scrollHeight; }
+function clearLog(){ $('log').textContent = ''; }
+function setProgress(p){ $('bar').style.width = Math.max(0, Math.min(100, p)) + '%'; }
+function setSummary(msg){ $('summary').textContent = msg; }
+function setStatus(id, kind, text){ const el=$(id); const dot=el.querySelector('.dot'); dot.className='dot '+(kind||''); el.lastChild.textContent = text; }
+function tick(){ return new Promise(r => setTimeout(r,0)); }
+function shDimForDegree(d){ return d===0?0:d===1?3:d===2?8:d===3?15:d===4?24:-1; }
+function readU32LE(bytes, o){ return (bytes[o] | (bytes[o+1]<<8) | (bytes[o+2]<<16) | (bytes[o+3]<<24)) >>> 0; }
+function readInt24LE(bytes, o){ let v = bytes[o] | (bytes[o+1]<<8) | (bytes[o+2]<<16); if(v & 0x800000) v |= 0xff000000; return v; }
+function dot3(x,y,z,a){ return x*a[0] + y*a[1] + z*a[2]; }
+function clamp01(v){ return Math.max(0, Math.min(1, v)); }
+function fract(v){ v = v - Math.floor(v); return v < 0 ? v + 1 : v; }
+function hexToRgb(hex){
+  hex = (hex || '').trim(); if(hex[0] === '#') hex = hex.slice(1);
+  if(hex.length === 3) hex = hex.split('').map(c=>c+c).join('');
+  const n = parseInt(hex,16); if(!Number.isFinite(n)) return [255,255,0];
+  return [(n>>16)&255, (n>>8)&255, n&255];
+}
+async function arrayBufferFromFile(file){ return await file.arrayBuffer(); }
+async function decompressGzip(buffer){
+  if(!('DecompressionStream' in window)) throw new Error('Your browser does not support DecompressionStream. Use current Chrome/Edge, or run a local server in a modern browser.');
+  const stream = new Blob([buffer]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return await new Response(stream).arrayBuffer();
+}
+async function compressGzip(buffer){
+  if(!('CompressionStream' in window)) throw new Error('Your browser does not support CompressionStream. Use current Chrome/Edge.');
+  const stream = new Blob([buffer]).stream().pipeThrough(new CompressionStream('gzip'));
+  return await new Response(stream).arrayBuffer();
+}
+function downloadBlob(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 30000);
+  return url;
+}
+async function loadImageFile(file){
+  const bmp = await createImageBitmap(file);
+  const c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height;
+  const ctx = c.getContext('2d', { willReadFrequently:true }); ctx.drawImage(bmp,0,0);
+  return { bitmap:bmp, canvas:c, data:ctx.getImageData(0,0,c.width,c.height), width:c.width, height:c.height, name:file.name };
+}
+function parseLegacySpz(bytes){
+  if(bytes[0] !== 0x4e || bytes[1] !== 0x47 || bytes[2] !== 0x53 || bytes[3] !== 0x50) throw new Error('Decompressed data is not NGSP.');
+  const version = readU32LE(bytes,4), numPoints = readU32LE(bytes,8), shDegree = bytes[12], fractionalBits = bytes[13], flags = bytes[14];
+  if(version < 1 || version > 3) throw new Error('This local tool supports legacy gzip SPZ v1–v3. Detected version '+version+'.');
+  const shDim = shDimForDegree(shDegree); if(shDim < 0) throw new Error('Unsupported SH degree: '+shDegree);
+  const usesFloat16 = version === 1; if(usesFloat16) throw new Error('SPZ v1 float16 positions are not supported by this masking tool. Convert to v2/v3 first.');
+  const posBytes = numPoints * 9;
+  const alphaOffset = 16 + posBytes;
+  const colorOffset = alphaOffset + numPoints;
+  const scaleOffset = colorOffset + numPoints * 3;
+  const rotBytesPerPoint = version >= 3 ? 4 : 3;
+  const rotationOffset = scaleOffset + numPoints * 3;
+  const shOffset = rotationOffset + numPoints * rotBytesPerPoint;
+  const shBytes = numPoints * shDim * 3;
+  const expectedMin = shOffset + shBytes;
+  if(bytes.length < expectedMin) throw new Error('SPZ appears truncated. Expected at least '+expectedMin+' bytes, got '+bytes.length+'.');
+  return {version,numPoints,shDegree,shDim,fractionalBits,flags,positionOffset:16,alphaOffset,colorOffset,scaleOffset,rotationOffset,shOffset,shBytes,expectedMin,rotBytesPerPoint};
+}
+async function ensureSpzLoaded(){
+  if(state.spz) return state.spz;
+  const file = state.spzFile; if(!file) throw new Error('Choose a .spz file first.');
+  log('Reading SPZ: '+file.name);
+  const raw = await arrayBufferFromFile(file);
+  const head = new Uint8Array(raw.slice(0,4));
+  if(head[0] === 0x4e && head[1] === 0x47 && head[2] === 0x53 && head[3] === 0x50){
+    throw new Error('This looks like SPZ v4/plain NGSP. This standalone HTML targets gzip SPZ v1–v3, like World Labs SPZ v2 exports. Convert v4 to v2/v3 first or use the official SPZ WASM library.');
+  }
+  if(!(head[0] === 0x1f && head[1] === 0x8b)) throw new Error('Not a gzip SPZ file.');
+  setProgress(5);
+  const dec = await decompressGzip(raw);
+  setProgress(25);
+  const bytes = new Uint8Array(dec);
+  const header = parseLegacySpz(bytes);
+  state.spz = {raw, decompressed:dec, bytes, header, name:file.name};
+  setStatus('spzStatus','good',`SPZ v${header.version}, ${header.numPoints.toLocaleString()} splats, SH ${header.shDegree}`);
+  log(`Loaded legacy gzip SPZ v${header.version}: ${header.numPoints.toLocaleString()} splats, fractionalBits=${header.fractionalBits}, SH degree=${header.shDegree}`);
+  return state.spz;
+}
+function buildPinkMask(){
+  if(!state.mask) throw new Error('Choose the pink mask panorama first.');
+  const {width:w,height:h,data} = state.mask;
+  const img = data.data;
+  const mask = new Uint8Array(w*h);
+  const satMin = Number($('sat').value), valMin = Number($('val').value);
+  const minR = Number($('minR').value), maxG = Number($('maxG').value), minB = Number($('minB').value);
+  let count = 0;
+  for(let i=0, p=0; i<img.length; i+=4, p++){
+    const r=img[i], g=img[i+1], b=img[i+2], a=img[i+3];
+    const max=Math.max(r,g,b), min=Math.min(r,g,b), d=max-min;
+    const sat = max === 0 ? 0 : d/max, val = max/255;
+    let hue = 0;
+    if(d !== 0){
+      if(max === r) hue = ((g-b)/d) % 6;
+      else if(max === g) hue = (b-r)/d + 2;
+      else hue = (r-g)/d + 4;
+      hue *= 60; if(hue < 0) hue += 360;
+    }
+    const huePink = hue >= 285 && hue <= 355;
+    const rgbPink = r >= minR && g <= maxG && b >= minB && (r-g) > 45 && (b-g) > 20;
+    if(a > 10 && huePink && sat >= satMin && val >= valMin && rgbPink){ mask[p]=1; count++; }
+  }
+  const radius = Number($('dilate').value);
+  if(radius > 0){
+    const integral = new Uint32Array((w+1)*(h+1));
+    for(let y=1;y<=h;y++){
+      let row=0; const rowOff=(y-1)*w, intRow=y*(w+1), intPrev=(y-1)*(w+1);
+      for(let x=1;x<=w;x++){ row += mask[rowOff+x-1]; integral[intRow+x] = integral[intPrev+x] + row; }
+    }
+    const dil = new Uint8Array(w*h); let dcount=0;
+    for(let y=0;y<h;y++){
+      const y0=Math.max(0,y-radius), y1=Math.min(h-1,y+radius);
+      for(let x=0;x<w;x++){
+        const x0=Math.max(0,x-radius), x1=Math.min(w-1,x+radius);
+        const A=y0*(w+1)+x0, B=y0*(w+1)+(x1+1), C=(y1+1)*(w+1)+x0, D=(y1+1)*(w+1)+(x1+1);
+        if(integral[D]-integral[B]-integral[C]+integral[A] > 0){ dil[y*w+x]=1; dcount++; }
+      }
+    }
+    log(`Pink pixels: ${count.toLocaleString()} → after dilation: ${dcount.toLocaleString()} (${(100*dcount/(w*h)).toFixed(1)}% of panorama)`);
+    return {mask:dil,width:w,height:h,count:dcount};
+  }
+  log(`Pink pixels: ${count.toLocaleString()} (${(100*count/(w*h)).toFixed(1)}% of panorama)`);
+  return {mask,width:w,height:h,count};
+}
+function projectPosition(x,y,z,preset,yawTurns){
+  const right = dot3(x,y,z,preset.right), up = dot3(x,y,z,preset.up), forward = dot3(x,y,z,preset.forward);
+  const r = Math.sqrt(right*right + up*up + forward*forward);
+  if(r <= 1e-12) return null;
+  const u = fract(0.5 + Math.atan2(right, forward) / TAU + yawTurns);
+  const v = 0.5 - Math.asin(clamp01((up/r + 1)/2)*2 - 1) / Math.PI;
+  return {u, v, r};
+}
+function drawBasePreview(){
+  const c=$('preview'), ctx=c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  const source = state.original || state.mask;
+  if(source){ ctx.drawImage(source.canvas,0,0,c.width,c.height); }
+  else { ctx.fillStyle='#080b12'; ctx.fillRect(0,0,c.width,c.height); }
+}
+function drawMaskOverlay(maskObj){
+  const c=$('preview'), ctx=c.getContext('2d');
+  drawBasePreview();
+  const tmp=document.createElement('canvas'); tmp.width=maskObj.width; tmp.height=maskObj.height;
+  const tctx=tmp.getContext('2d'); const id=tctx.createImageData(maskObj.width, maskObj.height);
+  for(let i=0;i<maskObj.mask.length;i++){ if(maskObj.mask[i]){ id.data[i*4]=255; id.data[i*4+1]=0; id.data[i*4+2]=160; id.data[i*4+3]=90; } }
+  tctx.putImageData(id,0,0); ctx.drawImage(tmp,0,0,c.width,c.height);
+}
+async function iterateSplats({modify=false, preview=false, scoreOnly=false, sampleLimit=0, preset=null, yawTurns=0, maskObj=null, outBytes=null}){
+  const spz = await ensureSpzLoaded();
+  const h=spz.header, bytes=spz.bytes;
+  const p = preset || presets[$('preset').value];
+  const minDist = Number($('minDist').value || 0);
+  let selected = 0, visited = 0;
+  const c=$('preview'), ctx=c.getContext('2d');
+  const drawStride = Math.max(1, Math.floor(h.numPoints / 150000));
+  const yellow = hexToRgb($('yellowColor').value);
+  const neutralize = $('neutralizeSH').checked;
+  const stride = sampleLimit ? Math.max(1, Math.floor(h.numPoints / sampleLimit)) : 1;
+  const totalSteps = Math.ceil(h.numPoints/stride);
+  for(let i=0, step=0; i<h.numPoints; i+=stride, step++){
+    const o = h.positionOffset + i*9;
+    const x = readInt24LE(bytes,o) / (1 << h.fractionalBits);
+    const y = readInt24LE(bytes,o+3) / (1 << h.fractionalBits);
+    const z = readInt24LE(bytes,o+6) / (1 << h.fractionalBits);
+    const pr = projectPosition(x,y,z,p,yawTurns);
+    if(!pr || pr.r < minDist) continue;
+    visited++;
+    let isSelected=false;
+    if(maskObj){
+      const mx = Math.min(maskObj.width-1, Math.max(0, Math.floor(pr.u * maskObj.width)));
+      const my = Math.min(maskObj.height-1, Math.max(0, Math.floor(pr.v * maskObj.height)));
+      isSelected = maskObj.mask[my*maskObj.width + mx] === 1;
+    }
+    if(isSelected){
+      selected++;
+      if(modify && outBytes){
+        const co = h.colorOffset + i*3;
+        outBytes[co] = yellow[0]; outBytes[co+1] = yellow[1]; outBytes[co+2] = yellow[2];
+        if(neutralize && h.shDim > 0){
+          const so = h.shOffset + i * h.shDim * 3;
+          outBytes.fill(128, so, so + h.shDim * 3);
+        }
+      }
+      if(preview && (i % drawStride === 0)){
+        ctx.fillStyle = '#ffe600';
+        ctx.fillRect(Math.floor(pr.u*c.width), Math.floor(pr.v*c.height), 2, 2);
+      }
+    }
+    if(step % 50000 === 0){
+      setProgress(30 + 55 * (step/Math.max(1,totalSteps)));
+      if(!scoreOnly) setSummary(`Scanning splats… ${Math.round(100*step/Math.max(1,totalSteps))}%`);
+      await tick();
+    }
+  }
+  return {selected, visited, total:h.numPoints, pct:selected/h.numPoints};
+}
+async function previewProjection(){
+  clearLog(); setProgress(0);
+  try{
+    await ensureSpzLoaded();
+    const maskObj=buildPinkMask(); drawMaskOverlay(maskObj);
+    const yawTurns = Number($('yaw').value)/360;
+    const result = await iterateSplats({preview:true, sampleLimit:0, preset:presets[$('preset').value], yawTurns, maskObj});
+    setProgress(100);
+    setSummary(`Preview: ${result.selected.toLocaleString()} of ${result.total.toLocaleString()} splats are inside the pink mask (${(100*result.pct).toFixed(2)}%).`);
+    log(`Selected: ${result.selected.toLocaleString()} / ${result.total.toLocaleString()} splats (${(100*result.pct).toFixed(2)}%)`);
+    $('savePreview').disabled = false;
+  }catch(e){ setProgress(0); setSummary('Error: '+e.message); log('ERROR: '+e.message); }
+}
+function sampleOriginalScore(spz, preset, yawTurns, sampleCount){
+  if(!state.original) throw new Error('Load the original panorama first.');
+  const h=spz.header, bytes=spz.bytes, img=state.original.data.data, w=state.original.width, hh=state.original.height;
+  const stride = Math.max(1, Math.floor(h.numPoints / sampleCount));
+  let n=0, sumA=0, sumB=0, sumAA=0, sumBB=0, sumAB=0;
+  for(let i=0; i<h.numPoints; i+=stride){
+    const o = h.positionOffset + i*9;
+    const x = readInt24LE(bytes,o) / (1 << h.fractionalBits);
+    const y = readInt24LE(bytes,o+3) / (1 << h.fractionalBits);
+    const z = readInt24LE(bytes,o+6) / (1 << h.fractionalBits);
+    const pr = projectPosition(x,y,z,preset,yawTurns); if(!pr || pr.r < 0.01) continue;
+    const px = Math.min(w-1, Math.max(0, Math.floor(pr.u*w))), py = Math.min(hh-1, Math.max(0, Math.floor(pr.v*hh)));
+    const ii = (py*w+px)*4;
+    const imgLum = (0.2126*img[ii] + 0.7152*img[ii+1] + 0.0722*img[ii+2]) / 255;
+    const co = h.colorOffset + i*3;
+    const splatLum = (0.2126*bytes[co] + 0.7152*bytes[co+1] + 0.0722*bytes[co+2]) / 255;
+    n++; sumA+=imgLum; sumB+=splatLum; sumAA+=imgLum*imgLum; sumBB+=splatLum*splatLum; sumAB+=imgLum*splatLum;
+  }
+  const cov=sumAB/n - (sumA/n)*(sumB/n), va=sumAA/n-(sumA/n)**2, vb=sumBB/n-(sumB/n)**2;
+  return cov / Math.sqrt(Math.max(1e-9, va*vb));
+}
+async function autoAlign(){
+  clearLog(); setProgress(0);
+  try{
+    if(!state.original) throw new Error('Load the original panorama before auto-align.');
+    const spz = await ensureSpzLoaded();
+    log('Auto-aligning. Testing coordinate presets and yaw offsets against original panorama brightness…');
+    let best={score:-Infinity,key:null,yaw:0}; const keys=Object.keys(presets);
+    let tested=0, total=keys.length*72;
+    for(const key of keys){
+      for(let deg=-180; deg<180; deg+=5){
+        const sc = sampleOriginalScore(spz, presets[key], deg/360, 45000);
+        tested++; if(sc > best.score) best={score:sc,key,yaw:deg};
+        if(tested % 8 === 0){ setProgress(100*tested/total); await tick(); }
+      }
+    }
+    $('preset').value = best.key; $('yaw').value = best.yaw; $('yawLabel').textContent = best.yaw + '°';
+    setProgress(100);
+    setSummary(`Auto-align chose ${presets[best.key].name}, yaw ${best.yaw}°, score ${best.score.toFixed(3)}. Check with Preview before processing.`);
+    log(`Best: ${presets[best.key].name}, yaw=${best.yaw}°, brightness correlation=${best.score.toFixed(3)}`);
+  }catch(e){ setProgress(0); setSummary('Error: '+e.message); log('ERROR: '+e.message); }
+}
+async function processSpz(){
+  clearLog(); setProgress(0); $('downloads').style.display='none'; $('downloads').innerHTML='';
+  try{
+    const spz = await ensureSpzLoaded();
+    const maskObj = buildPinkMask(); drawMaskOverlay(maskObj);
+    const outBytes = new Uint8Array(spz.decompressed.slice(0));
+    const yawTurns = Number($('yaw').value)/360;
+    log('Processing splats and recoloring selected packed RGB values…');
+    const result = await iterateSplats({modify:true, preview:true, preset:presets[$('preset').value], yawTurns, maskObj, outBytes});
+    setSummary(`Compressing new SPZ… selected ${result.selected.toLocaleString()} splats (${(100*result.pct).toFixed(2)}%).`);
+    setProgress(88); await tick();
+    const gz = await compressGzip(outBytes.buffer);
+    setProgress(96);
+    const base = (spz.name || 'output.spz').replace(/\.spz$/i,'');
+    const filename = `${base}_pinkRegion_yellow.spz`;
+    const blob = new Blob([gz], {type:'application/octet-stream'});
+    const url = URL.createObjectURL(blob);
+    const box=$('downloads'); box.style.display='block';
+    box.innerHTML = `<strong>Done.</strong><p class="hint">Selected ${result.selected.toLocaleString()} / ${result.total.toLocaleString()} splats (${(100*result.pct).toFixed(2)}%). New file size: ${(blob.size/1024/1024).toFixed(1)} MB.</p><a class="download" id="downloadSpz" href="${url}" download="${filename}">Download yellow SPZ</a>`;
+    log(`Created ${filename}: ${(blob.size/1024/1024).toFixed(1)} MB`);
+    setProgress(100); setSummary(`Done: ${result.selected.toLocaleString()} splats were recolored yellow.`);
+    $('savePreview').disabled = false;
+  }catch(e){ setProgress(0); setSummary('Error: '+e.message); log('ERROR: '+e.message); }
+}
+async function savePreview(){
+  const c=$('preview'); c.toBlob(blob=>{
+    if(!blob) return;
+    downloadBlob(blob, 'spz_pink_region_selection_preview.png');
+  }, 'image/png');
+}
+function resetSettings(){
+  $('preset').value='wl-opencv'; $('yaw').value=0; $('yawLabel').textContent='0°';
+  $('sat').value=.35; $('satLabel').textContent='0.35'; $('val').value=.45; $('valLabel').textContent='0.45'; $('dilate').value=2; $('dilateLabel').textContent='2 px';
+  $('minR').value=150; $('maxG').value=140; $('minB').value=80; $('yellowColor').value='#ffff00'; $('minDist').value='0.01'; $('neutralizeSH').checked=true;
+  drawBasePreview(); setSummary('Settings reset.');
+}
+$('spzFile').addEventListener('change', e=>{ state.spzFile=e.target.files[0]||null; state.spz=null; if(state.spzFile) setStatus('spzStatus','warn','SPZ chosen; not parsed yet'); else setStatus('spzStatus','','No SPZ loaded'); });
+$('maskFile').addEventListener('change', async e=>{ try{ const f=e.target.files[0]; if(!f) return; state.mask=await loadImageFile(f); setStatus('maskStatus','good',`${state.mask.width}×${state.mask.height}`); drawBasePreview(); }catch(err){ setStatus('maskStatus','bad','Error'); log('ERROR loading mask: '+err.message); } });
+$('origFile').addEventListener('change', async e=>{ try{ const f=e.target.files[0]; if(!f) return; state.original=await loadImageFile(f); setStatus('origStatus','good',`${state.original.width}×${state.original.height}`); drawBasePreview(); }catch(err){ setStatus('origStatus','bad','Error'); log('ERROR loading original: '+err.message); } });
+for(const [id,label,unit] of [['yaw','yawLabel','°'],['sat','satLabel',''],['val','valLabel',''],['dilate','dilateLabel',' px']]){
+  $(id).addEventListener('input', ()=>{ const v=$(id).value; $(label).textContent = (id==='yaw' ? Number(v).toString() : id==='dilate' ? Number(v).toString() : Number(v).toFixed(2)) + unit; });
+}
+$('process').addEventListener('click', processSpz);
+$('quickPreview').addEventListener('click', previewProjection);
+$('autoAlign').addEventListener('click', autoAlign);
+$('reset').addEventListener('click', resetSettings);
+$('savePreview').addEventListener('click', savePreview);
+drawBasePreview();
+</script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3D Model Admin</title>
+<script type="module" src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1d2129; --line:#2a2f3a;
+    --txt:#e6e9ef; --mut:#8b93a3; --acc:#4f8cff; --acc2:#3a6fd6;
+    --danger:#ff5d5d; --danger2:#c93f3f; --ok:#3ecf8e; --warn:#f0b400;
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.45 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--txt)}
+  header{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:20}
+  header h1{font-size:16px;margin:0;font-weight:600}
+  header .spacer{flex:1}
+  .layout{display:flex;min-height:calc(100vh - 53px)}
+  aside{width:240px;border-right:1px solid var(--line);background:var(--panel);padding:14px;flex:0 0 auto}
+  aside h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin:0 0 10px}
+  .cat{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;cursor:pointer;margin-bottom:3px;color:var(--txt)}
+  .cat:hover{background:var(--panel2)}
+  .cat.active{background:var(--acc);color:#fff}
+  .cat .count{margin-left:auto;font-size:12px;color:var(--mut);background:var(--panel2);padding:1px 7px;border-radius:10px}
+  .cat.active .count{color:#fff;background:rgba(255,255,255,.2)}
+  .cat .edit{opacity:0;font-size:12px;color:inherit}
+  .cat:hover .edit{opacity:.6}
+  main{flex:1;padding:20px;min-width:0}
+  .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+  .toolbar input[type=search]{flex:1;min-width:180px}
+  input,select,textarea{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 10px;font:inherit;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--acc)}
+  button{cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--txt);border-radius:8px;padding:8px 12px;font:inherit;display:inline-flex;align-items:center;gap:6px}
+  button:hover{border-color:var(--acc)}
+  button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+  button.primary:hover{background:var(--acc2)}
+  button.danger{color:var(--danger)}
+  button.danger:hover{border-color:var(--danger)}
+  button.ghost{background:transparent}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column}
+  .card.missing{opacity:.6;outline:1px dashed var(--warn)}
+  .preview{aspect-ratio:1/1;background:radial-gradient(circle at 50% 35%,#222836,#10131a);position:relative}
+  .preview model-viewer{width:100%;height:100%;--poster-color:transparent}
+  .preview img{width:100%;height:100%;object-fit:cover}
+  .preview .badge{position:absolute;top:8px;left:8px;font-size:11px;background:rgba(0,0,0,.55);padding:2px 7px;border-radius:6px;color:var(--mut)}
+  .preview.noview{display:flex;align-items:center;justify-content:center}
+  .preview.missingview{background:repeating-linear-gradient(45deg,#2a1414,#2a1414 10px,#241010 10px,#241010 20px)}
+  .fileicon{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--mut);font-size:34px}
+  .fileicon span{font-size:13px;font-weight:700;letter-spacing:.05em;color:var(--txt)}
+  .fileicon small{font-size:10.5px;color:var(--mut);max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .missingview .fileicon{color:var(--danger)}.missingview .fileicon span{color:var(--danger)}
+  .missing-banner{font-size:11px;background:rgba(255,93,93,.12);border:1px solid var(--danger);color:#ffb0b0;padding:5px 8px;border-radius:6px}
+  .missing-banner code{background:rgba(0,0,0,.25);color:#ffd0d0}
+  .catwarn{font-size:11px;color:var(--danger);font-weight:600;white-space:nowrap}
+  .cat.active .catwarn{color:#ffdede}
+  .card .body{padding:11px 12px;display:flex;flex-direction:column;gap:6px;flex:1}
+  .card .name{font-weight:600;font-size:13px;word-break:break-word}
+  .card .meta{font-size:11px;color:var(--mut)}
+  .card .desc{font-size:12px;color:var(--mut);min-height:0}
+  .card .actions{display:flex;gap:6px;padding:0 12px 12px}
+  .card .actions button{flex:1;padding:6px;font-size:12px;justify-content:center}
+  .status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle}
+  .s-active{background:var(--ok)} .s-draft{background:var(--warn)} .s-archived{background:var(--mut)}
+  .empty{color:var(--mut);text-align:center;padding:60px 20px}
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);width:480px;max-width:100%;max-height:90vh;overflow:auto}
+  .modal.wide{width:640px}
+  .modal h3{margin:0;padding:16px 18px;border-bottom:1px solid var(--line);font-size:15px}
+  .form-sec{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin:8px 0 -4px;padding-top:12px;border-top:1px solid var(--line)}
+  .form-sec.first{border-top:none;padding-top:0;margin-top:0}
+  .hint{text-transform:none;letter-spacing:0;color:var(--mut)}
+  .modal .content{padding:18px;display:flex;flex-direction:column;gap:14px}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field label{font-size:12px;color:var(--mut)}
+  .modal .foot{padding:14px 18px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end}
+  .warn-box{background:rgba(240,180,0,.1);border:1px solid var(--warn);color:#f6d57a;padding:10px 12px;border-radius:8px;font-size:13px}
+  .danger-box{background:rgba(255,93,93,.1);border:1px solid var(--danger);color:#ffb0b0;padding:10px 12px;border-radius:8px;font-size:13px}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);padding:10px 16px;border-radius:8px;z-index:80;box-shadow:0 6px 24px rgba(0,0,0,.4)}
+  code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
+  .row{display:flex;gap:10px}.row>*{flex:1}
+  /* product card data */
+  .card .titlerow{display:flex;align-items:center;gap:6px}
+  .price-tag{margin-left:auto;font-weight:700;color:var(--txt);white-space:nowrap}
+  .swatch{width:12px;height:12px;border-radius:50%;border:1px solid rgba(255,255,255,.3);display:inline-block;vertical-align:-2px;margin-right:5px}
+  .energy{font-weight:700;font-size:10.5px;padding:1px 6px;border-radius:5px;color:#04210f;margin-left:4px}
+  .energy-A{background:#3ecf8e}.energy-B{background:#7ed957}.energy-C{background:#cfe04a}
+  .energy-D{background:#f0d000}.energy-E{background:#f0a500}.energy-F{background:#f07b27}.energy-G{background:#f0463c;color:#fff}
+  .specs{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11px;color:var(--mut)}
+  .specs b{color:var(--txt);font-weight:600}
+  .chips{display:flex;flex-wrap:wrap;gap:4px}
+  .chip{font-size:10.5px;background:var(--panel2);border:1px solid var(--line);color:var(--mut);padding:2px 7px;border-radius:20px}
+  .card .actions button.details{flex:0 0 auto;padding:6px 9px}
+  .linkbtn{color:var(--acc);text-decoration:none}
+  .detail-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+  .detail-tbl td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  .detail-tbl tr:last-child td{border-bottom:none}
+  .detail-tbl td:first-child{color:var(--mut);width:36%;white-space:nowrap}
+</style>
+</style>
+</head>
+<body>
+<header>
+  <h1>🧊 RoomRevive Product Admin</h1>
+  <span class="spacer"></span>
+  <button id="missingBtn" class="danger" style="display:none" title="Files referenced by the catalog that no longer exist on disk"></button>
+  <button id="scanBtn" title="Re-scan the 3D-models folder for new files">↻ Rescan folder</button>
+</header>
+
+<div class="layout">
+  <aside>
+    <h2>Categories</h2>
+    <div id="catList"></div>
+    <button class="ghost" id="addCatBtn" style="width:100%;margin-top:10px;justify-content:center">+ New category</button>
+  </aside>
+
+  <main>
+    <div class="toolbar">
+      <input type="search" id="searchBox" placeholder="Search models by name…">
+      <select id="statusFilter">
+        <option value="">All statuses</option>
+        <option value="active">Active</option>
+        <option value="draft">Draft</option>
+        <option value="archived">Archived</option>
+        <option value="__missing__">⚠ Missing files</option>
+      </select>
+      <button class="primary" id="addItemBtn">+ Add product</button>
+    </div>
+    <div id="grid" class="grid"></div>
+  </main>
+</div>
+
+<div id="modalRoot"></div>
+<script src="app.js?v=8"></script>
+</body>
+</html>

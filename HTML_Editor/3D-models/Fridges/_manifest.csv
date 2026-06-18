@@ -1,0 +1,89 @@
+name,file,status,bytes,glb_url
+K 4002 D Hvid,K_4002_D_Hvid.glb,skip,13330404,
+K 4003 D Hvid,K_4003_D_Hvid.glb,skip,15937536,
+KS 4783 DD N Hvid,KS_4783_DD_N_Hvid.glb,skip,11500180,
+KS 4783 DD N CleanSteel,KS_4783_DD_N_CleanSteel.glb,FAIL_download,0,https://media.miele.com/downloads/9f/cf/00_C7F13838016B1EEEBFD06187D5F59FCF.glb
+KS 4783 DD N Blacksteel,KS_4783_DD_N_Blacksteel.glb,FAIL_download,0,https://media.miele.com/downloads/df/cf/00_C7F13838016B1EEEBFD056D38B19DFCF.glb
+KS 4885 DD N CleanSteel,KS_4885_DD_N_CleanSteel.glb,FAIL_download,0,https://media.miele.com/downloads/1f/cf/00_C7F13838016B1EEEBFD074CC99191FCF.glb
+KS 4887 DD CleanSteel,KS_4887_DD_CleanSteel.glb,skip,14772100,
+FNS 4382 D N Hvid,FNS_4382_D_N_Hvid.glb,FAIL_download,0,https://media.miele.com/downloads/1f/cf/00_C7F13838016B1EEEBFCF02C175661FCF.glb
+FNS 4382 D N Staallook,FNS_4382_D_N_Staallook.glb,FAIL_download,0,https://media.miele.com/downloads/9f/cf/00_C7F13838016B1EEEBFCEF94CB4E89FCF.glb
+FNS 4782 D N Hvid,FNS_4782_D_N_Hvid.glb,FAIL_download,0,https://media.miele.com/downloads/df/cf/00_C7F13838016B1EEEBFCF278CDD02DFCF.glb
+FNS 4782 D N CleanSteel,FNS_4782_D_N_CleanSteel.glb,FAIL_download,0,https://media.miele.com/downloads/9f/cf/00_C7F13838016B1EEEBFCF1F3099599FCF.glb
+FNS 4782 D N Blacksteel,FNS_4782_D_N_Blacksteel.glb,FAIL_download,0,https://media.miele.com/downloads/9f/cf/00_C7F13838016B1EEEBFCF176332D19FCF.glb
+FNS 4782 E N Blacksteel,FNS_4782_E_N_Blacksteel.glb,FAIL_download,0,https://media.miele.com/downloads/9f/cf/00_C7F13838016B1EEEBFCF176332D19FCF.glb
+FNS 4882 D N CleanSteel,FNS_4882_D_N_CleanSteel.glb,FAIL_download,0,https://media.miele.com/downloads/5f/cf/00_C7F13838016B1EEEBFCF2F24E8BE5FCF.glb
+KDN 4174 E Active Hvid,KDN_4174_E_Active_Hvid.glb,FAIL_download,0,https://media.miele.com/downloads/5f/cf/00_C7F13838016B1EEEBFCF87B2F6F15FCF.glb
+KDN 4174 E Active Staallook,KDN_4174_E_Active_Staallook.glb,skip,10164480,
+KFN 4375 CD Hvid,KFN_4375_CD_Hvid.glb,skip,15639692,
+KFN 4377 CD Staallook,KFN_4377_CD_Staallook.glb,FAIL_download,0,https://media.miele.com/downloads/df/cf/00_C7F13838016B1EEEBFCFB2FC59DFDFCF.glb
+KFN 4394 ED Staallook,KFN_4394_ED_Staallook.glb,skip,13238304,
+KFN 4395 CD Hvid,KFN_4395_CD_Hvid.glb,FAIL_download,0,https://media.miele.com/downloads/5f/cf/00_C7F13838016B1EEEBFCFC98686925FCF.glb
+KFN 4395 DD Hvid,KFN_4395_DD_Hvid.glb,FAIL_download,0,https://media.miele.com/downloads/5f/cf/00_C7F13838016B1EEEBFCFC98686925FCF.glb
+KFN 4395 DD Staallook,KFN_4395_DD_Staallook.glb,skip,15909036,
+KFN 4397 CD Staallook,KFN_4397_CD_Staallook.glb,skip,16073572,
+KFN 4494 ED Staallook,KFN_4494_ED_Staallook.glb,FAIL_download,0,https://media.miele.com/downloads/5f/cf/00_C7F13838016B1EEEBFCFD12D8D645FCF.glb
+KFN 4795 AD Blacksteel,KFN_4795_AD_Blacksteel.glb,ok_direct,10968472,https://media.miele.com/downloads/5f/cf/00_C7F13838016B1EEEBFCFEBC568865FCF.glb
+KFN 4795 AD CleanSteel,KFN_4795_AD_CleanSteel.glb,ok_wayback,13529740,https://media.miele.com/downloads/1f/cf/00_C7F13838016B1EEEBFCFF028E55A1FCF.glb
+KFN 4795 CD Blackboard,KFN_4795_CD_Blackboard.glb,ok_direct,12271476,https://media.miele.com/downloads/df/cf/00_C7F13838016B1EEEBFCFE78B3298DFCF.glb
+KFN 4795 CD Blacksteel,KFN_4795_CD_Blacksteel.glb,ok_direct,10968472,https://media.miele.com/downloads/5f/cf/00_C7F13838016B1EEEBFCFEBC568865FCF.glb
+KFN 4795 CD CleanSteel,KFN_4795_CD_CleanSteel.glb,ok_wayback,13529740,https://media.miele.com/downloads/1f/cf/00_C7F13838016B1EEEBFCFF028E55A1FCF.glb
+KFN 4795 CD Hvid,KFN_4795_CD_Hvid.glb,ok_wayback,15017436,https://media.miele.com/downloads/5f/cf/00_C7F13838016B1EEEBFCFF40CBCC45FCF.glb
+KFN 4795 DD Blacksteel,KFN_4795_DD_Blacksteel.glb,ok_wayback,10968472,https://media.miele.com/downloads/5f/cf/00_C7F13838016B1EEEBFCFEBC568865FCF.glb
+KFN 4796 CD CleanSteel,KFN_4796_CD_CleanSteel.glb,ok_wayback,16439956,https://media.miele.com/downloads/1f/cf/00_C7F13838016B1EEEBFCFF8A1A7C11FCF.glb
+KFN 4797 AD CleanSteel,KFN_4797_AD_CleanSteel.glb,ok_wayback,16298908,https://media.miele.com/downloads/df/cf/00_C7F13838016B1EEEBFCFFE0BE9A4DFCF.glb
+KFN 4797 CD CleanSteel,KFN_4797_CD_CleanSteel.glb,ok_wayback,16298908,https://media.miele.com/downloads/df/cf/00_C7F13838016B1EEEBFCFFE0BE9A4DFCF.glb
+KFN 4797 CD Hvid,KFN_4797_CD_Hvid.glb,FAIL_download,0,https://media.miele.com/downloads/1f/cf/00_C7F13838016B1EEEBFD0031320181FCF.glb
+KFN 4799 AD CleanSteel front,KFN_4799_AD_CleanSteel_front.glb,ok_wayback,16299380,https://media.miele.com/downloads/9f/cf/00_C7F13838016B1EEEBFD00791F2BA9FCF.glb
+KFN 4799 AD Obsidiansort mat,KFN_4799_AD_Obsidiansort_mat.glb,ok_wayback,16655592,https://media.miele.com/downloads/5f/cf/00_C7F13838016B1EEEBFD00C40B8045FCF.glb
+KFN 4799 CDE CleanSteel,KFN_4799_CDE_CleanSteel.glb,ok_wayback,16676056,https://media.miele.com/downloads/1f/cf/00_C7F13838016B1EEEBFD010F9AF5D1FCF.glb
+KFN 4799 DDE CleanSteel,KFN_4799_DDE_CleanSteel.glb,ok_wayback,16676056,https://media.miele.com/downloads/1f/cf/00_C7F13838016B1EEEBFD010F9AF5D1FCF.glb
+KFN 4898 AD Brillanthvid glas,KFN_4898_AD_Brillanthvid_glas.glb,FAIL_download,0,https://media.miele.com/downloads/1f/cf/00_C7F13838016B1EEEBFD01884313F1FCF.glb
+KFN 4898 AD Grafitgraa glas,KFN_4898_AD_Grafitgraa_glas.glb,ok_wayback,15406292,https://media.miele.com/downloads/df/cf/00_C7F13838016B1EEEBFD021DF352ADFCF.glb
+KFFD 6741 CleanSteel,KFFD_6741_CleanSteel.glb,ok_direct,10579892,https://media.miele.com/downloads/90/1d/00_C7F13838E4061FD18BF0F8F05267901D.glb
+KFFD 6765 CleanSteel,KFFD_6765_CleanSteel.glb,ok_direct,12579528,https://media.miele.com/downloads/d0/1d/00_C7F13838E4061FD18BF106949BDBD01D.glb
+KFFD 6867 Obsidiansort mat,KFFD_6867_Obsidiansort_mat.glb,ok_direct,12148768,https://media.miele.com/downloads/90/1d/00_C7F13838E4061FD18BF109D95B73901D.glb
+K 4002 D Hvid,K_4002_D_Hvid.glb,skip,13330404,
+K 4003 D Hvid,K_4003_D_Hvid.glb,skip,15937536,
+KS 4783 DD N Hvid,KS_4783_DD_N_Hvid.glb,skip,11500180,
+KS 4783 DD N CleanSteel,KS_4783_DD_N_CleanSteel.glb,FAIL_download,0,https://media.miele.com/downloads/9f/cf/00_C7F13838016B1EEEBFD06187D5F59FCF.glb
+KS 4783 DD N Blacksteel,KS_4783_DD_N_Blacksteel.glb,FAIL_download,0,https://media.miele.com/downloads/df/cf/00_C7F13838016B1EEEBFD056D38B19DFCF.glb
+KS 4885 DD N CleanSteel,KS_4885_DD_N_CleanSteel.glb,FAIL_download,0,https://media.miele.com/downloads/1f/cf/00_C7F13838016B1EEEBFD074CC99191FCF.glb
+KS 4887 DD CleanSteel,KS_4887_DD_CleanSteel.glb,skip,14772100,
+FNS 4382 D N Hvid,FNS_4382_D_N_Hvid.glb,FAIL_download,0,https://media.miele.com/downloads/1f/cf/00_C7F13838016B1EEEBFCF02C175661FCF.glb
+FNS 4382 D N Staallook,FNS_4382_D_N_Staallook.glb,FAIL_download,0,https://media.miele.com/downloads/9f/cf/00_C7F13838016B1EEEBFCEF94CB4E89FCF.glb
+FNS 4782 D N Hvid,FNS_4782_D_N_Hvid.glb,FAIL_download,0,https://media.miele.com/downloads/df/cf/00_C7F13838016B1EEEBFCF278CDD02DFCF.glb
+FNS 4782 D N CleanSteel,FNS_4782_D_N_CleanSteel.glb,FAIL_download,0,https://media.miele.com/downloads/9f/cf/00_C7F13838016B1EEEBFCF1F3099599FCF.glb
+FNS 4782 D N Blacksteel,FNS_4782_D_N_Blacksteel.glb,FAIL_download,0,https://media.miele.com/downloads/9f/cf/00_C7F13838016B1EEEBFCF176332D19FCF.glb
+FNS 4782 E N Blacksteel,FNS_4782_E_N_Blacksteel.glb,FAIL_download,0,https://media.miele.com/downloads/9f/cf/00_C7F13838016B1EEEBFCF176332D19FCF.glb
+FNS 4882 D N CleanSteel,FNS_4882_D_N_CleanSteel.glb,FAIL_download,0,https://media.miele.com/downloads/5f/cf/00_C7F13838016B1EEEBFCF2F24E8BE5FCF.glb
+KDN 4174 E Active Hvid,KDN_4174_E_Active_Hvid.glb,FAIL_download,0,https://media.miele.com/downloads/5f/cf/00_C7F13838016B1EEEBFCF87B2F6F15FCF.glb
+KDN 4174 E Active Staallook,KDN_4174_E_Active_Staallook.glb,skip,10164480,
+KFN 4375 CD Hvid,KFN_4375_CD_Hvid.glb,skip,15639692,
+KFN 4377 CD Staallook,KFN_4377_CD_Staallook.glb,FAIL_download,0,https://media.miele.com/downloads/df/cf/00_C7F13838016B1EEEBFCFB2FC59DFDFCF.glb
+KFN 4394 ED Staallook,KFN_4394_ED_Staallook.glb,skip,13238304,
+KFN 4395 CD Hvid,KFN_4395_CD_Hvid.glb,FAIL_download,0,https://media.miele.com/downloads/5f/cf/00_C7F13838016B1EEEBFCFC98686925FCF.glb
+KFN 4395 DD Hvid,KFN_4395_DD_Hvid.glb,FAIL_download,0,https://media.miele.com/downloads/5f/cf/00_C7F13838016B1EEEBFCFC98686925FCF.glb
+KFN 4395 DD Staallook,KFN_4395_DD_Staallook.glb,skip,15909036,
+KFN 4397 CD Staallook,KFN_4397_CD_Staallook.glb,skip,16073572,
+KFN 4494 ED Staallook,KFN_4494_ED_Staallook.glb,FAIL_download,0,https://media.miele.com/downloads/5f/cf/00_C7F13838016B1EEEBFCFD12D8D645FCF.glb
+KFN 4795 AD Blacksteel,KFN_4795_AD_Blacksteel.glb,skip,10968472,
+KFN 4795 AD CleanSteel,KFN_4795_AD_CleanSteel.glb,skip,13529740,
+KFN 4795 CD Blackboard,KFN_4795_CD_Blackboard.glb,skip,12271476,
+KFN 4795 CD Blacksteel,KFN_4795_CD_Blacksteel.glb,skip,10968472,
+KFN 4795 CD CleanSteel,KFN_4795_CD_CleanSteel.glb,skip,13529740,
+KFN 4795 CD Hvid,KFN_4795_CD_Hvid.glb,skip,15017436,
+KFN 4795 DD Blacksteel,KFN_4795_DD_Blacksteel.glb,skip,10968472,
+KFN 4796 CD CleanSteel,KFN_4796_CD_CleanSteel.glb,skip,16439956,
+KFN 4797 AD CleanSteel,KFN_4797_AD_CleanSteel.glb,skip,16298908,
+KFN 4797 CD CleanSteel,KFN_4797_CD_CleanSteel.glb,skip,16298908,
+KFN 4797 CD Hvid,KFN_4797_CD_Hvid.glb,ok_wayback,15471408,https://media.miele.com/downloads/1f/cf/00_C7F13838016B1EEEBFD0031320181FCF.glb
+KFN 4799 AD CleanSteel front,KFN_4799_AD_CleanSteel_front.glb,skip,16299380,
+KFN 4799 AD Obsidiansort mat,KFN_4799_AD_Obsidiansort_mat.glb,skip,16655592,
+KFN 4799 CDE CleanSteel,KFN_4799_CDE_CleanSteel.glb,skip,16676056,
+KFN 4799 DDE CleanSteel,KFN_4799_DDE_CleanSteel.glb,skip,16676056,
+KFN 4898 AD Brillanthvid glas,KFN_4898_AD_Brillanthvid_glas.glb,FAIL_download,0,https://media.miele.com/downloads/1f/cf/00_C7F13838016B1EEEBFD01884313F1FCF.glb
+KFN 4898 AD Grafitgraa glas,KFN_4898_AD_Grafitgraa_glas.glb,skip,15406292,
+KFFD 6741 CleanSteel,KFFD_6741_CleanSteel.glb,skip,10579892,
+KFFD 6765 CleanSteel,KFFD_6765_CleanSteel.glb,skip,12579528,
+KFFD 6867 Obsidiansort mat,KFFD_6867_Obsidiansort_mat.glb,skip,12148768,
