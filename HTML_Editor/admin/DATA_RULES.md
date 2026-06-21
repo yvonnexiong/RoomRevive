@@ -35,7 +35,7 @@ The pipeline above is the **miele.dk recipe**. For any other domain: first look 
 - AD / CD / DD (and similar suffixes) are DIFFERENT models with different energy figures. Fetch each model's own datasheet; never copy one variant's specs to another.
 - DK datasheet URL: `media.miele.com/downloads/k-/da/FS_<material>_DKD_DK-da.pdf` — the `<material>` is the number in the product-page URL (`/product/<material>/…`). This folder works across all categories (fridges, dishwashers, …).
 - If a value isn't in the source after a genuine attempt, leave it blank. Mark each entry datasheet-verified vs best-effort. Price is not on datasheets — leave blank unless given an authoritative source.
-- Copy (headline/description) should reuse the source's own wording, not invented marketing.
+- Copy (headline/description/features/subtitle) should reuse the source's own wording, not invented marketing — but **always store it in English**. Datasheets are Danish; translate at write-time. Never persist Danish copy (it caused a 346-string cleanup pass). Keep Miele brand/feature names untranslated (PowerFlex, Con@ctivity, ComfortSelect, DynamicWhite, M Sense, VarioRoom, …).
 
 **Writing & consistency**
 - Persist ONLY through the admin server (single-writer rule). Do NOT hand-edit or overwrite `catalog.json` while other writers (server rescan, admin edits) are active — you will clobber each other.

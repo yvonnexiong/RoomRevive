@@ -44,6 +44,9 @@ const PRODUCT_FIELDS = {
   swatchColor:     { type: 'string' },
   variantGroup:    { type: 'string' },
   price:           { type: 'number' },
+  priceDKK:        { type: 'number' },                 // Danish price (kr)
+  _priceQuality:   { type: 'string' },
+  _priceSource:    { type: 'string' },
   currency:        { type: 'string' },
   rating:          { type: 'number' },
   reviewCount:     { type: 'number' },

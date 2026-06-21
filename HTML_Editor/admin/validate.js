@@ -17,6 +17,8 @@ const FIELDS = {
   placeSettings:{type:'number'}, energyPer100Cycles:{type:'number'}, waterPerCycle:{type:'number'}, noiseClass:{type:'string'},
   // coffee machines
   waterTank:{type:'number'}, beanContainer:{type:'number'}, milkContainer:{type:'number'}, pumpBar:{type:'number'}, _dimSource:{type:'string'},
+  // pricing
+  priceDKK:{type:'number'}, _priceQuality:{type:'string'}, _priceSource:{type:'string'},
   // hoods
   airflow:{type:'number'}, airflowNote:{type:'string'},
   // cooktops

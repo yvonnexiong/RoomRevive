@@ -83,6 +83,10 @@ button:disabled{opacity:.42;cursor:default;pointer-events:none}
 .galhead{font-size:11px;font-weight:600;color:var(--text);margin:0 0 6px}
 .galh-hint{font-weight:400;color:var(--muted)}
 .galempty{grid-column:1/4;font-size:10.5px;color:var(--muted)}
+.matthumb.none{display:flex;align-items:center;justify-content:center;background:var(--panel2);border-style:dashed}
+.matthumb.none .nonelbl{position:static;background:none;color:var(--muted);font-size:11px;padding:0;letter-spacing:.04em}
+.matthumb.none.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.matthumb.none.sel .nonelbl{color:var(--accent)}
 summary.dsum{cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);list-style:none;user-select:none}
 summary.dsum::-webkit-details-marker{display:none}
 summary.dsum:hover{color:var(--text)}
@@ -95,9 +99,10 @@ summary.dsum:hover{color:var(--text)}
 <body>
 <div id="app">
   <div id="topbar">
-    <div id="wordmark">PINK<em>→MARBLE</em></div>
-    <div id="filemeta">no scene loaded</div>
-    <div id="stats"><b id="stat-pts">–</b> splats · <b id="stat-sel">0</b> pink</div>
+    <div id="wordmark">MASK<em>→MATERIALS</em></div>
+    <div id="filemeta">no mask loaded</div>
+    <button id="btn-loadmask">🗺️ Load mask splat…</button>
+    <div id="stats"><b id="stat-pts">–</b> splats · <b id="stat-sel">0</b> sel</div>
   </div>
 
   <div id="viewwrap">
@@ -106,15 +111,15 @@ summary.dsum:hover{color:var(--text)}
     <div id="hint">drag orbit · <kbd>shift</kbd>/right-drag pan · scroll zoom · double-click set pivot</div>
     <div id="dropzone">
       <div id="dropcard">
-        <h1>PINK<em>→MARBLE</em></h1>
-        <p>Repaints every pink-marked splat with a material image — keeping the scene's own light colour.</p>
+        <h1>MASK<em>→MATERIALS</em></h1>
+        <p>Upload one mask splat — cabinets painted green, worktops pink. Assign a material to each region, or leave it as <b>None</b>.</p>
         <div class="steps">
-          <div><b>1</b>drop a .spz scene (pink-painted surfaces)</div>
-          <div><b>2</b>drop the marble / material image</div>
-          <div><b>3</b>tweak &amp; download the restyled .spz</div>
+          <div><b>1</b>upload one mask .spz</div>
+          <div><b>2</b>pick a material per region (or None)</div>
+          <div><b>3</b>download the combined kitchen .spz</div>
         </div>
         <div class="btnrow" style="justify-content:center">
-          <button class="primary" id="btn-open">Open scene file</button>
+          <button class="primary" id="btn-open">Load mask splat…</button>
           <input type="file" id="fileinput" accept=".spz" style="display:none">
         </div>
       </div>
@@ -128,9 +133,8 @@ summary.dsum:hover{color:var(--text)}
       <button id="tab-combined" class="tab">Combined</button>
     </div>
     <div class="sec" style="padding-bottom:10px" data-vis="cw">
-      <h2 id="chan-head">Cabinets — pink splat</h2>
-      <div class="btnrow"><button class="primary" id="btn-openchan" style="flex:2">Load this channel's pink .spz</button></div>
-      <div class="status" style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px" id="chan-status">no splat loaded for this channel</div>
+      <h2 id="chan-head">Cabinets</h2>
+      <div class="status" style="font-family:var(--mono);font-size:11px;color:var(--muted)" id="chan-status">mask not loaded</div>
     </div>
     <div class="sec" data-vis="cw">
       <h2><span class="ic">🎯</span>Mask region (colour)</h2>
@@ -234,7 +238,7 @@ summary.dsum:hover{color:var(--text)}
         <input type="range" class="grad" id="tintamt" min="0" max="100" value="0" style="background:linear-gradient(90deg,#2e333d,var(--accent))"><span class="val" id="tintamt-v">off</span></div>
       <p class="note" style="margin:2px 0 10px">Overall lighting on the whole scene — splats &amp; room. <i>Tint hue</i> picks any colour; raise <i>Tint amount</i> from <b>off</b> to cast it.</p>
       <div class="row"><label>Splat size</label>
-        <input type="range" id="splatscale" min="40" max="220" value="164"><span class="val" id="splatscale-v">1.64×</span></div>
+        <input type="range" id="splatscale" min="40" max="250" value="164"><span class="val" id="splatscale-v">1.64×</span></div>
     </div>
 
     <div class="sec" style="border-bottom:0;margin-top:auto" data-vis="comb">
@@ -1048,7 +1052,8 @@ async function loadFile(file){
   }catch(err){ console.error(err); toast('Load failed: '+err.message,true); }
 }
 $('btn-open').onclick=()=>$('fileinput').click();
-$('fileinput').addEventListener('change',e=>{ if(e.target.files[0]) loadFile(e.target.files[0]); e.target.value=''; });
+$('btn-loadmask').onclick=()=>$('fileinput').click();
+$('fileinput').addEventListener('change',e=>{ if(e.target.files[0]) loadMask(e.target.files[0]); e.target.value=''; });
 for(const ev of ['dragover','dragenter']) window.addEventListener(ev,e=>{ e.preventDefault(); $('dropzone').classList.add('drag'); });
 window.addEventListener('dragleave',e=>{ if(!e.relatedTarget) $('dropzone').classList.remove('drag'); });
 window.addEventListener('drop',e=>{ e.preventDefault(); $('dropzone').classList.remove('drag');
@@ -1120,6 +1125,11 @@ function newChan(name,settings){ return {name,settings:Object.assign({},settings
   material:{img:null,data:null,w:0,h:0,name:'no material',meanLum:0.5}, orig:{grid:null,cell:0.08,name:'',scene:null}, sceneName:name,baseName:name}; }
 const chan={cab:newChan('Cabinets',presets.cab), wt:newChan('Worktops',presets.wt)};
 let active='cab', viewingCombined=false, editTarget='cab';
+const NO_MAT={img:null,data:null,w:0,h:0,name:'no material',meanLum:0.5};
+function clearChanMaterial(key){ const c=chan[key]; if(c.scene&&c.originalColors) c.scene.colors.set(c.originalColors); // back to raw mask colours
+  c.material=Object.assign({},NO_MAT); c.matSel='none'; c.lastApply=null; c.segData=null; }
+/* "None" swatch in the Combined tab — drop a region's material, show it as the bare mask, re-merge */
+function combinedClearMat(key){ setEditTarget(key); if(!chan[key].scene) return; clearChanMaterial(key); try{renderGallery();}catch(e){} showCombined(); }
 const LOOK_KEYS=['tilesize','texrot','grainvar','facetsplit','mosaic','contrast','shading','panocolor','keeplight','panoyaw','matchlight'];
 function setEditTarget(k){ editTarget=k; const e=$('edittarget'); if(e) e.textContent=(k==='cab'?'Cabinets':'Worktops'); }
 /* run fn() with globals pointing at chan[key] (out of combined view), then rebuild the combined kitchen */
@@ -1150,10 +1160,10 @@ function recombineLook(){ const key=editTarget, c=chan[key]; if(!c||!c.scene) re
   const panel=readSettings(); for(const k of LOOK_KEYS) c.settings[k]=panel[k];
   withChannel(key,()=>{ if(material.data&&selCount>0){ lastApply=null; applyMaterial(false); } }); }
 
-function chanApplied(key){ if(key===active) return !!scene && !!lastApply; const c=chan[key]; return !!c.scene && !!c.lastApply; }
-function updateCombineBtns(){ const cab=chanApplied('cab'), wt=chanApplied('wt');
+function chanLoaded(key){ if(key===active&&!viewingCombined) return !!scene; return !!chan[key].scene; }
+function updateCombineBtns(){ const cab=chanLoaded('cab'), wt=chanLoaded('wt');   // mask loaded → can combine/export (materials optional)
   $('btn-combined').disabled=!(cab&&wt); $('btn-exp-cab').disabled=!cab; $('btn-exp-wt').disabled=!wt;
-  const cs=$('chan-status'); if(cs) cs.textContent = (!viewingCombined&&scene)?(sceneName+' · '+scene.n.toLocaleString()+' splats'):(viewingCombined?cs.textContent:'no splat loaded for this channel'); }
+  const cs=$('chan-status'); if(cs) cs.textContent = (!viewingCombined&&scene)?(sceneName+' · '+scene.n.toLocaleString()+' splats'):(viewingCombined?cs.textContent:'mask not loaded'); }
 function saveActive(){ if(viewingCombined) return;   /* globals hold the merged scene in combined view — never write it back into a channel */
   const c=chan[active];
   c.scene=scene;c.originalColors=originalColors;c.selected=selected;c.selCount=selCount;c.segData=segData;c.lastApply=lastApply;
@@ -1181,19 +1191,18 @@ function setTab(t){ for(const k of ['cab','wt','combined']) $('tab-'+k).classLis
 function switchTab(to){
   if(!viewingCombined && to===active) return;
   if(!viewingCombined) saveActive(); viewingCombined=false;
-  active=to; const c=chan[to]; $('chan-head').textContent=c.name+' — pink splat';
+  active=to; const c=chan[to]; $('chan-head').textContent=c.name;
   loadChanInto(c); setTab(to);
   try{ renderGallery(); }catch(e){}
 }
 $('tab-cab').onclick=()=>switchTab('cab');
 $('tab-wt').onclick=()=>switchTab('wt');
-$('btn-openchan').onclick=()=>$('fileinput').click();
 
 /* merge both channels into one de-duplicated kitchen */
 function buildCombined(){
   saveActive();
   const A=chan.cab,B=chan.wt;
-  if(!(A.scene&&A.lastApply&&B.scene&&B.lastApply)){ toast('Apply a material in BOTH Cabinets and Worktops first',true); return null; }
+  if(!(A.scene&&B.scene)){ toast('Load a mask splat first',true); return null; }   // materials are optional — unpainted regions show the bare mask
   // SAME CLOUD (e.g. one MaskSplat in both channels, cabinets=green + worktops=pink) → index merge, no dedup
   let same=A.scene.n===B.scene.n;
   if(same){ const ap=A.scene.positions,bp2=B.scene.positions,step=Math.max(1,(A.scene.n/2000)|0); let d=0,ns=0;
@@ -1235,7 +1244,7 @@ function showCombined(){
 $('tab-combined').onclick=showCombined;
 $('btn-combined').onclick=async()=>{ try{ const out=buildCombined(); if(!out)return; toast('Encoding combined…'); const blob=await gzip(encodeSPZ(out)); download(blob,'kitchen-combined.spz'); toast('Saved kitchen-combined.spz ('+(blob.size/1048576).toFixed(1)+' MB · '+out.n.toLocaleString()+' splats)'); }catch(e){ console.error(e); toast('Combined export failed: '+e.message,true);} };
 async function exportChan(key){ if(key===active) saveActive(); const c=chan[key];
-  if(!c.scene||!c.lastApply){ toast('Apply a material in '+c.name+' first',true); return; }
+  if(!c.scene){ toast('Load a mask splat first',true); return; }
   try{ toast('Encoding '+c.name+'…'); const blob=await gzip(encodeSPZ(c.scene)); download(blob,c.name.toLowerCase()+'-restyled.spz'); toast('Saved '+c.name.toLowerCase()+'-restyled.spz ('+(blob.size/1048576).toFixed(1)+' MB)'); }catch(e){ console.error(e); toast('Export failed: '+e.message,true);} }
 $('btn-exp-cab').onclick=()=>exportChan('cab');
 $('btn-exp-wt').onclick=()=>exportChan('wt');
@@ -1320,19 +1329,32 @@ $('btn-align').onclick=alignAll;
 /* ===== material galleries (per-channel folder) + auto-load ===== */
 const MAT_FOLDER={cab:'./CabinetMaterials/', wt:'./WorktopMaterials/'};
 async function scanFolder(url){
-  try{ const r=await fetch(url); if(!r.ok) return [];
-    const html=await r.text();
-    const names=[...html.matchAll(/href="([^"?]+\.(?:jpg|jpeg|png|webp|avif))"/gi)].map(m=>decodeURIComponent(m[1].split('/').pop()));
-    return [...new Set(names)].filter(n=>!/^\./.test(n));
-  }catch(e){ return []; }
+  // retry: a cold/busy python server can drop or half-answer the dir-listing → empty gallery
+  for(let a=0;a<6;a++){
+    try{ const r=await fetch(url,{cache:'no-store'});
+      if(r.ok){ const html=await r.text();
+        const names=[...new Set([...html.matchAll(/href="([^"?]+\.(?:jpg|jpeg|png|webp|avif))"/gi)].map(m=>decodeURIComponent(m[1].split('/').pop())))].filter(n=>!/^\./.test(n));
+        if(names.length) return names;
+      }
+    }catch(e){}
+    await new Promise(r=>setTimeout(r,500));
+  }
+  return [];
 }
 function renderGallery(){
   for(const key of ['cab','wt']){
     const g=$('matgallery-'+key); if(!g) continue;
-    const names=chan[key].matNames||[], folder=MAT_FOLDER[key];
-    if(!names.length){ g.innerHTML='<div class="galempty">No materials in '+folder+' — drop images there &amp; reload.</div>'; continue; }
+    const names=chan[key].matNames||[], folder=MAT_FOLDER[key], cur=chan[key].matSel;
     g.innerHTML='';
-    for(const name of names){ const d=document.createElement('div'); d.className='matthumb'+(name===chan[key].matSel?' sel':'');
+    // "None" — no material; this region stays the bare mask. Default selection.
+    const none=document.createElement('div'); none.className='matthumb none'+((!cur||cur==='none')?' sel':'');
+    const nl=document.createElement('span'); nl.className='nonelbl'; nl.textContent='None'; none.appendChild(nl);
+    none.onclick=()=>combinedClearMat(key); g.appendChild(none);
+    if(!names.length){ const e=document.createElement('div'); e.className='galempty';
+      e.innerHTML='No materials loaded from '+folder+'<br>';
+      const b=document.createElement('button'); b.textContent='↻ Rescan'; b.style.cssText='margin-top:5px;padding:3px 9px;font-size:11px';
+      b.onclick=()=>refreshGalleries(); e.appendChild(b); g.appendChild(e); continue; }
+    for(const name of names){ const d=document.createElement('div'); d.className='matthumb'+(name===cur?' sel':'');
       const im=document.createElement('img'); im.loading='lazy'; im.src=folder+encodeURIComponent(name);
       const s=document.createElement('span'); s.textContent=name.replace(/\.[^.]+$/,'');
       d.appendChild(im); d.appendChild(s); d.onclick=()=>combinedApplyMat(key,name); g.appendChild(d); }
@@ -1385,6 +1407,27 @@ function frameMaskRegions(){
   pickKey='';
   return true;
 }
+/* load ONE mask splat into both channels (green→cabinets, pink→worktops), no materials, open Combined */
+async function loadMask(file){
+  if(!/\.spz$/i.test(file.name)){ toast('Please choose a .spz mask file',true); return; }
+  try{
+    $('dropzone').classList.add('hidden'); $('loadsplash').classList.remove('hidden'); camSaveEnabled=false; viewingCombined=false;
+    splash('Loading mask (cabinets)…',15);
+    active='cab'; clearChanMaterial('cab'); material=chan.cab.material; writeSettings(chan.cab.settings);
+    await loadFile(file);                       // parse → detect GREEN (cab settings); no material applied
+    chan.cab.matSel='none'; saveActive();
+    splash('Loading mask (worktops)…',60);
+    active='wt'; clearChanMaterial('wt'); material=chan.wt.material; writeSettings(chan.wt.settings);
+    await loadFile(file);                       // re-parse → detect PINK (wt settings)
+    chan.wt.matSel='none'; saveActive();
+    splash('Framing…',92);
+    try{ const sc=loadSavedCam(); if(sc) applySavedCam(sc); else frameMaskRegions(); }catch(e){ console.error(e); }
+    camSaveEnabled=true;
+    showCombined();                             // straight to Combined, mask only (materials optional)
+    splash('Ready',100); setTimeout(()=>$('loadsplash').classList.add('hidden'),300);
+    toast('Mask loaded — assign a material per region, or leave as None');
+  }catch(e){ console.error(e); toast('Mask load failed: '+e.message,true); $('loadsplash').classList.add('hidden'); }
+}
 async function autoload(){
   try{
     $('dropzone').classList.add('hidden');
@@ -1397,13 +1440,12 @@ async function autoload(){
     orig=sharedOrig; chan.wt.orig=sharedOrig;
     saveActive();
     splash('Scanning material folders…',84); await refreshGalleries();
-    if(chan.wt.matNames&&chan.wt.matNames.length) await applyFolderMaterial(chan.wt.matNames[0]);
-    switchTab('cab');
-    if(chan.cab.matNames&&chan.cab.matNames.length) await applyFolderMaterial(chan.cab.matNames[0]);
+    chan.cab.matSel='none'; chan.wt.matSel='none';   // start with NO materials assigned
     try{ const sc=loadSavedCam(); if(sc) applySavedCam(sc); else frameMaskRegions(); }catch(e){ console.error(e); }   // restore last camera, else frame all regions
     camSaveEnabled=true;   // from here on, camera moves persist across sessions
+    showCombined();        // open straight on the Combined tab, mask only (materials optional)
     splash('Ready',100); setTimeout(()=>$('loadsplash').classList.add('hidden'),400);
-    toast('Auto-loaded: cabinets + worktops + original + panorama');
+    toast('Mask loaded — assign a material per region, or leave as None');
   }catch(e){ console.error(e); splash('Auto-load failed: '+e.message,100);
     toast('Auto-load failed: '+e.message+' — load files manually',true); setTimeout(()=>$('loadsplash').classList.add('hidden'),2600); }
 }
