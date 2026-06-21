@@ -21,3 +21,7 @@ Thumbs.db
 .vscode/
 *.suo
 *.user
+
+# Large splat files (exceed GitHub's 100 MB limit)
+HTML_Editor/Splats/MaskSplat_TableLifted.ply
+World Splats/SuperSplatEditor.ssproj
