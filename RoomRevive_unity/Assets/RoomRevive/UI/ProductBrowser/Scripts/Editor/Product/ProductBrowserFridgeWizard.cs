@@ -27,8 +27,10 @@ namespace RoomRevive.ProductBrowser.EditorTools
         string     _id          = "";
         string     _brand       = "";
         string     _productName = "";
+        string     _subtitle    = "";
         string     _emotional   = "";
         string     _description = "";
+        string     _specsText   = "";
         string     _price       = "";
         Sprite     _image;
         GameObject _prefab;
@@ -68,14 +70,19 @@ namespace RoomRevive.ProductBrowser.EditorTools
             _id          = EditorGUILayout.TextField(new GUIContent("ID",           "Stable unique id, e.g. 'miele_white'. Used by PlayerPrefs favorites key."), _id);
             _brand       = EditorGUILayout.TextField(new GUIContent("Brand",        "e.g. Miele"), _brand);
             _productName = EditorGUILayout.TextField(new GUIContent("Product Name", "Headline shown on the card, e.g. 'Modern Fridge'"), _productName);
+            _subtitle    = EditorGUILayout.TextField(new GUIContent("Subtitle",     "Small line under the name, e.g. 'Freestanding refrigerator · white'"), _subtitle);
 
             EditorGUILayout.Space(4);
-            EditorGUILayout.LabelField("Emotional Line", EditorStyles.miniLabel);
+            EditorGUILayout.LabelField(new GUIContent("Emotional Line / Headline", "Shown as the large feature line on the Swap panel."), EditorStyles.miniLabel);
             _emotional = EditorGUILayout.TextArea(_emotional, GUILayout.MinHeight(40));
 
             EditorGUILayout.Space(4);
             EditorGUILayout.LabelField("Short Description", EditorStyles.miniLabel);
             _description = EditorGUILayout.TextArea(_description, GUILayout.MinHeight(60));
+
+            EditorGUILayout.Space(4);
+            EditorGUILayout.LabelField(new GUIContent("Specs (one per line)", "Each line becomes a chip, e.g. '141 L', '73 kWh/yr', '34 dB'."), EditorStyles.miniLabel);
+            _specsText = EditorGUILayout.TextArea(_specsText, GUILayout.MinHeight(54));
 
             EditorGUILayout.Space(4);
             _price  = EditorGUILayout.TextField(new GUIContent("Price",  "Optional, e.g. 'From $1,299'. Leave blank to hide."), _price);
@@ -155,8 +162,10 @@ namespace RoomRevive.ProductBrowser.EditorTools
             data.id              = _id.Trim();
             data.brandName       = _brand.Trim();
             data.productName     = _productName.Trim();
+            data.subtitle        = _subtitle.Trim();
             data.emotionalLine   = _emotional.Trim();
             data.shortDescription = _description.Trim();
+            data.specs           = ParseSpecs(_specsText);
             data.fromPrice       = _price.Trim();
             data.productImage    = _image;
 
@@ -216,11 +225,24 @@ namespace RoomRevive.ProductBrowser.EditorTools
             EditorGUIUtility.PingObject(data);
 
             // Reset form for next entry.
-            _id = _brand = _productName = _emotional = _description = _price = "";
+            _id = _brand = _productName = _subtitle = _emotional = _description = _specsText = _price = "";
             _image = null;
             _prefab = null;
 
             Repaint();
+        }
+
+        /// <summary>Splits a multi-line specs box into one trimmed chip string per non-empty line.</summary>
+        static string[] ParseSpecs(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return new string[0];
+            var list = new System.Collections.Generic.List<string>();
+            foreach (string line in raw.Split('\n'))
+            {
+                string t = line.Trim();
+                if (t.Length > 0) list.Add(t);
+            }
+            return list.ToArray();
         }
 
         // ── Scene resolution ─────────────────────────────────────────────────

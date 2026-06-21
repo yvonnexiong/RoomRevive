@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_KFN_4799_AD_Obsidiansort_mat
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: KFN_4799_AD_Obsidiansort_mat
+  catalogKey: KFN_4799_AD_Obsidiansort_mat
+  brandName: Miele
+  productName: KFN 4799 AD
+  subtitle: "Freestanding fridge-freezer \xB7 obsidian black (matte)"
+  emotionalLine: "Professional storage \u2014 fresher for longer"
+  shortDescription: PerfectFresh Pro and NoFrost for lasting freshness and added
+    comfort.
+  productImage: {fileID: 0}
+  specs:
+  - 258 L
+  - 116 kWh/yr
+  - 34 dB
+  - Class A
+  fromPrice: From EUR 2,653
+  splatAsset: {fileID: 0}
+  variants: []
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

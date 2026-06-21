@@ -1,0 +1,26 @@
+{
+  "category": "CoffeeMachines",
+  "file": "CM5310_brombaerrod_realsize.glb",
+  "name": "CM 5310 Silence",
+  "product": {
+    "brand": "Miele",
+    "name": "CM 5310 Silence",
+    "subtitle": "Freestanding espresso machine · Blackberry red",
+    "sku": "11541590",
+    "modelKey": "CM5310_brombaerrod_realsize",
+    "headline": "OneTouch for Two for the best coffee enjoyment",
+    "description": "Freestanding, fully automatic espresso machine for fresh beans, with OneTouch for Two and automatic milk frothing.",
+    "features": ["OneTouch for Two", "AromaticSystem", "Conical grinder", "Automatic milk frothing", "DirectSensor display", "ComfortClean dishwasher-safe parts", "1.3 L water tank", "200 g bean container", "1.45 kW power"],
+    "dimensions": "H360 x W241 x D460 mm",
+    "color": "Blackberry red",
+    "swatchColor": "#7a1f3d",
+    "variantGroup": "CM5310",
+    "price": 8890,
+    "currency": "DKK",
+    "rating": 4.6,
+    "reviewCount": 9,
+    "productSheetUrl": "https://media.miele.com/downloads/k-/da/FS_11541590_DKD_DK-da.pdf",
+    "productPageUrl": "https://www.miele.dk/product/11541590/fritstaende-espressomaskine-cm-5310-silence-brombarrod"
+  },
+  "_provenance": {"specs": "same machine as the Obsidian CM 5310 (datasheet-verified); colour/price/sku from the red product page"}
+}

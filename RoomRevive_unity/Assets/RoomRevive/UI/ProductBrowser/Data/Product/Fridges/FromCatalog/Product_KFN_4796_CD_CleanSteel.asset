@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_KFN_4796_CD_CleanSteel
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: KFN_4796_CD_CleanSteel
+  catalogKey: KFN_4796_CD_CleanSteel
+  brandName: Miele
+  productName: KFN 4796 CD
+  subtitle: "Freestanding fridge-freezer \xB7 clean steel"
+  emotionalLine: "75 cm wide \u2014 extra storage space"
+  shortDescription: DailyFresh and NoFrost in a spacious 75 cm-wide cabinet.
+  productImage: {fileID: 0}
+  specs:
+  - 348 L
+  - 185 kWh/yr
+  - 34 dB
+  - Class C
+  fromPrice: From EUR 2,358
+  splatAsset: {fileID: 0}
+  variants: []
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

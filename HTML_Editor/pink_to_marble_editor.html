@@ -43,6 +43,11 @@ kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;paddi
 input[type=range]{flex:1.4;appearance:none;height:3px;background:var(--line);border-radius:2px;outline:none}
 input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;border-radius:50%;background:var(--accent);border:2px solid var(--panel);box-shadow:0 0 0 1px var(--accent-dim);cursor:pointer}
 input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;background:var(--accent);border:2px solid var(--panel);cursor:pointer}
+input[type=range].grad{height:7px;border-radius:5px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)}
+input[type=range].grad::-webkit-slider-thumb{border-color:#fff;box-shadow:0 0 0 1.5px rgba(0,0,0,.55)}
+input[type=range].grad::-moz-range-thumb{border-color:#fff}
+.sec h2 .ic{font-size:13px;margin-right:8px;letter-spacing:0;display:inline-block;vertical-align:-1px;filter:saturate(1.15)}
+summary.dsum .ic{font-size:13px;margin-right:7px;letter-spacing:0}
 input[type=number]{width:58px;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:5px;padding:5px 6px;font-family:var(--mono);font-size:12px}
 button{font-family:var(--ui);font-size:12.5px;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:7px 11px;cursor:pointer}
 button:hover{border-color:var(--muted)}
@@ -128,7 +133,7 @@ summary.dsum:hover{color:var(--text)}
       <div class="status" style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px" id="chan-status">no splat loaded for this channel</div>
     </div>
     <div class="sec" data-vis="cw">
-      <h2>Mask region (colour)</h2>
+      <h2><span class="ic">🎯</span>Mask region (colour)</h2>
       <div class="row"><label>Hue range</label>
         <input type="number" id="hueLo" value="75" min="0" max="360"><input type="number" id="hueHi" value="155" min="0" max="360"></div>
       <div class="row"><label>Min saturation</label>
@@ -141,7 +146,7 @@ summary.dsum:hover{color:var(--text)}
 
     <div class="sec" data-vis="setup">
       <details>
-        <summary class="dsum">Scene lighting source — set once ▾</summary>
+        <summary class="dsum"><span class="ic">☀️</span>Scene lighting source — set once ▾</summary>
         <div style="margin-top:10px">
       <div class="row" style="margin-bottom:4px"><label style="flex:none;color:var(--text)">Original splat (.spz)</label><span class="val" id="matname3" style="flex:1;text-align:right">none</span></div>
       <div class="btnrow" style="margin-bottom:6px">
@@ -165,7 +170,7 @@ summary.dsum:hover{color:var(--text)}
     </div>
 
     <div class="sec" data-vis="comb">
-      <h2>Materials</h2>
+      <h2><span class="ic">🎨</span>Materials</h2>
       <p class="note" style="margin:0 0 12px">Click a swatch to swap that region's material — it paints into the combined kitchen live. <b>Cabinet</b> swatches paint the green region, <b>Worktop</b> swatches the pink region.</p>
       <div class="galsub"><div class="galhead">Cabinet material <span class="galh-hint">— green region</span></div><div id="matgallery-cab" class="matgallery"></div></div>
       <div class="galsub"><div class="galhead">Worktop material <span class="galh-hint">— pink region</span></div><div id="matgallery-wt" class="matgallery"></div></div>
@@ -181,7 +186,7 @@ summary.dsum:hover{color:var(--text)}
     </div>
 
     <div class="sec">
-      <h2>Material look</h2>
+      <h2><span class="ic">🎚️</span>Material look</h2>
       <div class="btnrow" style="margin-bottom:6px">
         <button id="btn-cabinet">Load Cabinet preset</button>
         <button id="btn-counter">Load Worktop preset</button>
@@ -218,15 +223,22 @@ summary.dsum:hover{color:var(--text)}
     </div>
 
     <div class="sec">
-      <h2>View</h2>
+      <h2><span class="ic">💡</span>Lighting &amp; view</h2>
+      <div class="row"><label>Strength</label>
+        <input type="range" class="grad" id="exposure" min="20" max="260" value="100" style="background:linear-gradient(90deg,#0c0d10,#e9e7e1)"><span class="val" id="exposure-v">1.00×</span></div>
+      <div class="row"><label>Warm · cool</label>
+        <input type="range" class="grad" id="lighttint" min="0" max="100" value="50" style="background:linear-gradient(90deg,#ff9a3c,#ffe9cf 50%,#7db8ff)"><span class="val" id="lighttint-v">neutral</span></div>
+      <div class="row"><label>Tint hue</label>
+        <input type="range" class="grad" id="tinthue" min="0" max="360" value="0" style="background:linear-gradient(90deg,#ff4d4d,#ffe24d,#4dff6e,#4de2ff,#5b6bff,#e24dff,#ff4d4d)"><span class="val" id="tinthue-v">0°</span></div>
+      <div class="row"><label>Tint amount</label>
+        <input type="range" class="grad" id="tintamt" min="0" max="100" value="0" style="background:linear-gradient(90deg,#2e333d,var(--accent))"><span class="val" id="tintamt-v">off</span></div>
+      <p class="note" style="margin:2px 0 10px">Overall lighting on the whole scene — splats &amp; room. <i>Tint hue</i> picks any colour; raise <i>Tint amount</i> from <b>off</b> to cast it.</p>
       <div class="row"><label>Splat size</label>
         <input type="range" id="splatscale" min="40" max="220" value="164"><span class="val" id="splatscale-v">1.64×</span></div>
-      <div class="row"><label>Exposure</label>
-        <input type="range" id="exposure" min="50" max="220" value="100"><span class="val" id="exposure-v">1.00×</span></div>
     </div>
 
     <div class="sec" style="border-bottom:0;margin-top:auto" data-vis="comb">
-      <h2>Align &amp; export</h2>
+      <h2><span class="ic">📦</span>Align &amp; export</h2>
       <button id="btn-align" style="width:100%;margin-bottom:8px">⛓ Align worktops + original → cabinets</button>
       <button id="btn-combined" class="primary" disabled style="width:100%">Download combined kitchen .spz</button>
       <div class="btnrow" style="margin-top:8px">
@@ -345,7 +357,7 @@ const VS=`#version 300 es
 precision highp float; precision highp int; precision highp usampler2D;
 uniform usampler2D u_data; uniform usampler2D u_sel;
 uniform mat4 u_view, u_proj; uniform vec2 u_focal, u_viewport; uniform vec3 u_selTint;
-uniform float u_splatScale, u_exposure, u_selMix;
+uniform float u_splatScale, u_exposure, u_selMix; uniform vec3 u_lightTint;
 in vec2 a_corner; in int a_index; out vec4 vColor; out vec2 vPos;
 void main(){
   int ix=(a_index & 1023)<<1; int iy=a_index>>10;
@@ -367,7 +379,7 @@ void main(){
   vec2 minor=min(sqrt(2.0*l2),1024.0)*u_splatScale*vec2(dir.y,-dir.x);
   uint col=t0.w;
   vec3 rgb=vec3(float(col&255u),float((col>>8)&255u),float((col>>16)&255u))/255.0;
-  float a=float((col>>24)&255u)/255.0; rgb*=u_exposure;
+  float a=float((col>>24)&255u)/255.0; rgb*=u_exposure*u_lightTint;
   uint sel=texelFetch(u_sel, ivec2(a_index&1023,iy),0).x;
   if(sel!=0u) rgb=mix(rgb,u_selTint,u_selMix);
   vColor=vec4(rgb,a); vPos=a_corner;
@@ -385,9 +397,9 @@ gl.linkProgram(prog); if(!gl.getProgramParameter(prog,gl.LINK_STATUS)) throw new
 gl.useProgram(prog);
 const U=n=>gl.getUniformLocation(prog,n);
 const uView=U('u_view'),uProj=U('u_proj'),uFocal=U('u_focal'),uViewport=U('u_viewport'),uTint=U('u_selTint');
-const uSplatScale=U('u_splatScale'),uExposure=U('u_exposure'),uSelMix=U('u_selMix');
+const uSplatScale=U('u_splatScale'),uExposure=U('u_exposure'),uSelMix=U('u_selMix'),uLightTint=U('u_lightTint');
 gl.uniform1i(U('u_data'),0); gl.uniform1i(U('u_sel'),1);
-gl.uniform3f(uTint,1.0,0.88,0.1); gl.uniform1f(uSplatScale,1.64); gl.uniform1f(uExposure,1.0); gl.uniform1f(uSelMix,0.6);
+gl.uniform3f(uTint,1.0,0.88,0.1); gl.uniform1f(uSplatScale,1.64); gl.uniform1f(uExposure,1.0); gl.uniform1f(uSelMix,0.6); gl.uniform3f(uLightTint,1,1,1);
 gl.disable(gl.DEPTH_TEST); gl.enable(gl.BLEND);
 gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA,gl.ONE,gl.ONE_MINUS_DST_ALPHA,gl.ONE);
 gl.clearColor(0,0,0,0);
@@ -562,6 +574,23 @@ canvas.addEventListener('dblclick',e=>{
 /* ---- view sliders ---- */
 $('splatscale').addEventListener('input',()=>{ const v=parseInt($('splatscale').value)/100; gl.uniform1f(uSplatScale,v); $('splatscale-v').textContent=v.toFixed(2)+'×'; });
 $('exposure').addEventListener('input',()=>{ const v=parseInt($('exposure').value)/100; gl.uniform1f(uExposure,v); $('exposure-v').textContent=v.toFixed(2)+'×'; });
+function hsv2rgb(h,s,v){ h=(((h%360)+360)%360)/60; const c=v*s, x=c*(1-Math.abs(h%2-1)), m=v-c; let r=0,g=0,b=0;
+  if(h<1){r=c;g=x;} else if(h<2){r=x;g=c;} else if(h<3){g=c;b=x;} else if(h<4){g=x;b=c;} else if(h<5){r=x;b=c;} else {r=c;b=x;}
+  return [r+m,g+m,b+m]; }
+function recomputeLightTint(){
+  const t=(+$('lighttint').value-50)/50;                       // warm ↔ cool axis
+  let r=1-0.20*t, g=1-0.04*Math.abs(t), b=1+0.22*t;
+  const amt=+$('tintamt').value/100;                            // any-colour tint
+  if(amt>0){ const h=hsv2rgb(+$('tinthue').value,1,1), mean=(h[0]+h[1]+h[2])/3;
+    r*=1+amt*(h[0]-mean); g*=1+amt*(h[1]-mean); b*=1+amt*(h[2]-mean); }
+  gl.uniform3f(uLightTint, r, g, b);
+}
+['lighttint','tinthue','tintamt'].forEach(id=>$(id).addEventListener('input',()=>{
+  const wc=+$('lighttint').value-50; $('lighttint-v').textContent = wc===0?'neutral':(wc<0?('warm '+Math.round(-wc*2)+'%'):('cool '+Math.round(wc*2)+'%'));
+  const hue=+$('tinthue').value, hc=hsv2rgb(hue,0.78,1); $('tinthue-v').textContent=hue+'°'; $('tinthue-v').style.color='rgb('+hc.map(x=>Math.round(x*255)).join(',')+')';
+  const amt=+$('tintamt').value; $('tintamt-v').textContent=amt===0?'off':amt+'%';
+  recomputeLightTint();
+}));
 $('hl').addEventListener('change',()=>{ gl.uniform1f(uSelMix,$('hl').checked?0.6:0.0); });
 
 /* ---- pink detection (by splat colour) ---- */

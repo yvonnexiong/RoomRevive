@@ -1,0 +1,23 @@
+{
+  "category": "CoffeeMachines",
+  "file": "CM6560_graphite_realsize.glb",
+  "name": "CM 6560 MilkPerfection",
+  "product": {
+    "brand": "Miele",
+    "name": "CM 6560 MilkPerfection",
+    "subtitle": "Freestanding espresso machine · Graphite grey",
+    "sku": "11579720",
+    "modelKey": "CM6560_graphite_realsize",
+    "headline": "Creamy milk foam for many coffee specialities",
+    "description": "Freestanding, fully automatic espresso machine for fresh beans with an automatic milk system, 8 user profiles and WiFi.",
+    "features": ["AromaticSystem", "OneTouch for Two", "Automatic milk system", "8 user profiles", "WiFi (Miele@home)", "Expert mode", "1.8 L water tank", "300 g bean container", "1.45 kW power"],
+    "dimensions": "H359 x W251 x D427 mm",
+    "color": "Graphite grey",
+    "swatchColor": "#4a4a4f",
+    "variantGroup": "CM6560",
+    "price": 14790,
+    "currency": "DKK",
+    "productPageUrl": "https://www.miele.dk/product/11579720/fritstaende-espressomaskine-cm-6560-milkperfection-grafitgra-pf"
+  },
+  "_provenance": {"specs": "miele.dk product page (datasheet cross-check pending for production); CAD bundled a detachable milk flask offset to the side -> cropped to the machine body"}
+}

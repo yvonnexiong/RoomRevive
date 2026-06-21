@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_KFN_4795_AD_CleanSteel
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: KFN_4795_AD_CleanSteel
+  catalogKey: KFN_4795_AD_CleanSteel
+  brandName: Miele
+  productName: KFN 4795 AD
+  subtitle: "Freestanding fridge-freezer \xB7 clean steel"
+  emotionalLine: Spacious drawer with moisture control
+  shortDescription: DailyFresh, NoFrost, DynaCool and added convenience.
+  productImage: {fileID: 0}
+  specs:
+  - 268 L
+  - 104 kWh/yr
+  - 34 dB
+  - Class A
+  fromPrice: From EUR 2,452
+  splatAsset: {fileID: 0}
+  variants: []
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

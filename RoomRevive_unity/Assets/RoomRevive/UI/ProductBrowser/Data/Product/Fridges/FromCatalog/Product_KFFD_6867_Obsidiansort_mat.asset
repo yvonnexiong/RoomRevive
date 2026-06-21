@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_KFFD_6867_Obsidiansort_mat
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: KFFD_6867_Obsidiansort_mat
+  catalogKey: KFFD_6867_Obsidiansort_mat
+  brandName: Miele
+  productName: KFFD 6867
+  subtitle: "Freestanding fridge-freezer (French door) \xB7 obsidian black (matte)"
+  emotionalLine: "Fresh 5\xD7 longer with PerfectFresh Active"
+  shortDescription: PerfectFresh Active, Longlife AirClean, IceMaker and water dispenser.
+  productImage: {fileID: 0}
+  specs:
+  - 356 L
+  - 287 kWh/yr
+  - 39 dB
+  - Class D
+  fromPrice: From EUR 7,264
+  splatAsset: {fileID: 0}
+  variants: []
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

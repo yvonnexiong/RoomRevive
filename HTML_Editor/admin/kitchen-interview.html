@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RoomRevive — Kitchen Interview (prototype)</title>
+<style>
+  :root{
+    --bg:#f4f1ea;            /* warm cream */
+    --panel:#fbf9f5;
+    --ink:#272320;          /* near-black warm */
+    --muted:#8a8178;
+    --line:#e6e0d6;
+    --accent:#b5683f;       /* terracotta */
+    --accent-soft:#f0e3da;
+    --assistant:#ffffff;
+    --user:#272320;
+    --user-ink:#f4f1ea;
+    --good:#5b8a5a;
+    --radius:16px;
+    --shadow:0 1px 2px rgba(0,0,0,.04), 0 8px 28px rgba(39,35,32,.07);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);}
+  .wrap{max-width:760px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+  header{
+    position:sticky;top:0;z-index:5;background:rgba(244,241,234,.92);backdrop-filter:blur(8px);
+    padding:18px 20px 12px;border-bottom:1px solid var(--line);
+  }
+  header h1{margin:0;font-size:20px;letter-spacing:.2px;}
+  header .sub{margin:2px 0 0;font-size:12.5px;color:var(--muted);font-family:ui-sans-serif,system-ui,sans-serif;}
+  .statusrow{display:flex;align-items:center;gap:10px;margin-top:10px;font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);}
+  .pill.warn{background:#fbe9e4;color:#a23b22;}
+  .pill.ok{background:#e7f0e6;color:var(--good);}
+  .btn{cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+    border-radius:999px;padding:5px 12px;font-size:12px;font-family:ui-sans-serif,system-ui,sans-serif;}
+  .btn:hover{border-color:var(--accent);color:var(--accent);}
+  .spacer{flex:1}
+
+  main{flex:1;padding:18px 16px 8px;overflow-y:auto;}
+  .msg{display:flex;margin:14px 0;animation:rise .35s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .msg .bubble{max-width:80%;padding:13px 16px;border-radius:var(--radius);box-shadow:var(--shadow);line-height:1.5;font-size:16px;}
+  .msg.bot .bubble{background:var(--assistant);border:1px solid var(--line);border-bottom-left-radius:5px;}
+  .msg.me{justify-content:flex-end;}
+  .msg.me .bubble{background:var(--user);color:var(--user-ink);border-bottom-right-radius:5px;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:2px 4px 6px;}
+  .chip{cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+    border-radius:999px;padding:9px 15px;font-size:14px;font-family:ui-sans-serif,system-ui,sans-serif;transition:.15s;}
+  .chip:hover{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);transform:translateY(-1px);}
+
+  /* input */
+  .inputbar{position:sticky;bottom:0;background:rgba(244,241,234,.94);backdrop-filter:blur(8px);
+    border-top:1px solid var(--line);padding:12px 16px 16px;display:flex;gap:8px;}
+  .inputbar input{flex:1;border:1px solid var(--line);border-radius:999px;padding:12px 16px;font-size:15px;
+    font-family:ui-sans-serif,system-ui,sans-serif;background:#fff;color:var(--ink);outline:none;}
+  .inputbar input:focus{border-color:var(--accent);}
+  .send{cursor:pointer;border:none;background:var(--accent);color:#fff;border-radius:999px;padding:0 20px;font-size:15px;
+    font-family:ui-sans-serif,system-ui,sans-serif;}
+  .send:disabled{opacity:.5;cursor:default;}
+
+  /* results */
+  .look{background:linear-gradient(160deg,#fff,#f7efe9);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px 20px;box-shadow:var(--shadow);margin:4px 0 2px;}
+  .look .eyebrow{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);}
+  .look h2{margin:4px 0 6px;font-size:24px;}
+  .look .tag{color:var(--muted);font-size:15px;}
+  .look .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin-top:14px;font-family:ui-sans-serif,system-ui,sans-serif;font-size:13px;}
+  .look .grid div b{display:block;color:var(--muted);font-weight:600;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px;}
+  .cards{display:flex;flex-direction:column;gap:12px;margin-top:12px;}
+  .card{display:flex;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);}
+  .swatch{flex:0 0 54px;width:54px;height:54px;border-radius:12px;border:1px solid rgba(0,0,0,.08);display:flex;align-items:center;justify-content:center;font-size:24px;}
+  .card .body{flex:1;min-width:0;}
+  .card .cat{font-family:ui-sans-serif,system-ui,sans-serif;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);}
+  .card h3{margin:1px 0 3px;font-size:17px;}
+  .card .why{font-size:14px;color:var(--ink);line-height:1.45;}
+  .card .specs{margin-top:7px;display:flex;flex-wrap:wrap;gap:6px;}
+  .card .specs span{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;background:#efe9df;color:#6b6258;border-radius:6px;padding:3px 8px;}
+  .card a{font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;color:var(--accent);text-decoration:none;display:inline-block;margin-top:8px;}
+  .card a:hover{text-decoration:underline;}
+  .note{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11.5px;color:var(--muted);margin:10px 4px 2px;line-height:1.5;}
+  .typing{display:inline-flex;gap:4px;}
+  .typing i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:blink 1.2s infinite;}
+  .typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,60%,100%{opacity:.25}30%{opacity:1}}
+  input[type=file]{font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>RoomRevive · Kitchen Interview</h1>
+    <p class="sub">A quick conversation about how you live — then matched to your Miele &amp; Nobilia selection.</p>
+    <div class="statusrow">
+      <span id="catStatus" class="pill warn">catalog: loading…</span>
+      <input type="file" id="fileInput" accept=".json" style="display:none" />
+      <button class="btn" id="loadBtn" style="display:none" onclick="document.getElementById('fileInput').click()">Load catalog.json</button>
+      <span class="spacer"></span>
+      <button class="btn" onclick="restart()">↺ Restart</button>
+    </div>
+  </header>
+
+  <main id="log"></main>
+
+  <div class="inputbar">
+    <input id="textInput" placeholder="Type your answer in your own words…" autocomplete="off" />
+    <button class="send" id="sendBtn">Send</button>
+  </div>
+</div>
+
+<script>
+/* ---------------------------------------------------------------------------
+   1. THE INTERVIEW  — six discriminating questions (the "Guess Who" dials)
+   Each question moves exactly one hidden dial. Intent is DERIVED, not asked.
+--------------------------------------------------------------------------- */
+const QUESTIONS = [
+  { dial:"warmth", q:"Picture your dream kitchen at golden hour. Does it glow — warm light on real wood and stone? Or is it crisp, bright and gallery-clean?",
+    options:[
+      {label:"Warm & natural", value:"warm_natural", kw:["warm","wood","cozy","cosy","natural","soft","earthy","organic","oak","walnut","matte","golden","inviting","homey","rustic","stone","glow"]},
+      {label:"Cool & crisp",   value:"cool_precise", kw:["cool","sleek","clean","modern","minimal","crisp","bright","gallery","steel","white","sharp","contemporary","gloss","precise"]},
+    ]},
+  { dial:"texture", q:"Do you like to see and feel your materials — grain, a real handle in your hand? Or surfaces that disappear, seamless and uninterrupted?",
+    options:[
+      {label:"Tactile & handled", value:"tactile_framed", kw:["handle","handles","grain","texture","tactile","frame","framed","real","feel","knob","knobs","traditional","cottage","wood"]},
+      {label:"Seamless & hidden", value:"seamless",       kw:["seamless","smooth","flat","hidden","handleless","integrated","uninterrupted","slab","minimal","clean","sleek"]},
+    ]},
+  { dial:"scale", q:"On a normal week, who are you really cooking for?",
+    options:[
+      {label:"Just me / us",        value:"few",         kw:["me","myself","alone","one","two","couple","single","solo","partner","just us"]},
+      {label:"A busy family",       value:"family",      kw:["family","kids","children","household","busy","everyday","four","kid"]},
+      {label:"Often a full table",  value:"entertainer", kw:["guests","host","hosting","entertain","party","parties","crowd","gather","friends","dinner party","full house","table","everyone"]},
+    ]},
+  { dial:"pace", q:"Is cooking something you want to slow down and savour? Or something effortless and quickly done?",
+    options:[
+      {label:"Slow & savour",     value:"savour",    kw:["savour","savor","slow","relax","unwind","enjoy","take my time","ritual","calm","leisure","coffee","mindful","love cooking"]},
+      {label:"Fast & effortless", value:"effortless",kw:["fast","quick","efficient","effortless","busy","no time","easy","convenient","speed","rushed","practical","get it done"]},
+    ]},
+  { dial:"tech", q:"Do you want a kitchen that does the thinking for you — app control, automatic everything? Or simple and honest, just the essentials?",
+    options:[
+      {label:"Smart & connected", value:"connected", kw:["smart","app","wifi","wi-fi","connected","automatic","tech","gadget","control","automate","latest"]},
+      {label:"Simple & essential",value:"essential", kw:["simple","basic","essential","honest","no frills","minimal","straightforward","just works","plain"]},
+    ]},
+  { dial:"priority", q:"Last one — what matters more to you in the background?",
+    options:[
+      {label:"A genuinely quiet kitchen",   value:"quiet", kw:["quiet","silent","silence","noise","peaceful","calm","still"]},
+      {label:"Running as efficiently as possible", value:"eco", kw:["eco","energy","efficient","sustainable","green","environment","save","power","bills"]},
+      {label:"Neither, really", value:"none", kw:["neither","none","dont care","don't care","whatever","no preference"]},
+    ]},
+];
+
+/* ---------------------------------------------------------------------------
+   2. DERIVE  — intent (atmosphere) + Nobilia style world + finish direction
+--------------------------------------------------------------------------- */
+function deriveIntent(p){
+  let calm=0, host=0, fast=0;
+  p.pace==="savour" ? calm+=2 : fast+=2;
+  if(p.scale==="few") calm+=1;
+  if(p.scale==="family") host+=1;
+  if(p.scale==="entertainer") host+=2;
+  if(p.tech==="connected") fast+=1;
+  if(p.priority==="quiet") calm+=1;
+  if(p.priority==="eco") fast+=1;
+  const m=Math.max(calm,host,fast);
+  if(host===m && host>0) return "host";
+  if(fast===m) return "fast";
+  return "calm";
+}
+const INTENT_META = {
+  calm:{name:"Calm & Unwind", tag:"quiet, warm, restorative — end-of-day decompression", light:"warm soft light · 2700–3000 K"},
+  host:{name:"Host & Gather", tag:"warm, social, inviting — built for connection",        light:"brighter warm light"},
+  fast:{name:"Fast & Focused",tag:"efficient, structured, purposeful",                     light:"neutral / cool light"},
+};
+function deriveStyle(p){
+  if(p.warmth==="warm_natural" && p.texture==="tactile_framed") return "Nobilia · Modern Cottage / Country — frame fronts, matte wood";
+  if(p.warmth==="warm_natural" && p.texture==="seamless")       return "Nobilia · Natural Living / Japandi — warm wood, soft & seamless";
+  if(p.warmth==="cool_precise" && p.texture==="tactile_framed") return "Nobilia · Designer — textured, statement surfaces";
+  return "Nobilia · Modern / LINE-N — sleek, handleless, gallery-clean";
+}
+function finishHint(p){
+  return p.warmth==="warm_natural"
+    ? "white, matte black, graphite glass — soft, non-metallic"
+    : "clean steel, steel look, black steel — precise & metallic";
+}
+
+/* ---------------------------------------------------------------------------
+   3. SCORE  — every Miele product in catalog.json against the profile
+--------------------------------------------------------------------------- */
+const E_MAP={A:5,B:4,C:3,D:2,E:1};
+function scoreItem(item, prof){
+  const p=item.product||{}, cat=item.category;
+  let s=0; const why=[];
+  const color=(p.color||"").toLowerCase();
+  const metallic=color.includes("steel");
+  const feats=(p.features||[]).join(" ").toLowerCase();
+
+  /* finish ↔ warmth */
+  if(color){
+    if(prof.warmth==="cool_precise" && metallic){ s+=3; why.push(`its ${p.color.toLowerCase()} reads cool and precise`); }
+    else if(prof.warmth==="warm_natural" && !metallic){ s+=3; why.push(`a soft ${p.color.toLowerCase()} finish feels warm and natural`); }
+    else { s+=0.5; }
+  }
+  /* energy class */
+  const e=E_MAP[(p.energyClass||"").toUpperCase()]||0;
+  const ecoW=(prof.priority==="eco"||prof.intent==="fast")?1.0:0.4;
+  s+=e*ecoW*0.6;
+  if(e>=5 && (prof.priority==="eco"||prof.intent==="fast")) why.push("top energy class A");
+  /* noise */
+  const noise=p.noise || ({A:30,B:34,C:38,D:42}[(p.noiseClass||"").toUpperCase()]);
+  if(noise){ s+=(45-noise)*(prof.priority==="quiet"?0.5:0.15); if(prof.priority==="quiet"&&noise<=35) why.push(`whisper-quiet at ${noise} dB`); }
+  /* tech */
+  const smart=feats.includes("miele@home")||feats.includes("wi-fi");
+  if(prof.tech==="connected"){ if(smart){s+=2; why.push("app-connected (Miele@home)");} if(feats.includes("perfectfresh")) s+=1; }
+  else { if(!smart) s+=1.5; if(feats.includes("dailyfresh")) s+=0.5; }
+  /* pace */
+  if(prof.pace==="savour"){ if(feats.includes("perfectfresh")){ s+=2; why.push("PerfectFresh keeps ingredients prime for slow, considered cooking"); } }
+  else { if(feats.includes("nofrost")) s+=0.5; if(e>=5) s+=0.5; }
+
+  /* category-specific scale */
+  if(cat==="Fridges"){
+    const fd=(p.subtitle||"").toLowerCase().includes("french door")||(p.modelKey||"").startsWith("KFFD");
+    const disp=feats.includes("dispenser")||feats.includes("icemaker")||feats.includes("myice");
+    const cap=p.fridgeCapacity||0;
+    if(prof.scale==="entertainer"){ if(fd){s+=4; why.push("French-door space for a full house");} if(disp){s+=2; why.push("built-in ice & water for guests");} s+=cap*0.005; }
+    else if(prof.scale==="family"){ s+=cap*0.012; if(cap>=300) why.push("roomy enough for a busy family"); }
+    else { s+=Math.max(0,(280-cap))*0.012; if(cap<=240) why.push("right-sized for one or two"); }
+  }
+  if(cat==="Dishwashers"){
+    const ps=p.placeSettings||0;
+    if(prof.scale==="entertainer"||prof.scale==="family"){ s+=ps*0.4; if(ps>=14) why.push(`${ps} place settings for big loads`); }
+    else { s+=(14-Math.abs(ps-12))*0.2; }
+    if(prof.pace==="effortless" && feats.includes("autoopen")){ s+=1.5; why.push("AutoOpen drying for hands-off convenience"); }
+  }
+  if(cat==="CoffeeMachines"){
+    if(prof.pace==="savour"){ s+=3; why.push("the heart of a slow morning ritual"); }
+    if(prof.scale==="entertainer"){ s+=2; why.push("OneTouch coffee for a room full of guests"); }
+    if(p.rating) s+=p.rating*0.3;
+  }
+  if(cat==="Cooktops" && prof.intent==="fast"){ s+=2; why.push("built for fast, active cooking"); }
+
+  if(p.rating) s+=p.rating*0.05;
+  return {score:s, why:[...new Set(why)]};
+}
+
+/* pick the single best product per category, deduped by variant group */
+function recommend(items, prof){
+  const groups={}; // variantGroup -> best scored item
+  items.filter(it=>it.status==="active" && it.missing!==true).forEach(it=>{
+    const r=scoreItem(it,prof);
+    const key=(it.product&&it.product.variantGroup)||it.name;
+    if(!groups[key] || r.score>groups[key].score){ groups[key]={item:it, ...r}; }
+  });
+  const byCat={};
+  Object.values(groups).forEach(g=>{
+    const c=g.item.category;
+    if(!byCat[c] || g.score>byCat[c].score) byCat[c]=g;
+  });
+  return byCat; // {Fridges:{item,score,why}, ...}
+}
+
+/* which categories to surface, given the derived intent */
+function pickCategories(prof, byCat){
+  const out=[];
+  const push=c=>{ if(byCat[c]) out.push(byCat[c]); };
+  push("Fridges");
+  push("Dishwashers");
+  if(prof.pace==="savour" || prof.scale==="entertainer") push("CoffeeMachines");
+  if(prof.intent==="fast") push("Cooktops");
+  return out;
+}
+
+/* ---------------------------------------------------------------------------
+   4. CHAT ENGINE
+--------------------------------------------------------------------------- */
+const log=document.getElementById("log");
+const textInput=document.getElementById("textInput");
+const sendBtn=document.getElementById("sendBtn");
+let step=0, profile={}, catalog=null;
+
+const CAT_ICON={Fridges:"🧊",Dishwashers:"🍽️",CoffeeMachines:"☕",Cooktops:"🔥",Hoods:"🌀",Microwaves:"📡"};
+
+function botSay(html, chips){
+  const m=document.createElement("div"); m.className="msg bot";
+  const b=document.createElement("div"); b.className="bubble"; b.innerHTML=html; m.appendChild(b); log.appendChild(m);
+  if(chips){
+    const c=document.createElement("div"); c.className="chips";
+    chips.forEach(opt=>{ const ch=document.createElement("button"); ch.className="chip"; ch.textContent=opt.label;
+      ch.onclick=()=>answer(opt.label, opt.value); c.appendChild(ch); });
+    log.appendChild(c);
+  }
+  scroll();
+}
+function meSay(txt){ const m=document.createElement("div"); m.className="msg me";
+  const b=document.createElement("div"); b.className="bubble"; b.textContent=txt; m.appendChild(b); log.appendChild(m); scroll(); }
+function scroll(){ requestAnimationFrame(()=>{ window.scrollTo(0,document.body.scrollHeight); log.scrollTop=log.scrollHeight; }); }
+
+function typing(then){
+  const m=document.createElement("div"); m.className="msg bot";
+  m.innerHTML='<div class="bubble"><span class="typing"><i></i><i></i><i></i></span></div>';
+  log.appendChild(m); scroll();
+  setTimeout(()=>{ m.remove(); then(); }, 550);
+}
+
+function askCurrent(){
+  if(step>=QUESTIONS.length){ typing(finish); return; }
+  const Q=QUESTIONS[step];
+  typing(()=>botSay(Q.q, Q.options));
+}
+
+/* classify a free-text answer for the CURRENT question */
+function classify(text){
+  const Q=QUESTIONS[step]; const t=" "+text.toLowerCase()+" ";
+  let best=null, bestN=0;
+  Q.options.forEach(o=>{ let n=0; o.kw.forEach(k=>{ if(t.includes(k)) n++; }); if(n>bestN){bestN=n; best=o;} });
+  return bestN>0 ? best : null;
+}
+
+function answer(label, value){
+  meSay(label);
+  profile[QUESTIONS[step].dial]=value;
+  step++;
+  const ack=["Got it.","Noted.","Makes sense.","Lovely.","Perfect.","Understood."][Math.floor(Math.random()*6)];
+  typing(()=>{ const m=document.createElement("div"); m.className="msg bot";
+    m.innerHTML='<div class="bubble">'+ack+'</div>'; log.appendChild(m); scroll(); askCurrent(); });
+}
+
+function onSend(){
+  const txt=textInput.value.trim(); if(!txt) return;
+  if(step>=QUESTIONS.length){ textInput.value=""; return; }
+  meSay(txt); textInput.value="";
+  const hit=classify(txt);
+  if(hit){
+    profile[QUESTIONS[step].dial]=hit.value; step++;
+    typing(()=>{ botSayPlain(`Sounds like <b>${hit.label.toLowerCase()}</b> — got it.`); askCurrent(); });
+  } else {
+    typing(()=>botSay("I didn't quite catch which way you lean — could you pick one of these?", QUESTIONS[step].options));
+  }
+}
+function botSayPlain(html){ const m=document.createElement("div"); m.className="msg bot";
+  m.innerHTML='<div class="bubble">'+html+'</div>'; log.appendChild(m); scroll(); }
+
+sendBtn.onclick=onSend;
+textInput.addEventListener("keydown",e=>{ if(e.key==="Enter") onSend(); });
+
+/* ---------------------------------------------------------------------------
+   5. FINISH  — derive + score + render recommendations
+--------------------------------------------------------------------------- */
+function finish(){
+  profile.intent=deriveIntent(profile);
+  const meta=INTENT_META[profile.intent];
+  const style=deriveStyle(profile);
+
+  let cardsHtml="";
+  let count=0;
+  if(catalog && catalog.items){
+    const byCat=recommend(catalog.items, profile);
+    const picks=pickCategories(profile, byCat);
+    count=catalog.items.filter(it=>it.status==="active"&&it.missing!==true).length;
+    cardsHtml='<div class="cards">'+picks.map(g=>{
+      const p=g.item.product||{}; const sw=p.swatchColor||"#cccccc";
+      const specs=[];
+      if(p.energyClass) specs.push("Energy "+p.energyClass);
+      if(p.fridgeCapacity) specs.push(p.fridgeCapacity+" L fridge");
+      if(p.placeSettings) specs.push(p.placeSettings+" settings");
+      if(p.noise) specs.push(p.noise+" dB");
+      if(p.color) specs.push(p.color);
+      if(p.price) specs.push("€"+p.price);
+      const why=g.why.length? g.why.slice(0,2).join(" · ") : "a strong all-round match for your profile";
+      const link=(p.productPageUrl&&p.productPageUrl.length)? `<a href="${p.productPageUrl}" target="_blank">View on miele.dk ↗</a>`:"";
+      return `<div class="card">
+        <div class="swatch" style="background:${sw}">${CAT_ICON[g.item.category]||"•"}</div>
+        <div class="body">
+          <div class="cat">${g.item.category.replace(/s$/,"")}</div>
+          <h3>${(p.brand||"Miele")} ${p.name||g.item.name}</h3>
+          <div class="why">Why for you: ${why}.</div>
+          <div class="specs">${specs.map(s=>`<span>${s}</span>`).join("")}</div>
+          ${link}
+        </div></div>`;
+    }).join("")+"</div>";
+  } else {
+    cardsHtml=`<div class="note">⚠️ Couldn't read <b>catalog.json</b>, so I can only show your <em>direction</em> above. Click <b>Load catalog.json</b> in the header to get matched products.</div>`;
+  }
+
+  const look=`<div class="look">
+    <div class="eyebrow">Your kitchen</div>
+    <h2>${meta.name}</h2>
+    <div class="tag">${meta.tag}</div>
+    <div class="grid">
+      <div><b>Cabinet direction</b>${style}</div>
+      <div><b>Appliance finish</b>${finishHint(profile)}</div>
+      <div><b>Lighting</b>${meta.light}</div>
+      <div><b>Your profile</b>${profile.warmth.replace("_"," ")} · ${profile.texture.replace("_"," ")} · ${profile.scale} · ${profile.pace} · ${profile.tech}</div>
+    </div></div>`;
+
+  const m=document.createElement("div"); m.className="msg bot";
+  m.innerHTML='<div class="bubble" style="max-width:100%">'+
+    "Here's how I'd revive your kitchen — same room, your way of living:"+
+    look+cardsHtml+
+    (count?`<div class="note">Picks scored live from your <b>catalog.json</b> (${count} Miele products). Cabinets are Nobilia <em>direction</em> — no cabinet data in the catalog yet. <button class="btn" onclick="restart()">Try different answers</button></div>`:"")+
+    '</div>';
+  log.appendChild(m); scroll();
+}
+
+/* ---------------------------------------------------------------------------
+   6. CATALOG LOADING  (auto-fetch, with file-picker fallback for file://)
+--------------------------------------------------------------------------- */
+const catStatus=document.getElementById("catStatus");
+const loadBtn=document.getElementById("loadBtn");
+const fileInput=document.getElementById("fileInput");
+
+function setCatalog(data, src){
+  catalog=data;
+  const n=(data.items||[]).filter(it=>it.status==="active"&&it.missing!==true).length;
+  catStatus.className="pill ok"; catStatus.textContent=`catalog: ${n} products ✓`;
+  loadBtn.style.display="none";
+}
+function catalogFailed(){
+  catStatus.className="pill warn"; catStatus.textContent="catalog: not loaded";
+  loadBtn.style.display="inline-flex";
+}
+fetch("catalog.json").then(r=>{ if(!r.ok) throw 0; return r.json(); })
+  .then(d=>setCatalog(d,"fetch")).catch(()=>catalogFailed());
+fileInput.addEventListener("change",e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{ try{ setCatalog(JSON.parse(rd.result),"file"); }catch(err){ alert("Couldn't parse that file as JSON."); } };
+  rd.readAsText(f);
+});
+
+/* ---------------------------------------------------------------------------
+   7. BOOT
+--------------------------------------------------------------------------- */
+function restart(){ log.innerHTML=""; step=0; profile={}; boot(); }
+function boot(){
+  typing(()=>botSay("Hi — I'm here to help you picture <em>your</em> kitchen, transformed. I'll ask six quick questions about how you like to live, then recommend pieces from the Miele &amp; Nobilia range. You can tap an option or just write back in your own words.<br><br>Ready when you are.",
+    [{label:"Let's go", value:"__start"}]));
+}
+/* intercept the start chip */
+const _answer=answer;
+answer=function(label,value){
+  if(value==="__start"){ meSay(label); step=0; askCurrent(); return; }
+  _answer(label,value);
+};
+boot();
+</script>
+</body>
+</html>

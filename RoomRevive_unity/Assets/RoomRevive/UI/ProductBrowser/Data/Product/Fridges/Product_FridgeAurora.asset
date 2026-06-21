@@ -15,11 +15,16 @@ MonoBehaviour:
   id: fridge_aurora
   brandName: Nobilia
   productName: Aurora French Door
+  subtitle: "French-door refrigerator \u00b7 stainless"
   emotionalLine: "A statement piece that earns its place \u2014 polished, capacious
     and unmistakably premium."
   shortDescription: French-door fridge with reflective stainless steel, vertical
     handles and an integrated water dispenser.
   productImage: {fileID: 21300000, guid: cfa2e0c02a5c31c42950cb313472021e, type: 3}
+  specs:
+  - 508 L
+  - 112 kWh/yr
+  - 39 dB
   fromPrice: From $1,799
   variants:
   - label: Mirror Steel

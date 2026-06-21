@@ -14,7 +14,7 @@ It has two panels:
 | Panel | What it shows |
 |-------|--------------|
 | **Discover** | Compact teaser card — product image, brand, emotional line, "Explore options" CTA |
-| **Swap** | Full variant browser — prev/next navigation, dot indicators, "Select" CTA that triggers the actual swap |
+| **Swap** | Full product card — brand (with accent dot), name, subtitle, headline, description, spec chips, "From … price", favorite CTA, prev/next navigation, dot indicators, and a small product image pinned top-right |
 
 Both panels are always present in the scene as disabled GameObjects. A hotspot calls `ProductBrowserController.OpenDiscover(categoryData)` to show the right one.
 
@@ -66,9 +66,27 @@ Then describe your change: *"Make the Discover card taller, increase the product
 ### Adding a product to a catalog
 
 1. **Right-click** in the Project window → **Create → RoomRevive / Product Browser / Product Data**
-2. Fill in: `brandName`, `productName`, `emotionalLine`, `productImage`, `fromPrice`
+2. Fill in: `brandName`, `productName`, `subtitle`, `emotionalLine` (shown as the Swap headline),
+   `shortDescription`, `specs` (one chip per array entry, e.g. `141 L`), `productImage`, `fromPrice`
 3. Open the matching catalog asset (e.g. `FridgesCatalog.asset`)
 4. Add the new `ProductData` to the `products` list
+
+> The **Add New Fridge** / **Add New Cabinet** wizards do all of this in one step and now
+> include **Subtitle** and **Specs (one per line)** fields.
+
+### Swap-panel fields at a glance
+
+| Slot | Source field | Notes |
+|------|-------------|-------|
+| Brand dot | `ProductCategoryData.accentColor` | Tinted per category, not per product |
+| Brand | `ProductData.brandName` | |
+| Name | `ProductData.productName` | |
+| Subtitle | `ProductData.subtitle` | Hidden when empty |
+| Headline | `ProductData.emotionalLine` | Same field the Discover card uses |
+| Description | `ProductData.shortDescription` | |
+| Spec chips | `ProductData.specs[]` | Up to 4 chips; row hidden when empty |
+| Price | `ProductData.fromPrice` | A leading "From" renders as a separate label |
+| Image | `ProductData.productImage` | Small thumbnail pinned top-right |
 
 Changes to a `ProductData` asset immediately refresh any open swap panels in the editor.
 
@@ -95,14 +113,17 @@ Drag items in the `ProductCatalog.products` list. The dot indicators and nav but
 
 ## Inspector buttons reference
 
-| Button | What it does | Safe? |
+| Button / Menu | What it does | Safe? |
 |--------|-------------|-------|
 | 📸 Export Snapshot | Writes current state to `Snapshots/ProductBrowserUI.md` | ✅ Read-only |
 | 🔗 Sync | Fills null references, creates missing assets | ✅ Non-destructive |
 | 🔧 Auto-Bind | Wires Controller → View → Panels | ✅ Only fills nulls |
-| ⚠ Rebuild | Recreates all prefabs from scratch | ❌ Destroys manual edits |
+| **Rebuild Swap Panel (Safe)** | Regenerates **only** `ProductSwapPanel.prefab` and re-wires its buttons inside `ProductBrowserUI.prefab` without recreating the root | ✅ Scene instances keep their category / variant assignments |
+| ⚠ Rebuild (Destructive) | Recreates all three prefabs from scratch | ❌ Destroys manual edits **and** orphans scene-instance overrides |
 
-**Rule of thumb:** always Snapshot → Sync. Only Rebuild when starting fresh.
+**Rule of thumb:** to change the Swap panel layout in code, edit `ProductBrowserPrefabCreator.BuildSwapPrefab()`
+then run **Tools → RoomRevive → Product Browser → Rebuild Swap Panel (Safe)**. Only use the full
+destructive Rebuild when starting completely fresh.
 
 ---
 

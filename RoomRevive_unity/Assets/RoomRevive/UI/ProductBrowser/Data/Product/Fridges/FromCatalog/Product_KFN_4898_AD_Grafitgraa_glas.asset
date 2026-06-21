@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_KFN_4898_AD_Grafitgraa_glas
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: KFN_4898_AD_Grafitgraa_glas
+  catalogKey: KFN_4898_AD_Grafitgraa_glas
+  brandName: Miele
+  productName: KFN 4898 A-10 D
+  subtitle: "Freestanding fridge-freezer \xB7 graphite grey (glass)"
+  emotionalLine: "Fresh 5\xD7 longer with PerfectFresh Active"
+  shortDescription: PerfectFresh Active and Freeze&Cool for lasting freshness and
+    convenience.
+  productImage: {fileID: 0}
+  specs:
+  - 259 L
+  - 104 kWh/yr
+  - 29 dB
+  - Class A
+  fromPrice: From EUR 4,181
+  splatAsset: {fileID: 0}
+  variants: []
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

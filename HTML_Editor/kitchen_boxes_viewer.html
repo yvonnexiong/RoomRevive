@@ -54,8 +54,9 @@ button:hover{border-color:var(--muted)}
     <div class="sec"><h2>Objects</h2><div id="objlist"></div>
       <button id="btn-frame" style="width:100%;margin-top:6px">Frame all</button></div>
     <div class="sec"><h2>Box fit</h2>
-      <div class="row"><label>Front gap (m)</label><input type="range" id="boxgap" min="0" max="0.3" step="0.01" value="0.05"><input type="number" id="boxgap-n" min="0" max="0.3" step="0.01" value="0.05"></div>
-      <p class="note">Nudges each box's left, right and front faces inward until they sit this far from the nearest (non-floater) splat. Updates all boxes live. Floaters are excluded from the test.</p>
+      <div class="row" style="align-items:center"><label>Front gap (m)</label><input type="number" id="boxgap-n" min="-4" max="4" step="0.05" value="0.05" style="width:70px"></div>
+      <input type="range" id="boxgap" min="-4" max="4" step="0.05" value="0.05" style="width:100%;height:26px;margin:4px 0">
+      <p class="note">Offsets each box's left, right, front and top faces relative to the nearest (non-floater) splat surface: <b>positive</b> leaves a gap (box grows out), <b>negative</b> cuts inside the surface (box shrinks in). Updates all boxes live.</p>
     </div>
     <div class="sec"><h2>Camera</h2>
       <div class="row"><label>Position</label><span class="val" id="campos">–</span></div>
@@ -289,38 +290,55 @@ function boxFrame(cor){
  const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],len=v=>Math.hypot(v[0],v[1],v[2]),nrm=v=>{const l=len(v)||1;return[v[0]/l,v[1]/l,v[2]/l];};
  return {C,u:nrm(sub(cor[3],cor[0])),w:nrm(sub(cor[1],cor[0])),hu:len(sub(cor[3],cor[0]))/2,hw:len(sub(cor[1],cor[0]))/2,hy:len(sub(cor[4],cor[0]))/2};
 }
-const PROUD=0.30;        // front-slab thickness: splats this close to the front face define the appliance
-function pct(arr,q){if(!arr.length)return 0;arr.sort((a,b)=>a-b);return arr[Math.min(arr.length-1,Math.max(0,Math.floor(q*(arr.length-1))))];}
+// ── splat occupancy grid (non-floater) for fast corner–splat proximity tests ──
+let _occ=null; const _occCell=0.05;
+function buildOcc(){
+ _occ=new Set(); const p=scene.positions,op=scene.alphasU8,n=scene.n,sel=selected,c=_occCell;
+ for(let i=0;i<n;i++){ if(op[i]<120)continue; if(sel&&(sel[i]&2))continue;
+  _occ.add(Math.floor(p[i*3]/c)+','+Math.floor(p[i*3+1]/c)+','+Math.floor(p[i*3+2]/c)); }
+}
+// approx distance (m) from a world point to the nearest splat, searched out to maxR
+function nearestDist(px,py,pz,maxR){
+ const c=_occCell,gx=Math.floor(px/c),gy=Math.floor(py/c),gz=Math.floor(pz/c),mS=Math.min(40,Math.ceil(maxR/c));
+ for(let s=0;s<=mS;s++){ for(let dx=-s;dx<=s;dx++)for(let dy=-s;dy<=s;dy++)for(let dz=-s;dz<=s;dz++){
+   if(Math.max(Math.abs(dx),Math.abs(dy),Math.abs(dz))!==s)continue;
+   if(_occ.has((gx+dx)+','+(gy+dy)+','+(gz+dz)))return s*c; } }
+ return Infinity;
+}
+// Settle one face so its nearest corner ends up `gap` from a splat. `t` is the face's
+// distance from the box centre along its axis (always positive). corners(t) returns the
+// face's 4 world corner points. Shrinking STOPS the instant a corner reaches a splat —
+// it never cuts through. Positive gap = clearance; negative gap = cut in by |gap|.
+function settleFace(start,gap,corners){
+ const clr=Math.max(gap,0);
+ const probe=t=>{let m=Infinity;for(const P of corners(t)){const d=nearestDist(P[0],P[1],P[2],clr+0.25);if(d<m)m=d;}return m;};
+ const STEP=0.02; let t=start;
+ // DESCALE ONLY: pull the face in from the original edge; stop the instant the nearest
+ // corner is within `clr` of a splat (won't cut through). Never grows past the original.
+ while(t>0.06 && probe(t)>clr) t-=STEP;
+ if(gap<0) t=Math.max(0.04,t+gap);        // optional: cut inside the surface by |gap|
+ return t;
+}
 function nudgeBoxFaces(bx,gap){
  if(!scene)return;
  if(!bx.corners0)bx.corners0=bx.corners.map(c=>c.slice());
+ if(!_occ)buildOcc();
  const f=boxFrame(bx.corners0),C=f.C,u=f.u,w=f.w,hu=f.hu,hw=f.hw,hy=f.hy;
- bx.corners=bx.corners0.map(c=>c.slice());           // start from the original fit
- const p=scene.positions,op=scene.alphasU8,n=scene.n,sel=selected;
- const ctd=sceneCentroid(),fs=Math.sign((ctd[0]-C[0])*w[0]+(ctd[1]-C[1])*w[1]+(ctd[2]-C[2])*w[2])||1;
- // collect in-box, non-floater splats in box-local coords
- const DU=[],DW=[],DY=[]; const IB=[];
- for(let i=0;i<n;i++){
-  if(op[i]<120)continue; if(sel&&(sel[i]&2))continue;          // skip faint + floaters
-  const dx=p[i*3]-C[0],dy=p[i*3+1]-C[1],dz=p[i*3+2]-C[2];
-  if(Math.abs(dy)>hy)continue;                                  // within height band
-  const du=dx*u[0]+dz*u[2]; if(du<-hu||du>hu)continue;
-  const dw=dx*w[0]+dz*w[2]; if(dw<-hw||dw>hw)continue;
-  DU.push(du);DW.push(dw);DY.push(dy);
- }
- if(DU.length<30)return;
- // front face = outermost splat toward the room (the proud face), as a signed w coord
- const frontW = fs>0 ? pct(DW.slice(),0.98) : pct(DW.slice(),0.02);
- // FRONT SLAB: only splats within PROUD of the front face → excludes the RECESSED side cabinets
- const su=[],sy=[];
- for(let k=0;k<DU.length;k++){ if(fs*DW[k] > fs*frontW - PROUD){ su.push(DU[k]); sy.push(DY[k]); } }
- if(su.length<20)return;
- // left/right (width) and top from the proud front slab; pull each face to splat ± gap
- const uLo=Math.max(-hu, pct(su.slice(),0.01)-gap), uHi=Math.min(hu, pct(su.slice(),0.99)+gap);
- const yHi=Math.min(hy, pct(sy.slice(),0.99)+gap);   // top nudges DOWN to the front-edge top
- // front depth face to the proud surface + gap; keep the back face as originally fit
- let wLo=-hw,wHi=hw; if(fs>0) wHi=Math.min(hw,frontW+gap); else wLo=Math.max(-hw,frontW-gap);
- const cu=(uLo+uHi)/2,cw=(wLo+wHi)/2,cy=(-hy+yHi)/2,nhu=(uHi-uLo)/2,nhw=(wHi-wLo)/2,nhy=(yHi-(-hy))/2;
+ const ctd=sceneCentroid(),fs=Math.sign((ctd[0]-C[0])*w[0]+(ctd[2]-C[2])*w[2])||1;
+ // each face settles independently against the ORIGINAL box's full-face corners, so
+ // faces don't interact (a width shrink can't drag the top face down, etc.)
+ let uLo=-hu,uHi=hu,wLo=-hw,wHi=hw,yLo=-hy,yHi=hy;
+ const P=(uc,wc,yc)=>[C[0]+u[0]*uc+w[0]*wc, C[1]+yc, C[2]+u[2]*uc+w[2]*wc];
+ uHi=settleFace(hu,gap,t=>[P(t,-hw,-hy),P(t,hw,-hy),P(t,-hw,hy),P(t,hw,hy)]);       // RIGHT
+ uLo=-settleFace(hu,gap,t=>[P(-t,-hw,-hy),P(-t,hw,-hy),P(-t,-hw,hy),P(-t,hw,hy)]);  // LEFT
+ yHi=settleFace(hy,gap,t=>[P(-hu,-hw,t),P(hu,-hw,t),P(-hu,hw,t),P(hu,hw,t)]);        // TOP
+ if(fs>0){ wHi=settleFace(hw,gap,t=>[P(-hu,t,-hy),P(hu,t,-hy),P(-hu,t,hy),P(hu,t,hy)]); }         // FRONT
+ else    { wLo=-settleFace(hw,gap,t=>[P(-hu,-t,-hy),P(hu,-t,-hy),P(-hu,-t,hy),P(hu,-t,hy)]); }
+ // non-degenerate guards
+ if(uHi-uLo<0.04){const m=(uLo+uHi)/2;uLo=m-0.02;uHi=m+0.02;}
+ if(yHi-yLo<0.04){yHi=yLo+0.04;}
+ if(wHi-wLo<0.04){const m=(wLo+wHi)/2;wLo=m-0.02;wHi=m+0.02;}
+ const cu=(uLo+uHi)/2,cw=(wLo+wHi)/2,cy=(yLo+yHi)/2,nhu=(uHi-uLo)/2,nhw=(wHi-wLo)/2,nhy=(yHi-yLo)/2;
  const nC=[C[0]+u[0]*cu+w[0]*cw, C[1]+cy, C[2]+u[2]*cu+w[2]*cw];
  const mk=(sx,sw,syy)=>[nC[0]+u[0]*sx*nhu+w[0]*sw*nhw, nC[1]+syy*nhy, nC[2]+u[2]*sx*nhu+w[2]*sw*nhw];
  bx.corners=[mk(-1,-1,-1),mk(-1,1,-1),mk(1,1,-1),mk(1,-1,-1),mk(-1,-1,1),mk(-1,1,1),mk(1,1,1),mk(1,-1,1)];
@@ -596,7 +614,7 @@ $('crophide').addEventListener('change',()=>{gl.useProgram(prog);gl.uniform1f(uC
 // Box fit: front-gap slider <-> number, live re-nudge of all boxes
 (function(){const s=$('boxgap'),nb=$('boxgap-n');
  s.addEventListener('input',()=>{nb.value=s.value;scheduleBoxGap();});
- nb.addEventListener('input',()=>{let v=Math.max(0,Math.min(0.3,parseFloat(nb.value)||0));s.value=v;scheduleBoxGap();});})();
+ nb.addEventListener('input',()=>{let v=Math.max(-4,Math.min(4,parseFloat(nb.value)||0));s.value=v;scheduleBoxGap();});})();
 $('cropreset').onclick=cropToScene;
 ['ndheight','ndspacing','ndclear'].forEach(id=>$(id).addEventListener('change',computeNodes));
 $('cropsave').onclick=()=>{const data=JSON.stringify({center:CROP.c.map(v=>+v.toFixed(4)),size:CROP.h.map(v=>+(v*2).toFixed(4))});
@@ -618,7 +636,7 @@ async function loadSPZ(file){try{const raw=await file.arrayBuffer();let buf=new 
  if($('floaters').checked||$('floaterhide').checked)detectFloaters();
  cropToScene();gl.useProgram(prog);gl.uniform1f(uCropOn,$('crophide').checked?1:0);computeNodes();
  $('dropzone').classList.add('hidden');$('filemeta').textContent=file.name;$('stat-pts').textContent=scene.n.toLocaleString();frameAll();restoreCam();
- _sceneCentroid=null;applyBoxGap();   // re-nudge boxes against the freshly loaded splats
+ _sceneCentroid=null;_occ=null;applyBoxGap();   // re-nudge boxes against the freshly loaded splats
  fetch('http://localhost:8777/load-spz',{method:'POST',headers:{'Content-Type':'application/octet-stream'},body:raw})
   .then(r=>{
     if(!r.ok){showToast('Detect server error on load','warn');return null;}

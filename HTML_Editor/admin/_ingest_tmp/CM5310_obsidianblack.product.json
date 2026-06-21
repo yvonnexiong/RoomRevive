@@ -1,0 +1,42 @@
+{
+  "category": "CoffeeMachines",
+  "file": "CM5310_obsidianblack_realsize.glb",
+  "name": "CM 5310 Silence",
+  "product": {
+    "brand": "Miele",
+    "name": "CM 5310 Silence",
+    "subtitle": "Freestanding espresso machine · Obsidian black",
+    "sku": "11541580",
+    "modelKey": "CM5310_obsidianblack_realsize",
+    "headline": "OneTouch for Two for the best coffee enjoyment",
+    "description": "Freestanding, fully automatic espresso machine for fresh beans, with OneTouch for Two and automatic milk frothing for cafe-quality specialities at home.",
+    "features": [
+      "OneTouch for Two",
+      "AromaticSystem aroma preservation",
+      "Conical grinder",
+      "Automatic milk frothing",
+      "DirectSensor display",
+      "ComfortClean dishwasher-safe parts",
+      "Adjustable coffee spout 8-13.5 cm",
+      "1.3 L water tank",
+      "200 g bean container",
+      "1.45 kW power"
+    ],
+    "dimensions": "H360 x W241 x D460 mm",
+    "color": "Obsidian black",
+    "swatchColor": "#0d0d10",
+    "variantGroup": "CM5310",
+    "price": 8890,
+    "currency": "DKK",
+    "rating": 4.6,
+    "reviewCount": 9,
+    "productSheetUrl": "https://media.miele.com/downloads/k-/da/FS_11541580_DKD_DK-da.pdf",
+    "productPageUrl": "https://www.miele.dk/product/11541580/fritstaende-espressomaskine-cm-5310-silence-obsidiansort"
+  },
+  "_provenance": {
+    "datasheetVerified": ["brand", "name", "sku", "color", "dimensions", "features(capacities/power)"],
+    "pageSourced": ["price", "currency", "rating", "reviewCount", "headline", "description"],
+    "blankNoSource": ["energyClass", "noise", "annualEnergy", "weight", "pressureBar"],
+    "notes": "Pressure(bar), weight, noise not present in datasheet -> left blank, not invented. Sibling variant exists: Blackberry Red (Brombaerrod), same variantGroup CM5310."
+  }
+}

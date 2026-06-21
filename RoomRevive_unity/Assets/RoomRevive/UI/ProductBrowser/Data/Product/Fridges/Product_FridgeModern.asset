@@ -15,11 +15,16 @@ MonoBehaviour:
   id: fridge_modern
   brandName: Nobilia
   productName: Modern Fridge
+  subtitle: "Four-door refrigerator · brushed steel"
   emotionalLine: A clean, confident fridge that fits right into a modern kitchen
     without asking for attention.
   shortDescription: Four-door stainless fridge with brushed steel surfaces and a
     high-end modern kitchen look.
   productImage: {fileID: 21300000, guid: 3fcbbb89021804c418d75197dc8e9ab8, type: 3}
+  specs:
+  - 467 L
+  - 98 kWh/yr
+  - 37 dB
   fromPrice: From $1,299
   variants:
   - label: Brushed Steel

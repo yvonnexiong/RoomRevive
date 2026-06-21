@@ -137,11 +137,36 @@ function card(it) {
   const finish = (p.color || p.dimensions)
     ? `<div class="meta">${swatch}${esc([p.color, p.dimensions].filter(Boolean).join(' · '))}</div>` : '';
 
+  // Schema-agnostic spec row: render whatever key specs the item actually has.
+  // Curated display rules for known fields; fields not listed here are skipped on the card
+  // (they still appear in the full Details modal). Internal fields (_specSource etc.) are never shown.
+  const SPEC_FIELDS = [
+    { key: 'fridgeCapacity',  fmt: v => `<b>${v} L</b> fridge` },
+    { key: 'freezerCapacity', fmt: v => `<b>${v} L</b> freezer` },
+    { key: 'noise',           fmt: v => `<b>${v}</b> dB` },
+    { key: 'annualEnergy',    fmt: v => `<b>${v}</b> kWh/yr` },
+    { key: 'waterTank',       fmt: v => `<b>${esc(String(v))}</b> water` },
+    // Hoods
+    { key: 'airflow',         fmt: v => `<b>${v}</b> m³/h` },
+    // Cooktops
+    { key: 'zones',           fmt: v => `<b>${v}</b> zones` },
+    { key: 'totalPowerKw',    fmt: v => `<b>${v} kW</b> total` },
+    { key: 'boosterKw',       fmt: v => `<b>${v} kW</b> boost` },
+    { key: 'induction',       fmt: v => v ? `<b>induction</b>` : null },
+    // Microwaves
+    { key: 'capacityL',       fmt: v => `<b>${v} L</b>` },
+    { key: 'microwavePowerW', fmt: v => `<b>${v} W</b>` },
+    { key: 'grill',           fmt: v => v ? `<b>grill</b>` : null },
+    { key: 'grillPowerW',     fmt: v => `<b>${v} W</b> grill` },
+    { key: 'beanContainer',   fmt: v => `<b>${esc(String(v))}</b> beans` },
+    { key: 'power',           fmt: v => `<b>${esc(String(v))}</b> power` },
+    { key: 'energyClass',     fmt: v => `energy <b>${esc(String(v))}</b>` },
+    { key: 'dimensions',      fmt: v => `<span>${esc(String(v))}</span>` },
+  ];
   const specs = [];
-  if (p.fridgeCapacity != null) specs.push(`<span><b>${p.fridgeCapacity} L</b> fridge</span>`);
-  if (p.freezerCapacity != null) specs.push(`<span><b>${p.freezerCapacity} L</b> freezer</span>`);
-  if (p.noise != null) specs.push(`<span><b>${p.noise}</b> dB</span>`);
-  if (p.annualEnergy != null) specs.push(`<span><b>${p.annualEnergy}</b> kWh/yr</span>`);
+  for (const { key, fmt } of SPEC_FIELDS) {
+    if (p[key] != null && specs.length < 4) { const h = fmt(p[key]); if (h) specs.push(`<span>${h}</span>`); }
+  }
   const specsHTML = specs.length ? `<div class="specs">${specs.join('')}</div>` : '';
 
   const feats = Array.isArray(p.features) ? p.features.slice(0, 6) : [];
@@ -206,6 +231,14 @@ function productDetail(it) {
   row('Product sheet', p.productSheetUrl ? `<a class="linkbtn" href="${esc(p.productSheetUrl)}" target="_blank" rel="noopener">Open PDF ↗</a>` : '');
   row('Product page', p.productPageUrl ? `<a class="linkbtn" href="${esc(p.productPageUrl)}" target="_blank" rel="noopener">Open page ↗</a>` : '');
   row('File size', fmtBytes(it.bytes));
+
+  // Schema-agnostic: render any product field the bot added that has no curated row above,
+  // so the admin always matches whatever is in catalog.json.
+  const extra = Object.keys(p).filter(k => !DETAIL_KNOWN.has(k) && fmtVal(p[k]) !== '');
+  if (extra.length) {
+    rows.push(`<tr><td colspan="2" class="detail-sec">Other fields</td></tr>`);
+    extra.forEach(k => row(prettyLabel(k), fmtVal(p[k])));
+  }
 
   modal({
     wide: true,
@@ -477,6 +510,28 @@ function addCategory() {
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])); }
 function fmtBytes(b) { if (!b) return '—'; const u = ['B', 'KB', 'MB', 'GB']; let i = 0; while (b >= 1024 && i < 3) { b /= 1024; i++; } return b.toFixed(b < 10 && i > 0 ? 1 : 0) + ' ' + u[i]; }
 function fmtPrice(v, c) { try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: c || 'EUR', maximumFractionDigits: 0 }).format(v); } catch { return `${v} ${c || ''}`.trim(); } }
+
+// product keys that already have a curated row in the Details view
+const DETAIL_KNOWN = new Set(['brand', 'name', 'subtitle', 'sku', 'modelKey', 'emotionalLine',
+  'headline', 'description', 'features', 'fridgeCapacity', 'freezerCapacity', 'annualEnergy',
+  'noise', 'energyClass', 'dimensions', 'color', 'swatchColor', 'price', 'currency', 'rating',
+  'reviewCount', 'reviews', 'variantGroup', 'productSheetUrl', 'productPageUrl']);
+
+// turn a field key into a readable label: camelCase / snake_case -> "Title case"
+function prettyLabel(k) {
+  return k.replace(/[_-]+/g, ' ').replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
+}
+
+// generic value formatter for arbitrary field types (string / number / bool / array / object / url)
+function fmtVal(v) {
+  if (v == null || v === '') return '';
+  if (Array.isArray(v)) return v.length
+    ? `<div class="chips">${v.map(x => `<span class="chip">${esc(typeof x === 'object' ? JSON.stringify(x) : String(x))}</span>`).join('')}</div>` : '';
+  if (typeof v === 'object') return `<code>${esc(JSON.stringify(v))}</code>`;
+  if (typeof v === 'string' && /^https?:\/\//i.test(v))
+    return `<a class="linkbtn" href="${esc(v)}" target="_blank" rel="noopener">${esc(v)} ↗</a>`;
+  return esc(String(v));
+}
 
 // ---------- wire up ----------
 $('#addCatBtn').onclick = addCategory;

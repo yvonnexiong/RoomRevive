@@ -51,6 +51,38 @@ const PRODUCT_FIELDS = {
   productSheetUrl: { type: 'url' },
   productPageUrl:  { type: 'url' },                     // link back to the source
   modelKey:        { type: 'string' },                 // ties web GLB ↔ Unity splat
+  // dishwasher / cross-category
+  placeSettings:   { type: 'number' },
+  energyPer100Cycles: { type: 'number' },
+  waterPerCycle:   { type: 'number' },
+  noiseClass:      { type: 'string' },
+  // hoods
+  airflow:         { type: 'number' },                 // max luftydelse m³/h (boost)
+  airflowNote:     { type: 'string' },
+  // cooktops
+  zones:           { type: 'number' },
+  induction:       { type: 'boolean' },
+  totalPowerKw:    { type: 'number' },
+  boosterKw:       { type: 'number' },
+  energyClassNote: { type: 'string' },
+  // microwaves
+  capacityL:       { type: 'number' },
+  microwavePowerW: { type: 'number' },
+  grill:           { type: 'boolean' },
+  grillNote:       { type: 'string' },
+  grillPowerW:     { type: 'number' },
+  // coffee machines
+  waterTank:       { type: 'number' },                 // litres
+  beanContainer:   { type: 'number' },                 // grams (total)
+  milkContainer:   { type: 'number' },                 // litres
+  pumpBar:         { type: 'number' },
+  // shared notes / provenance metadata
+  dimensionsNote:  { type: 'string' },
+  _specSource:     { type: 'string' },
+  _dataQuality:    { type: 'string' },
+  _copySource:     { type: 'string' },
+  _copyQuality:    { type: 'string' },
+  _note:           { type: 'string' },
 };
 // fields the bot must never overwrite (managed by the model-file scan / Unity)
 const PROTECTED = ['modelKey'];

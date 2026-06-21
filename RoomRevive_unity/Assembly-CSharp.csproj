@@ -99,6 +99,7 @@
     <Compile Include="Assets\RoomRevive\Scripts\Hotspot\HotspotVisual.cs" />
     <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Runtime\Product\ProductBrowserController.cs" />
     <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Runtime\Product\ProductCategoryData.cs" />
+    <Compile Include="Assets\RoomRevive\Scripts\Splat\GaussianCutoutMatchCollider.cs" />
     <Compile Include="Assets\Scripts\MetaRayBeforeAfterSliderUI.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Hotspot\GazeHotspotDetector.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Startup\StartupController.cs" />

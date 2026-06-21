@@ -22,6 +22,10 @@ namespace RoomRevive.ProductBrowser
         [Tooltip("Stable id — used by routers and logs. Should be unique within a catalog.")]
         public string id;
 
+        [Tooltip("If set, this product is synced from HTML_Editor/admin/catalog.json (matches a JSON item's modelKey). " +
+                 "Managed by the catalog sync tool — leave EMPTY for hand-authored products so the sync never overwrites them.")]
+        public string catalogKey;
+
         [Header("Card Content")]
         [Tooltip("Brand name shown above the product name (e.g. Miele, Nobilia, Neuhaus).")]
         public string brandName;
@@ -29,7 +33,10 @@ namespace RoomRevive.ProductBrowser
         [Tooltip("Short product or style name shown as the card headline.")]
         public string productName;
 
-        [Tooltip("One emotional/lifestyle sentence shown on the Discover card.")]
+        [Tooltip("Small line under the product name, e.g. 'Freestanding refrigerator · white'.")]
+        public string subtitle;
+
+        [Tooltip("One emotional/lifestyle sentence. Used as the Discover card line AND the Swap panel headline.")]
         [TextArea(1, 3)]
         public string emotionalLine;
 
@@ -41,8 +48,12 @@ namespace RoomRevive.ProductBrowser
         [Tooltip("Primary product image used on both the Discover card and the Swap panel.")]
         public Sprite productImage;
 
+        [Header("Specs")]
+        [Tooltip("Short spec chips shown as pills, e.g. '141 L', '73 kWh/yr', '34 dB'. One entry per chip. Leave empty to hide the chip row.")]
+        public string[] specs;
+
         [Header("Pricing")]
-        [Tooltip("Optional price string, e.g. 'From $1,299'. Leave empty to hide price.")]
+        [Tooltip("Optional price string, e.g. 'From $1,299'. A leading 'From' is shown as a separate label on the Swap panel. Leave empty to hide price.")]
         public string fromPrice;
 
         [Header("Gaussian Splat")]

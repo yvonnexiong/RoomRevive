@@ -15,11 +15,16 @@ MonoBehaviour:
   id: fridge_nordic
   brandName: Nobilia
   productName: Nordic Tall Fridge
+  subtitle: "Bottom-freezer refrigerator \u00b7 soft steel"
   emotionalLine: "Slim, quiet and tall \u2014 a fridge that disappears into a calm
     Scandinavian kitchen."
   shortDescription: Bottom-freezer refrigerator with a minimal vertical profile and
     soft brushed metal finish.
   productImage: {fileID: 21300000, guid: 7aad4b169f7d899479fc9f1c8bac2808, type: 3}
+  specs:
+  - 311 L
+  - 84 kWh/yr
+  - 34 dB
   fromPrice: From $899
   variants:
   - label: Soft Steel

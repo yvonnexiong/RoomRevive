@@ -1,0 +1,23 @@
+{
+  "category": "CoffeeMachines",
+  "file": "CM6160_lotuswhite_realsize.glb",
+  "name": "CM 6160 MilkPerfection",
+  "product": {
+    "brand": "Miele",
+    "name": "CM 6160 MilkPerfection",
+    "subtitle": "Freestanding espresso machine · Lotus white",
+    "sku": "11579650",
+    "modelKey": "CM6160_lotuswhite_realsize",
+    "headline": "Creamy milk foam for many coffee specialities",
+    "description": "Freestanding, fully automatic espresso machine for fresh beans with an automatic milk system and intense coffee aroma.",
+    "features": ["AromaticSystem", "OneTouch for Two", "Automatic milk system (programmable foam)", "WiFiConn@ct", "Expert mode", "1.8 L water tank", "300 g bean container", "1.45 kW power"],
+    "dimensions": "H359 x W251 x D427 mm",
+    "color": "Lotus white",
+    "swatchColor": "#f1efe8",
+    "variantGroup": "CM6160",
+    "price": 12390,
+    "currency": "DKK",
+    "productPageUrl": "https://www.miele.dk/product/11579650/fritstaende-espressomaskine-cm-6160-milkperfection-lotushvid"
+  },
+  "_provenance": {"specs": "miele.dk product page (datasheet cross-check pending for production)"}
+}

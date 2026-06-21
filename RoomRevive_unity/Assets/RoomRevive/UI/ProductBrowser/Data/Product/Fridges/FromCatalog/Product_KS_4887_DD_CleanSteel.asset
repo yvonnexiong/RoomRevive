@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_KS_4887_DD_CleanSteel
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: KS_4887_DD_CleanSteel
+  catalogKey: KS_4887_DD_CleanSteel
+  brandName: Miele
+  productName: KS 4887 DD
+  subtitle: "Freestanding refrigerator \xB7 clean steel"
+  emotionalLine: "Fresh 5\xD7 longer with PerfectFresh Active"
+  shortDescription: PerfectFresh Active, FlexiLight 2.0 and Click2open for maximum
+    comfort.
+  productImage: {fileID: 0}
+  specs:
+  - 387 L
+  - 134 kWh/yr
+  - 34 dB
+  - Class D
+  fromPrice: From EUR 2,519
+  splatAsset: {fileID: 0}
+  variants: []
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []
