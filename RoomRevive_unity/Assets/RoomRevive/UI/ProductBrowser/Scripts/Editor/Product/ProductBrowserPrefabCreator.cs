@@ -1028,6 +1028,10 @@ namespace RoomRevive.ProductBrowser.EditorTools
             rt.sizeDelta = size; rt.anchoredPosition = pos;
         }
 
+        const string AlanSansFontPath = "Assets/RoomRevive/Font/AlanSans-VariableFont_wght SDF.asset";
+        static TMP_FontAsset _alanSans;
+        static TMP_FontAsset AlanSans => _alanSans ??= AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(AlanSansFontPath);
+
         static TextMeshProUGUI MakeText(Transform parent, string name, string text,
                                          float size, Color color,
                                          Vector2 sizeDelta, Vector2 anchor, Vector2 pivot, Vector2 pos)
@@ -1040,6 +1044,7 @@ namespace RoomRevive.ProductBrowser.EditorTools
             TextMeshProUGUI tmp = go.AddComponent<TextMeshProUGUI>();
             tmp.text = text; tmp.fontSize = size; tmp.color = color;
             tmp.enableAutoSizing = false; tmp.raycastTarget = false;
+            if (AlanSans != null) tmp.font = AlanSans;
             return tmp;
         }
 
