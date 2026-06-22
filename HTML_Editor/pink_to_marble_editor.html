@@ -206,6 +206,13 @@ summary.dsum:hover{color:var(--text)}
       <div class="row"><label>Grain variation</label>
         <input type="range" id="grainvar" min="0" max="100" value="11"><span class="val" id="grainvar-v">11%</span></div>
       <div class="row"><label class="check"><input type="checkbox" id="facetsplit" checked> Per-facet projection (split bends)</label></div>
+      <div class="row"><label>Subdivide amount</label>
+        <input type="range" id="detail" min="10" max="40" step="1" value="10"><span class="val" id="detail-v">off</span></div>
+      <div class="row"><label>Subdivide spread</label>
+        <input type="range" id="spread" min="30" max="250" step="5" value="110"><span class="val" id="spread-v">1.10</span></div>
+      <div class="row"><label>Subdivide evenness</label>
+        <input type="range" id="even" min="0" max="100" step="5" value="0"><span class="val" id="even-v">off</span></div>
+      <div class="row"><label class="check"><input type="checkbox" id="autoplane" checked> Snap subdivide to surface (H/V)</label></div>
       <div class="row"><label>Floor mosaic</label>
         <input type="range" id="mosaic" min="0" max="150" value="0"><span class="val" id="mosaic-v">off</span></div>
       <div class="row"><label>Contrast</label>
@@ -241,10 +248,28 @@ summary.dsum:hover{color:var(--text)}
         <input type="range" id="splatscale" min="40" max="250" value="164"><span class="val" id="splatscale-v">1.64×</span></div>
     </div>
 
+    <div class="sec">
+      <h2><span class="ic">✂️</span>Crop box <span style="font-weight:400;color:var(--muted);font-size:11px">view only</span></h2>
+      <div class="row"><label class="check"><input type="checkbox" id="crop-on"> Enable — hide splats outside the box</label></div>
+      <div class="row"><label>X min</label><input type="range" id="cropxmin" min="-10" max="10" step="0.001" value="-10"><span class="val" id="cropxmin-v">–</span></div>
+      <div class="row"><label>X max</label><input type="range" id="cropxmax" min="-10" max="10" step="0.001" value="10"><span class="val" id="cropxmax-v">–</span></div>
+      <div class="row"><label>Y min</label><input type="range" id="cropymin" min="-10" max="10" step="0.001" value="-10"><span class="val" id="cropymin-v">–</span></div>
+      <div class="row"><label>Y max</label><input type="range" id="cropymax" min="-10" max="10" step="0.001" value="10"><span class="val" id="cropymax-v">–</span></div>
+      <div class="row"><label>Z min</label><input type="range" id="cropzmin" min="-10" max="10" step="0.001" value="-10"><span class="val" id="cropzmin-v">–</span></div>
+      <div class="row"><label>Z max</label><input type="range" id="cropzmax" min="-10" max="10" step="0.001" value="10"><span class="val" id="cropzmax-v">–</span></div>
+      <button id="btn-cropfit" style="width:100%;margin-top:6px">Reset box to full splat</button>
+      <p class="note" style="margin-top:6px">Hides splats whose centre is outside the box, in this viewer only — the exported / live Unity copy keeps every splat.</p>
+    </div>
+
     <div class="sec" style="border-bottom:0;margin-top:auto" data-vis="comb">
       <h2><span class="ic">📦</span>Align &amp; export</h2>
       <button id="btn-align" style="width:100%;margin-bottom:8px">⛓ Align worktops + original → cabinets</button>
       <button id="btn-combined" class="primary" disabled style="width:100%">Download combined kitchen .spz</button>
+      <div class="row" style="margin-top:8px;align-items:center;gap:8px">
+        <label class="check" style="flex:none"><input type="checkbox" id="autocopy-on" checked> 💾 Auto-save to Unity</label>
+        <button id="btn-autocopy-loc" style="flex:1">Choose file…</button>
+      </div>
+      <div id="autocopy-status" style="font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:4px;text-align:center">auto-save on — keeps a live copy that updates on every change</div>
       <div class="btnrow" style="margin-top:8px">
         <button id="btn-exp-cab" disabled>Cabinets only .spz</button>
         <button id="btn-exp-wt" disabled>Worktops only .spz</button>
@@ -362,11 +387,13 @@ precision highp float; precision highp int; precision highp usampler2D;
 uniform usampler2D u_data; uniform usampler2D u_sel;
 uniform mat4 u_view, u_proj; uniform vec2 u_focal, u_viewport; uniform vec3 u_selTint;
 uniform float u_splatScale, u_exposure, u_selMix; uniform vec3 u_lightTint;
+uniform vec3 u_cropMin, u_cropMax; uniform float u_cropOn;
 in vec2 a_corner; in int a_index; out vec4 vColor; out vec2 vPos;
 void main(){
   int ix=(a_index & 1023)<<1; int iy=a_index>>10;
   uvec4 t0=texelFetch(u_data, ivec2(ix,iy),0);
   vec3 p=vec3(uintBitsToFloat(t0.x),uintBitsToFloat(t0.y),uintBitsToFloat(t0.z));
+  if(u_cropOn>0.5 && (any(lessThan(p,u_cropMin))||any(greaterThan(p,u_cropMax)))){ gl_Position=vec4(0.0,0.0,2.0,1.0); return; }   // crop box (view only): cull splats outside the box
   vec4 cam=u_view*vec4(p,1.0); vec4 clipPos=u_proj*cam; float clip=1.2*clipPos.w;
   if(clipPos.z<-clip||clipPos.x<-clip||clipPos.x>clip||clipPos.y<-clip||clipPos.y>clip){ gl_Position=vec4(0.0,0.0,2.0,1.0); return; }
   uvec4 t1=texelFetch(u_data, ivec2(ix|1,iy),0);
@@ -402,8 +429,10 @@ gl.useProgram(prog);
 const U=n=>gl.getUniformLocation(prog,n);
 const uView=U('u_view'),uProj=U('u_proj'),uFocal=U('u_focal'),uViewport=U('u_viewport'),uTint=U('u_selTint');
 const uSplatScale=U('u_splatScale'),uExposure=U('u_exposure'),uSelMix=U('u_selMix'),uLightTint=U('u_lightTint');
+const uCropMin=U('u_cropMin'),uCropMax=U('u_cropMax'),uCropOn=U('u_cropOn');
 gl.uniform1i(U('u_data'),0); gl.uniform1i(U('u_sel'),1);
 gl.uniform3f(uTint,1.0,0.88,0.1); gl.uniform1f(uSplatScale,1.64); gl.uniform1f(uExposure,1.0); gl.uniform1f(uSelMix,0.6); gl.uniform3f(uLightTint,1,1,1);
+gl.uniform3f(uCropMin,-1e9,-1e9,-1e9); gl.uniform3f(uCropMax,1e9,1e9,1e9); gl.uniform1f(uCropOn,0);
 gl.disable(gl.DEPTH_TEST); gl.enable(gl.BLEND);
 gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA,gl.ONE,gl.ONE_MINUS_DST_ALPHA,gl.ONE);
 gl.clearColor(0,0,0,0);
@@ -480,17 +509,18 @@ function colorWord(i){
   const r=clamp(Math.round(scene.colors[i*3]*255),0,255), g=clamp(Math.round(scene.colors[i*3+1]*255),0,255), b=clamp(Math.round(scene.colors[i*3+2]*255),0,255);
   return (r|(g<<8)|(b<<16)|(scene.alphasU8[i]<<24))>>>0;
 }
-function buildGPUData(){
-  const n=scene.n; texRows=Math.ceil(n/1024); texData=new Uint32Array(2048*texRows*4);
+function buildGPUData(src){
+  const s=src||scene; const n=s.n; texRows=Math.ceil(n/1024); texData=new Uint32Array(2048*texRows*4);
   const f2u=new Uint32Array(1), f2f=new Float32Array(f2u.buffer), cov=new Float32Array(6);
   for(let i=0;i<n;i++){
     const row=i>>10,col=(i&1023)<<1,base=(row*2048+col)*4;
-    f2f[0]=scene.positions[i*3]; texData[base]=f2u[0];
-    f2f[0]=scene.positions[i*3+1]; texData[base+1]=f2u[0];
-    f2f[0]=scene.positions[i*3+2]; texData[base+2]=f2u[0];
-    texData[base+3]=colorWord(i);
-    const sx=Math.exp(scene.scalesLog[i*3]),sy=Math.exp(scene.scalesLog[i*3+1]),sz=Math.exp(scene.scalesLog[i*3+2]);
-    quatToCov(scene.quats[i*4],scene.quats[i*4+1],scene.quats[i*4+2],scene.quats[i*4+3],sx,sy,sz,cov);
+    f2f[0]=s.positions[i*3]; texData[base]=f2u[0];
+    f2f[0]=s.positions[i*3+1]; texData[base+1]=f2u[0];
+    f2f[0]=s.positions[i*3+2]; texData[base+2]=f2u[0];
+    const r=clamp(Math.round(s.colors[i*3]*255),0,255),g=clamp(Math.round(s.colors[i*3+1]*255),0,255),b=clamp(Math.round(s.colors[i*3+2]*255),0,255);
+    texData[base+3]=(r|(g<<8)|(b<<16)|(s.alphasU8[i]<<24))>>>0;
+    const sx=Math.exp(s.scalesLog[i*3]),sy=Math.exp(s.scalesLog[i*3+1]),sz=Math.exp(s.scalesLog[i*3+2]);
+    quatToCov(s.quats[i*4],s.quats[i*4+1],s.quats[i*4+2],s.quats[i*4+3],sx,sy,sz,cov);
     texData[base+4]=packHalf2x16(cov[0],cov[1]); texData[base+5]=packHalf2x16(cov[2],cov[3]); texData[base+6]=packHalf2x16(cov[4],cov[5]); texData[base+7]=0;
   }
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,dataTex);
@@ -498,7 +528,8 @@ function buildGPUData(){
   selected=new Uint8Array(1024*texRows);
   gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,selTex);
   gl.texImage2D(gl.TEXTURE_2D,0,gl.R8UI,1024,texRows,0,gl.RED_INTEGER,gl.UNSIGNED_BYTE,selected);
-  if(worker){ const posCopy=scene.positions.slice(); worker.postMessage({type:'init',positions:posCopy.buffer,count:n},[posCopy.buffer]); }
+  if(worker){ const posCopy=s.positions.slice(); worker.postMessage({type:'init',positions:posCopy.buffer,count:n},[posCopy.buffer]); }
+  setCropRanges(s);   // re-fit the crop-box sliders to this splat's bounds
   needSort=true;
 }
 function uploadColors(){ gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,dataTex);
@@ -525,8 +556,8 @@ function frame(){
     if(worker){ if(!sortBusy){ sortBusy=true; needSort=false; lastSortView=zkey; worker.postMessage({type:'sort',z:[viewMat[2],viewMat[6],viewMat[10]],token:++sortToken}); } }
     else { const now=performance.now(); if(needSort||now-lastMTSort>140){ needSort=false; lastSortView=zkey; lastMTSort=now; mainThreadSort(viewMat[2],viewMat[6],viewMat[10]); } }
   }
-  if(colorDirty){ uploadColors(); colorDirty=false; }
-  if(selDirty){ uploadSel(); selDirty=false; }
+  if(colorDirty){ if(!chPreview) uploadColors(); colorDirty=false; }   // skip incremental uploads while a densified preview owns texData
+  if(selDirty){ if(!chPreview) uploadSel(); selDirty=false; }
   gl.clear(gl.COLOR_BUFFER_BIT);
   if(drawCount>0) gl.drawArraysInstanced(gl.TRIANGLE_STRIP,0,4,drawCount);
 }
@@ -577,16 +608,18 @@ canvas.addEventListener('dblclick',e=>{
 
 /* ---- view sliders ---- */
 $('splatscale').addEventListener('input',()=>{ const v=parseInt($('splatscale').value)/100; gl.uniform1f(uSplatScale,v); $('splatscale-v').textContent=v.toFixed(2)+'×'; });
-$('exposure').addEventListener('input',()=>{ const v=parseInt($('exposure').value)/100; gl.uniform1f(uExposure,v); $('exposure-v').textContent=v.toFixed(2)+'×'; });
+$('exposure').addEventListener('input',()=>{ const v=parseInt($('exposure').value)/100; gl.uniform1f(uExposure,v); $('exposure-v').textContent=v.toFixed(2)+'×'; scheduleCopySave(); });
 function hsv2rgb(h,s,v){ h=(((h%360)+360)%360)/60; const c=v*s, x=c*(1-Math.abs(h%2-1)), m=v-c; let r=0,g=0,b=0;
   if(h<1){r=c;g=x;} else if(h<2){r=x;g=c;} else if(h<3){g=c;b=x;} else if(h<4){g=x;b=c;} else if(h<5){r=x;b=c;} else {r=c;b=x;}
   return [r+m,g+m,b+m]; }
+let lightTintRGB=[1,1,1];   // last computed light-tint (kept so exports can bake it in, like the on-screen view)
 function recomputeLightTint(){
   const t=(+$('lighttint').value-50)/50;                       // warm ↔ cool axis
   let r=1-0.20*t, g=1-0.04*Math.abs(t), b=1+0.22*t;
   const amt=+$('tintamt').value/100;                            // any-colour tint
   if(amt>0){ const h=hsv2rgb(+$('tinthue').value,1,1), mean=(h[0]+h[1]+h[2])/3;
     r*=1+amt*(h[0]-mean); g*=1+amt*(h[1]-mean); b*=1+amt*(h[2]-mean); }
+  lightTintRGB=[r,g,b];
   gl.uniform3f(uLightTint, r, g, b);
 }
 ['lighttint','tinthue','tintamt'].forEach(id=>$(id).addEventListener('input',()=>{
@@ -594,8 +627,37 @@ function recomputeLightTint(){
   const hue=+$('tinthue').value, hc=hsv2rgb(hue,0.78,1); $('tinthue-v').textContent=hue+'°'; $('tinthue-v').style.color='rgb('+hc.map(x=>Math.round(x*255)).join(',')+')';
   const amt=+$('tintamt').value; $('tintamt-v').textContent=amt===0?'off':amt+'%';
   recomputeLightTint();
+  scheduleCopySave();   // lighting is baked into the live copy → push it to Unity too
 }));
 $('hl').addEventListener('change',()=>{ gl.uniform1f(uSelMix,$('hl').checked?0.6:0.0); });
+
+/* ---- crop box (view only): cull splats whose centre is outside an adjustable box ---- */
+let sceneBounds=null, cropCustomized=false;
+function applyCrop(){
+  gl.uniform3f(uCropMin,+$('cropxmin').value,+$('cropymin').value,+$('cropzmin').value);
+  gl.uniform3f(uCropMax,+$('cropxmax').value,+$('cropymax').value,+$('cropzmax').value);
+  gl.uniform1f(uCropOn,$('crop-on').checked?1:0);
+  for(const id of ['cropxmin','cropxmax','cropymin','cropymax','cropzmin','cropzmax']) $(id+'-v').textContent=(+$(id).value).toFixed(2);
+}
+// Re-range the sliders to the displayed splat's bounding box; snap to full extent until the user edits one.
+function setCropRanges(s){
+  const n=s.n, p=s.positions; if(!n||!p) return;
+  let a=[Infinity,Infinity,Infinity], b=[-Infinity,-Infinity,-Infinity];
+  for(let i=0;i<n;i++) for(let k=0;k<3;k++){ const v=p[i*3+k]; if(v<a[k])a[k]=v; if(v>b[k])b[k]=v; }
+  sceneBounds={min:a.slice(),max:b.slice()};
+  const ax=[['cropxmin','cropxmax',0],['cropymin','cropymax',1],['cropzmin','cropzmax',2]];
+  for(const [lo,hi,k] of ax){ const r=(b[k]-a[k])||1, st=Math.max(r/400,1e-4), aa=a[k]-r*0.02, bb=b[k]+r*0.02;
+    const L=$(lo),H=$(hi); L.min=aa;L.max=bb;L.step=st; H.min=aa;H.max=bb;H.step=st;
+    if(!cropCustomized){ L.value=a[k]; H.value=b[k]; } else { L.value=clamp(+L.value,aa,bb); H.value=clamp(+H.value,aa,bb); } }
+  applyCrop();
+}
+['cropxmin','cropxmax','cropymin','cropymax','cropzmin','cropzmax'].forEach(id=>$(id).addEventListener('input',()=>{ cropCustomized=true; applyCrop(); }));
+$('crop-on').addEventListener('change',applyCrop);
+$('btn-cropfit').onclick=()=>{ if(!sceneBounds) return; cropCustomized=false;
+  $('cropxmin').value=sceneBounds.min[0]; $('cropxmax').value=sceneBounds.max[0];
+  $('cropymin').value=sceneBounds.min[1]; $('cropymax').value=sceneBounds.max[1];
+  $('cropzmin').value=sceneBounds.min[2]; $('cropzmax').value=sceneBounds.max[2];
+  applyCrop(); };
 
 /* ---- pink detection (by splat colour) ---- */
 function detectPink(){
@@ -884,7 +946,7 @@ function applyMaterial(reuse,skipGPU){
     panoMean=s/idxs.length||1;
   }
   // per-surface base grain angle (cos/sin) + gentle brightness anchor (soft, so dark stays dark)
-  const ca=[],sa=[],bS=[];
+  const ca=[],sa=[],bS=[], _lf=new Float32Array(idxs.length*3);   // _lf = per-splat light factor, kept for the Detail subdivision
   for(let c=0;c<fits.length;c++){ const f=fits[c];
     const ja=grain*fract(Math.abs(Math.sin((c+1)*12.9898)*43758.5453))*Math.PI, a=rot+ja;
     ca[c]=Math.cos(a); sa[c]=Math.sin(a);
@@ -925,13 +987,15 @@ function applyMaterial(reuse,skipGPU){
       else if(usePano){ pcr=1+(panoCh[k*3]-1)*panoColorAmt; pcg=1+(panoCh[k*3+1]-1)*panoColorAmt; pcb=1+(panoCh[k*3+2]-1)*panoColorAmt; }
     }
     const m=tR*bS[c]*light*pcr, mg=tG*bS[c]*light*pcg, mb=tB*bS[c]*light*pcb;
+    _lf[k*3]=m;_lf[k*3+1]=mg;_lf[k*3+2]=mb;
     scene.colors[i*3]=clamp(r*m,0,1); scene.colors[i*3+1]=clamp(g*mg,0,1); scene.colors[i*3+2]=clamp(bl*mb,0,1);
     if(!skipGPU){ const row=i>>10,col2=(i&1023)<<1; texData[(row*2048+col2)*4+3]=colorWord(i); }
   }
+  segData._lf=_lf; segData._ca=ca; segData._sa=sa; segData._tile=tile; segData._contrast=contrast; segData._mcell=mcell; segData._matD=D; segData._matW=W; segData._matH=H;   // for Detail subdivision in buildCombined
   lastApply=segData; if(!skipGPU) colorDirty=true; try{ updateCombineBtns(); }catch(e){}
 }
 $('btn-apply').onclick=()=>{ if(viewingCombined){ recombineLook(); toast('Re-applied '+(editTarget==='cab'?'cabinet':'worktop')+' look'); return; }
-  lastApply=null; applyMaterial(false);
+  lastApply=null; applyMaterial(false); renderChannel();
   $('hl').checked=false; gl.uniform1f(uSelMix,0.0);
   toast('Material projected onto '+selCount.toLocaleString()+' splats'); };
 
@@ -960,7 +1024,7 @@ function autoMatch(){
   setCtl('shading',shading,shading+'%');
   setCtl('panocolor',srcColour,srcColour+'%');
   setCtl('matchlight',matchl,matchl+'%');
-  lastApply=null; applyMaterial(false);
+  lastApply=null; applyMaterial(false); renderChannel();
   $('hl').checked=false; gl.uniform1f(uSelMix,0.0);
   toast(`Auto-matched · contrast ${(contrast/100).toFixed(2)}× · shading ${shading}% · colour ${srcColour}% · match ${matchl}%`+(hasSrc?' · from original splat':''));
 }
@@ -976,10 +1040,12 @@ const presets={ cab:loadPreset('cab'), wt:loadPreset('wt') };
 function resetColors(){ if(!scene)return; scene.colors.set(originalColors);
   for(let i=0;i<scene.n;i++){ const row=i>>10,col=(i&1023)<<1; texData[(row*2048+col)*4+3]=colorWord(i); } colorDirty=true; }
 function applyPreset(key){
+  ensureBaseDisplay();
   writeSettings(presets[key]);
   if(scene){ resetColors(); detectPink(); }
   segData=null; lastApply=null;
   if(scene&&material.data&&selCount>0){ applyMaterial(false); $('hl').checked=false; gl.uniform1f(uSelMix,0.0); }
+  renderChannel();
   toast((key==='cab'?'Cabinet':'Worktop')+' preset loaded');
 }
 function savePreset(key){ let s;
@@ -1013,18 +1079,36 @@ for(const id of ['tilesize','texrot','grainvar','mosaic','contrast','shading','p
     $('panoyaw-v').textContent=$('panoyaw').value+'°';
     $('matchlight-v').textContent=$('matchlight').value+'%';
     if(viewingCombined){ clearTimeout(sliderTimer); sliderTimer=setTimeout(recombineLook,280); }
-    else if(lastApply){ clearTimeout(sliderTimer); sliderTimer=setTimeout(()=>applyMaterial(true),120); }
+    else if(lastApply){ clearTimeout(sliderTimer); sliderTimer=setTimeout(()=>{ applyMaterial(true); renderChannel(); },120); }
   });
 }
 let detectTimer=null;
 for(const id of ['hueLo','hueHi','sat','val']){
   $(id).addEventListener('input',()=>{
     $('sat-v').textContent=(+$('sat').value/100).toFixed(2); $('val-v').textContent=(+$('val').value/100).toFixed(2);
-    clearTimeout(detectTimer); detectTimer=setTimeout(()=>{ resetColors(); detectPink(); if(material.data){ lastApply=null; applyMaterial(false); } },130);
+    clearTimeout(detectTimer); detectTimer=setTimeout(()=>{ ensureBaseDisplay(); resetColors(); detectPink(); if(material.data){ lastApply=null; applyMaterial(false); } },130);
   });
 }
 // toggling facet split changes segmentation → rebuild from scratch
 $('facetsplit').addEventListener('change',()=>{ if(viewingCombined){ recombineLook(); return; } segData=null; if(scene&&material.data&&selCount>0) applyMaterial(false); });
+/* Detail (subdivide) — one control in Material look, targets the active channel (Cabinets/Worktops tab) or
+   the edit target in Combined. So the Cabinets tab edits cabinet detail, the Worktops tab worktop detail. */
+const amtLbl=amt=>Math.round(amt*amt)<=1?'off':(amt.toFixed(1)+'×');
+let detailTimer=null;
+function detailTarget(){ return viewingCombined?editTarget:active; }
+function syncDetailSlider(){ const k=detailTarget();
+  const de=$('detail'); if(de){ de.value=Math.round((chan[k].detail||1)*10); $('detail-v').textContent=amtLbl(chan[k].detail||1); }
+  const se=$('spread'); if(se){ se.value=Math.round((chan[k].spread||1.1)*100); $('spread-v').textContent=(chan[k].spread||1.1).toFixed(2); }
+  const ee=$('even'); if(ee){ const ev=chan[k].even||0; ee.value=Math.round(ev*100); $('even-v').textContent=ev===0?'off':Math.round(ev*100)+'%'; }
+  const ap=$('autoplane'); if(ap) ap.checked=(chan[k].autoplane!==false); }
+function detailLive(){ const k=detailTarget(); clearTimeout(detailTimer); detailTimer=setTimeout(()=>{
+  if((chan[k].detail||1)>1.2 && !chan[k].lastApply){ toast('Apply a '+(k==='cab'?'cabinet':'worktop')+' material first — subdivide needs one to sample',true); return; }
+  if(viewingCombined){ setEditTarget(k); showCombined(); } else { renderChannel(); }   // preview the subdivision right where you are
+},250); }
+$('detail').addEventListener('input',()=>{ const k=detailTarget(), amt=(parseInt($('detail').value)||10)/10; chan[k].detail=amt; $('detail-v').textContent=amtLbl(amt); detailLive(); });
+$('spread').addEventListener('input',()=>{ const k=detailTarget(), sp=(parseInt($('spread').value)||110)/100; chan[k].spread=sp; $('spread-v').textContent=sp.toFixed(2); detailLive(); });
+$('even').addEventListener('input',()=>{ const k=detailTarget(), ev=(parseInt($('even').value)||0)/100; chan[k].even=ev; $('even-v').textContent=ev===0?'off':Math.round(ev*100)+'%'; detailLive(); });
+$('autoplane').addEventListener('change',()=>{ const k=detailTarget(); chan[k].autoplane=$('autoplane').checked; detailLive(); });
 
 /* ---- file load / export ---- */
 async function loadFile(file){
@@ -1121,19 +1205,19 @@ function lblFor(id,v){ switch(id){
   default: return null; } }
 function writeSettings(o){ for(const id of SETTING_IDS){ if(!(id in o))continue; const e=$(id);
   if(e.type==='checkbox') e.checked=o[id]; else { e.value=o[id]; const l=$(id+'-v'),t=lblFor(id,o[id]); if(l&&t!=null)l.textContent=t; } } }
-function newChan(name,settings){ return {name,settings:Object.assign({},settings),scene:null,originalColors:null,selected:null,selCount:0,segData:null,lastApply:null,
+function newChan(name,settings){ return {name,settings:Object.assign({},settings),scene:null,originalColors:null,selected:null,selCount:0,segData:null,lastApply:null,detail:1,spread:1.1,even:0,autoplane:true,
   material:{img:null,data:null,w:0,h:0,name:'no material',meanLum:0.5}, orig:{grid:null,cell:0.08,name:'',scene:null}, sceneName:name,baseName:name}; }
 const chan={cab:newChan('Cabinets',presets.cab), wt:newChan('Worktops',presets.wt)};
-let active='cab', viewingCombined=false, editTarget='cab';
+let active='cab', viewingCombined=false, editTarget='cab', chPreview=false;
 const NO_MAT={img:null,data:null,w:0,h:0,name:'no material',meanLum:0.5};
 function clearChanMaterial(key){ const c=chan[key]; if(c.scene&&c.originalColors) c.scene.colors.set(c.originalColors); // back to raw mask colours
   c.material=Object.assign({},NO_MAT); c.matSel='none'; c.lastApply=null; c.segData=null; }
 /* "None" swatch in the Combined tab — drop a region's material, show it as the bare mask, re-merge */
-function combinedClearMat(key){ setEditTarget(key); if(!chan[key].scene) return; clearChanMaterial(key); try{renderGallery();}catch(e){} showCombined(); }
+function combinedClearMat(key){ setEditTarget(key); if(!chan[key].scene) return; clearChanMaterial(key); try{renderGallery();}catch(e){} showCombined(); scheduleCopySave(); }
 const LOOK_KEYS=['tilesize','texrot','grainvar','facetsplit','mosaic','contrast','shading','panocolor','keeplight','panoyaw','matchlight'];
-function setEditTarget(k){ editTarget=k; const e=$('edittarget'); if(e) e.textContent=(k==='cab'?'Cabinets':'Worktops'); }
+function setEditTarget(k){ editTarget=k; const e=$('edittarget'); if(e) e.textContent=(k==='cab'?'Cabinets':'Worktops'); try{ syncDetailSlider(); }catch(e){} }
 /* run fn() with globals pointing at chan[key] (out of combined view), then rebuild the combined kitchen */
-function withChannel(key,fn){ setEditTarget(key); viewingCombined=false; active=key; loadChanInto(chan[key]); try{ fn&&fn(); }catch(e){ console.error(e); } showCombined(); }
+function withChannel(key,fn){ setEditTarget(key); viewingCombined=false; active=key; loadChanInto(chan[key]); try{ fn&&fn(); }catch(e){ console.error(e); } showCombined(); scheduleCopySave(); }
 /* swap a region's material from the Combined tab — paints chan[key], then re-merges */
 async function combinedApplyMat(key,name){
   setEditTarget(key);
@@ -1154,6 +1238,7 @@ async function combinedApplyMat(key,name){
   scene=G.scene; originalColors=G.originalColors; selected=G.selected; selCount=G.selCount;
   segData=G.segData; lastApply=G.lastApply; material=G.material; orig=G.orig;
   showCombined();                                 // one rebuild + upload: old merge → new merge, no intermediate frame
+  scheduleCopySave();                             // keep the linked copy file in sync
 }
 /* live look tuning from the Combined tab — copy the look sliders onto editTarget, re-apply, re-merge */
 function recombineLook(){ const key=editTarget, c=chan[key]; if(!c||!c.scene) return;
@@ -1164,7 +1249,7 @@ function chanLoaded(key){ if(key===active&&!viewingCombined) return !!scene; ret
 function updateCombineBtns(){ const cab=chanLoaded('cab'), wt=chanLoaded('wt');   // mask loaded → can combine/export (materials optional)
   $('btn-combined').disabled=!(cab&&wt); $('btn-exp-cab').disabled=!cab; $('btn-exp-wt').disabled=!wt;
   const cs=$('chan-status'); if(cs) cs.textContent = (!viewingCombined&&scene)?(sceneName+' · '+scene.n.toLocaleString()+' splats'):(viewingCombined?cs.textContent:'mask not loaded'); }
-function saveActive(){ if(viewingCombined) return;   /* globals hold the merged scene in combined view — never write it back into a channel */
+function saveActive(){ if(viewingCombined||chPreview) return;   /* merged scene (combined) or densified preview (channel) — never write the display-only globals back into a channel */
   const c=chan[active];
   c.scene=scene;c.originalColors=originalColors;c.selected=selected;c.selCount=selCount;c.segData=segData;c.lastApply=lastApply;
   c.material=material;c.orig=orig;c.sceneName=sceneName;c.baseName=baseName;c.settings=readSettings(); }
@@ -1190,10 +1275,13 @@ function setTab(t){ for(const k of ['cab','wt','combined']) $('tab-'+k).classLis
 }
 function switchTab(to){
   if(!viewingCombined && to===active) return;
+  exitChannelPreview();
   if(!viewingCombined) saveActive(); viewingCombined=false;
   active=to; const c=chan[to]; $('chan-head').textContent=c.name;
   loadChanInto(c); setTab(to);
   try{ renderGallery(); }catch(e){}
+  try{ syncDetailSlider(); }catch(e){}
+  try{ renderChannel(); }catch(e){}
 }
 $('tab-cab').onclick=()=>switchTab('cab');
 $('tab-wt').onclick=()=>switchTab('wt');
@@ -1208,6 +1296,8 @@ function buildCombined(){
   if(same){ const ap=A.scene.positions,bp2=B.scene.positions,step=Math.max(1,(A.scene.n/2000)|0); let d=0,ns=0;
     for(let i=0;i<A.scene.n;i+=step){ d+=Math.abs(ap[i*3]-bp2[i*3])+Math.abs(ap[i*3+1]-bp2[i*3+1])+Math.abs(ap[i*3+2]-bp2[i*3+2]); ns++; } same=(d/ns)<0.1; }
   if(same){
+    const kc=detailFactor('cab'), kw=detailFactor('wt');
+    if(kc>1||kw>1) return buildCombinedDetailed(A,B,kc,kw);   // subdivide painted splats for extra material detail
     const n=A.scene.n, oc=A.originalColors, asel=A.selected, bsel0=B.selected, ac=A.scene.colors, bc=B.scene.colors;
     const out={n,shDegree:0,flags:A.scene.flags|0,positions:A.scene.positions,colors:new Float32Array(n*3),scalesLog:A.scene.scalesLog,quats:A.scene.quats,alphasU8:A.scene.alphasU8,shBytes:null};
     for(let i=0;i<n;i++){ let s,si=i*3;
@@ -1232,13 +1322,140 @@ function buildCombined(){
   for(let i=0;i<B.scene.n;i++) if(bsel&&bsel[i]) cp(B.scene,i);
   return out;
 }
+/* Detail level for a channel (1 = off). Only when a material is applied, segData has the stored
+   light factors, and mosaic is off (mosaic's per-tile rotation isn't reproduced per child). */
+function detailFactor(key){ const c=chan[key]; if(!c||!c.scene) return 1;
+  const d=parseFloat(c.detail||1)||1, sd=c.segData;          // d = floating subdivide amount (1–4)
+  if(Math.round(d*d)<=1) return 1;                            // rounds to ≤1 child → no subdivision
+  return (c.lastApply && sd && sd._lf && sd._matD && sd._mcell===0) ? d : 1; }
+/* in-plane gaussian sigma of splat i along facet axes fU,fV (how big its footprint is on the surface) */
+function sigUV(scn,i,fU,fV){
+  const q=scn.quats, sl=scn.scalesLog, qw=q[i*4],qx=q[i*4+1],qy=q[i*4+2],qz=q[i*4+3];
+  const e0x=1-2*(qy*qy+qz*qz),e0y=2*(qx*qy+qw*qz),e0z=2*(qx*qz-qw*qy);
+  const e1x=2*(qx*qy-qw*qz),e1y=1-2*(qx*qx+qz*qz),e1z=2*(qy*qz+qw*qx);
+  const e2x=2*(qx*qz+qw*qy),e2y=2*(qy*qz-qw*qx),e2z=1-2*(qx*qx+qy*qy);
+  const s0=Math.exp(sl[i*3]),s1=Math.exp(sl[i*3+1]),s2=Math.exp(sl[i*3+2]);
+  const du0=e0x*fU[0]+e0y*fU[1]+e0z*fU[2], du1=e1x*fU[0]+e1y*fU[1]+e1z*fU[2], du2=e2x*fU[0]+e2y*fU[1]+e2z*fU[2];
+  const dv0=e0x*fV[0]+e0y*fV[1]+e0z*fV[2], dv1=e1x*fV[0]+e1y*fV[1]+e1z*fV[2], dv2=e2x*fV[0]+e2y*fV[1]+e2z*fV[2];
+  return [Math.max(Math.sqrt(s0*s0*du0*du0+s1*s1*du1*du1+s2*s2*du2*du2),1e-4), Math.max(Math.sqrt(s0*s0*dv0*dv0+s1*s1*dv1*dv1+s2*s2*dv2*dv2),1e-4)];
+}
+/* mean in-plane footprint over a channel's painted splats — the target spacing for the evenness blend */
+function meanSigOf(c){ const sd=c.segData, ix=sd.idxs; let su=0,sv=0;
+  for(let k=0;k<ix.length;k++){ const f=sd.fits[sd.comp[k]], s=sigUV(c.scene,ix[k],f.U,f.V); su+=s[0];sv+=s[1]; }
+  const m=ix.length||1; return [su/m,sv/m]; }
+/* Same-cloud merge but each painted splat is split into k×k children, each sampling the material at
+   its own offset → real added resolution. Cabinets and worktops can each have their own k. */
+function buildCombinedDetailed(A,B,kc,kw){
+  const n=A.scene.n, oc=A.originalColors, asel=A.selected, bsel0=B.selected;
+  const ncC=Math.max(1,Math.round(kc*kc)), ncW=Math.max(1,Math.round(kw*kw));   // children per painted splat (amount²)
+  const spC=A.spread||1.1, spW=B.spread||1.1;                                    // how far the children fan out
+  const evC=A.even||0, evW=B.even||0;                                            // 0 = parent-relative spacing, 1 = uniform
+  const msC=(kc>1&&evC>0)?meanSigOf(A):null, msW=(kw>1&&evW>0)?meanSigOf(B):null;
+  let N=0; for(let i=0;i<n;i++){ if(asel&&asel[i]) N+=(kc>1?ncC:1); else if(bsel0&&bsel0[i]) N+=(kw>1?ncW:1); else N++; }
+  const out={n:N,shDegree:0,flags:A.scene.flags|0,positions:new Float32Array(N*3),colors:new Float32Array(N*3),scalesLog:new Float32Array(N*3),quats:new Float32Array(N*4),alphasU8:new Uint8Array(N),shBytes:null};
+  const mk=c=>{ const inv=new Int32Array(n).fill(-1), ix=c.segData.idxs; for(let k=0;k<ix.length;k++) inv[ix[k]]=k; return inv; };
+  const invA=kc>1?mk(A):null, invB=kw>1?mk(B):null;
+  let w=0;
+  const copyParent=(scn,i,srcColors)=>{ const cw=w*3;
+    out.positions[cw]=scn.positions[i*3];out.positions[cw+1]=scn.positions[i*3+1];out.positions[cw+2]=scn.positions[i*3+2];
+    out.colors[cw]=srcColors[i*3];out.colors[cw+1]=srcColors[i*3+1];out.colors[cw+2]=srcColors[i*3+2];
+    out.scalesLog[cw]=scn.scalesLog[i*3];out.scalesLog[cw+1]=scn.scalesLog[i*3+1];out.scalesLog[cw+2]=scn.scalesLog[i*3+2];
+    out.quats[w*4]=scn.quats[i*4];out.quats[w*4+1]=scn.quats[i*4+1];out.quats[w*4+2]=scn.quats[i*4+2];out.quats[w*4+3]=scn.quats[i*4+3];
+    out.alphasU8[w]=scn.alphasU8[i]; w++; };
+  const childrenOf=(c,inv,i,nChildren,spreadF,autoplane,even,meanSig)=>{   // autoplane → flatten horizontal facets (surfaces) to world-H, keep vertical facets on their face; even→uniform spacing
+    const ki=inv[i]; if(ki<0){ copyParent(c.scene,i,c.scene.colors); return; }
+    const sd=c.segData, f=sd.fits[sd.comp[ki]], ca=sd._ca[sd.comp[ki]], sa=sd._sa[sd.comp[ki]];
+    const lfm=sd._lf[ki*3], lfg=sd._lf[ki*3+1], lfb=sd._lf[ki*3+2];
+    const tile=sd._tile, contrast=sd._contrast, D=sd._matD, W=sd._matW, H=sd._matH;
+    const p=c.scene.positions, sl=c.scene.scalesLog, q=c.scene.quats, al=c.scene.alphasU8;
+    const px=p[i*3],py=p[i*3+1],pz=p[i*3+2], a=px-f.c[0],b=py-f.c[1],cc=pz-f.c[2];
+    const su=a*f.U[0]+b*f.U[1]+cc*f.U[2], sv=a*f.V[0]+b*f.V[1]+cc*f.V[2];
+    const qw=q[i*4],qx=q[i*4+1],qy=q[i*4+2],qz=q[i*4+3];
+    const sg=sigUV(c.scene,i,f.U,f.V); let sigU=sg[0], sigV=sg[1];
+    if(even>0&&meanSig){ sigU+=even*(meanSig[0]-sigU); sigV+=even*(meanSig[1]-sigV); }   // pull toward the region's mean → even spacing
+    const side=Math.max(1,Math.ceil(Math.sqrt(nChildren)));
+    const lnk=0.5*Math.log(nChildren), nsl0=sl[i*3]-lnk,nsl1=sl[i*3+1]-lnk,nsl2=sl[i*3+2]-lnk, alpha=al[i];
+    for(let idx=0;idx<nChildren;idx++){ const gi=idx%side, gj=(idx/side)|0;
+      const offU=((gi-(side-1)*0.5)/side)*(2*sigU*spreadF), offV=((gj-(side-1)*0.5)/side)*(2*sigV*spreadF);
+      const csu=su+offU, csv=sv+offV, cru=csu*ca-csv*sa, crv=csu*sa+csv*ca;
+      const col=sampleBilinear(D,W,H,cru/tile,crv/tile), cw=w*3;
+      out.colors[cw]=clamp(((col[0]-0.5)*contrast+0.5)*lfm,0,1);
+      out.colors[cw+1]=clamp(((col[1]-0.5)*contrast+0.5)*lfg,0,1);
+      out.colors[cw+2]=clamp(((col[2]-0.5)*contrast+0.5)*lfb,0,1);
+      let ox=f.U[0]*offU+f.V[0]*offV, oy=f.U[1]*offU+f.V[1]*offV, oz=f.U[2]*offU+f.V[2]*offV;
+      if(autoplane && Math.abs(f.N[1])>0.5) oy=0;   // horizontal facet (surface) → keep the subdivision flat; vertical facets spread on their face
+      out.positions[cw]=px+ox; out.positions[cw+1]=py+oy; out.positions[cw+2]=pz+oz;
+      out.scalesLog[cw]=nsl0; out.scalesLog[cw+1]=nsl1; out.scalesLog[cw+2]=nsl2;
+      out.quats[w*4]=qw; out.quats[w*4+1]=qx; out.quats[w*4+2]=qy; out.quats[w*4+3]=qz; out.alphasU8[w]=alpha; w++;
+    }
+  };
+  for(let i=0;i<n;i++){
+    if(asel&&asel[i]){ if(kc>1) childrenOf(A,invA,i,ncC,spC,A.autoplane!==false,evC,msC); else copyParent(A.scene,i,A.scene.colors); }
+    else if(bsel0&&bsel0[i]){ if(kw>1) childrenOf(B,invB,i,ncW,spW,B.autoplane!==false,evW,msW); else copyParent(B.scene,i,B.scene.colors); }
+    else copyParent(A.scene,i,oc);
+  }
+  return out;
+}
+/* densified version of ONE channel's scene (painted region subdivided, rest copied) — for the live
+   preview shown on the Cabinets/Worktops tab. Display only; chan[key].scene stays the base. */
+function buildChannelDetailed(key){
+  const c=chan[key], scn=c.scene, sel=c.selected, sd=c.segData, n=scn.n;
+  const amt=parseFloat(c.detail||1)||1, nc=Math.max(1,Math.round(amt*amt));
+  const spreadF=c.spread||1.1, even=c.even||0, autoplane=(c.autoplane!==false), meanSig=even>0?meanSigOf(c):null;
+  let N=0; for(let i=0;i<n;i++) N+=(sel&&sel[i])?nc:1;
+  const out={n:N,shDegree:0,flags:scn.flags|0,positions:new Float32Array(N*3),colors:new Float32Array(N*3),scalesLog:new Float32Array(N*3),quats:new Float32Array(N*4),alphasU8:new Uint8Array(N),shBytes:null};
+  const inv=new Int32Array(n).fill(-1), ix=sd.idxs; for(let k=0;k<ix.length;k++) inv[ix[k]]=k;
+  const p=scn.positions, sl=scn.scalesLog, q=scn.quats, al=scn.alphasU8, sc=scn.colors;
+  const D=sd._matD,W=sd._matW,H=sd._matH,tile=sd._tile,contrast=sd._contrast;
+  let w=0;
+  const copy=i=>{ const cw=w*3; out.positions[cw]=p[i*3];out.positions[cw+1]=p[i*3+1];out.positions[cw+2]=p[i*3+2];
+    out.colors[cw]=sc[i*3];out.colors[cw+1]=sc[i*3+1];out.colors[cw+2]=sc[i*3+2];
+    out.scalesLog[cw]=sl[i*3];out.scalesLog[cw+1]=sl[i*3+1];out.scalesLog[cw+2]=sl[i*3+2];
+    out.quats[w*4]=q[i*4];out.quats[w*4+1]=q[i*4+1];out.quats[w*4+2]=q[i*4+2];out.quats[w*4+3]=q[i*4+3]; out.alphasU8[w]=al[i]; w++; };
+  for(let i=0;i<n;i++){
+    if(!(sel&&sel[i])){ copy(i); continue; }
+    const ki=inv[i]; if(ki<0){ copy(i); continue; }
+    const f=sd.fits[sd.comp[ki]], ca=sd._ca[sd.comp[ki]], sa=sd._sa[sd.comp[ki]];
+    const lfm=sd._lf[ki*3],lfg=sd._lf[ki*3+1],lfb=sd._lf[ki*3+2];
+    const px=p[i*3],py=p[i*3+1],pz=p[i*3+2], a=px-f.c[0],b=py-f.c[1],cc=pz-f.c[2];
+    const su=a*f.U[0]+b*f.U[1]+cc*f.U[2], sv=a*f.V[0]+b*f.V[1]+cc*f.V[2];
+    const sg=sigUV(scn,i,f.U,f.V); let sigU=sg[0],sigV=sg[1];
+    if(even>0&&meanSig){ sigU+=even*(meanSig[0]-sigU); sigV+=even*(meanSig[1]-sigV); }
+    const qw=q[i*4],qx=q[i*4+1],qy=q[i*4+2],qz=q[i*4+3];
+    const side=Math.max(1,Math.ceil(Math.sqrt(nc))), lnk=0.5*Math.log(nc), nsl0=sl[i*3]-lnk,nsl1=sl[i*3+1]-lnk,nsl2=sl[i*3+2]-lnk, alpha=al[i];
+    for(let idx=0;idx<nc;idx++){ const gi=idx%side, gj=(idx/side)|0;
+      const offU=((gi-(side-1)*0.5)/side)*(2*sigU*spreadF), offV=((gj-(side-1)*0.5)/side)*(2*sigV*spreadF);
+      const csu=su+offU, csv=sv+offV, cru=csu*ca-csv*sa, crv=csu*sa+csv*ca;
+      const col=sampleBilinear(D,W,H,cru/tile,crv/tile), cw=w*3;
+      out.colors[cw]=clamp(((col[0]-0.5)*contrast+0.5)*lfm,0,1); out.colors[cw+1]=clamp(((col[1]-0.5)*contrast+0.5)*lfg,0,1); out.colors[cw+2]=clamp(((col[2]-0.5)*contrast+0.5)*lfb,0,1);
+      let ox=f.U[0]*offU+f.V[0]*offV, oy=f.U[1]*offU+f.V[1]*offV, oz=f.U[2]*offU+f.V[2]*offV; if(autoplane && Math.abs(f.N[1])>0.5) oy=0;
+      out.positions[cw]=px+ox; out.positions[cw+1]=py+oy; out.positions[cw+2]=pz+oz;
+      out.scalesLog[cw]=nsl0;out.scalesLog[cw+1]=nsl1;out.scalesLog[cw+2]=nsl2;
+      out.quats[w*4]=qw;out.quats[w*4+1]=qx;out.quats[w*4+2]=qy;out.quats[w*4+3]=qz; out.alphasU8[w]=alpha; w++;
+    }
+  }
+  return out;
+}
+function channelWantsPreview(){ if(viewingCombined) return false; const c=chan[active], amt=parseFloat((c&&c.detail)||1)||1;
+  return !!(c&&c.scene&&c.lastApply&&Math.round(amt*amt)>1&&c.segData&&c.segData._lf&&c.segData._matD&&c.segData._mcell===0); }
+function exitChannelPreview(){ if(chPreview){ chPreview=false; const c=chan[active]; if(c&&c.selected) selected=c.selected; } }  // restore base selection ref before any save
+function renderChannel(){   // refresh the channel-tab display: densified preview when wanted, else base
+  if(viewingCombined) return;
+  if(channelWantsPreview()){ const Dp=buildChannelDetailed(active); chPreview=true; buildGPUData(Dp); colorDirty=false; selDirty=false; $('stat-pts').textContent=Dp.n.toLocaleString(); }
+  else if(chPreview){ chPreview=false; buildGPUData(); const c=chan[active]; if(c&&c.selected){ selected=c.selected; selDirty=true; } $('stat-pts').textContent=scene?scene.n.toLocaleString():'–'; }
+}
+function ensureBaseDisplay(){   // before a base edit (detect) that needs the base-sized texData + real selection
+  if(chPreview){ chPreview=false; buildGPUData(); const c=chan[active]; if(c&&c.selected){ selected=c.selected; selDirty=true; } }
+}
 function showCombined(){
+  exitChannelPreview();
   if(!viewingCombined) saveActive();
   const out=buildCombined(); if(!out){ setTab(active); return; }
   viewingCombined=true; scene=out; originalColors=out.colors.slice(); selected=new Uint8Array(out.n); selCount=0; segData=null; lastApply=null;
   buildGPUData(); $('dropzone').classList.add('hidden'); $('stat-pts').textContent=out.n.toLocaleString(); $('stat-sel').textContent='—';
   setTab('combined'); $('chan-head').textContent='Combined kitchen'; $('chan-status').textContent='Combined view · '+out.n.toLocaleString()+' splats (read-only)';
   try{ renderGallery(); }catch(e){}
+  try{ syncDetailSlider(); }catch(e){}
   toast('Combined view — '+out.n.toLocaleString()+' splats');
 }
 $('tab-combined').onclick=showCombined;
@@ -1248,6 +1465,91 @@ async function exportChan(key){ if(key===active) saveActive(); const c=chan[key]
   try{ toast('Encoding '+c.name+'…'); const blob=await gzip(encodeSPZ(c.scene)); download(blob,c.name.toLowerCase()+'-restyled.spz'); toast('Saved '+c.name.toLowerCase()+'-restyled.spz ('+(blob.size/1048576).toFixed(1)+' MB)'); }catch(e){ console.error(e); toast('Export failed: '+e.message,true);} }
 $('btn-exp-cab').onclick=()=>exportChan('cab');
 $('btn-exp-wt').onclick=()=>exportChan('wt');
+
+/* ===== live "copy splat": pick a file once, then auto-save the combined kitchen on every material change ===== */
+let copyHandle=null, copySaveTimer=null, copySaving=false, copyDirty=false;
+let autoCopyOn=true, storedHandle=null, reconnectArmed=false;   // autoCopyOn persists in localStorage; storedHandle persists in IndexedDB
+const acStatus=t=>{ const e=$('autocopy-status'); if(e) e.textContent=t; };
+// Bake the global Lighting & view (exposure × light tint) into a freshly-built export scene, so the
+// live copy Unity loads matches what you see here. The on-screen WebGL view already multiplies by these
+// uniforms at draw time, so we only ever bake into the export 'out' (never the channel scenes) — no double-apply.
+function bakeViewLighting(out){
+  if(!out||!out.colors) return out;
+  const ex=parseInt($('exposure').value)/100, lt=lightTintRGB;
+  if(ex===1 && lt[0]===1 && lt[1]===1 && lt[2]===1) return out;   // neutral → nothing to bake
+  const c=out.colors, n=c.length/3;
+  for(let i=0;i<n;i++){ c[i*3]=clamp(c[i*3]*ex*lt[0],0,1); c[i*3+1]=clamp(c[i*3+1]*ex*lt[1],0,1); c[i*3+2]=clamp(c[i*3+2]*ex*lt[2],0,1); }
+  return out;
+}
+async function saveCopyNow(){
+  if(!copyHandle) return;
+  if(copySaving){ copyDirty=true; return; }   // a save is mid-flight — mark dirty so we save the latest right after
+  copySaving=true; copyDirty=false;
+  try{ const out=buildCombined(); if(!out) return;
+    bakeViewLighting(out);                       // bake exposure × tint in — Unity has no exposure control, so it must live in the data
+    acStatus('saving → '+copyHandle.name+' …');
+    const blob=await gzip(encodeSPZ(out));
+    const w=await copyHandle.createWritable(); await w.write(blob); await w.close();
+    acStatus('✓ saved '+(blob.size/1048576).toFixed(1)+' MB → '+copyHandle.name);
+  }catch(e){ console.error(e); acStatus('⚠ save failed → '+copyHandle.name+': '+e.message); }
+  finally{ copySaving=false; if(copyDirty){ copyDirty=false; scheduleCopySave(); } }   // a change arrived during the save → save again
+}
+function scheduleCopySave(){ if(!autoCopyOn||!copyHandle) return; clearTimeout(copySaveTimer); acStatus('● '+copyHandle.name+' — saving on change…'); copySaveTimer=setTimeout(saveCopyNow,700); }
+function updateAcUI(){ const b=$('btn-autocopy-loc'); if(b) b.textContent = copyHandle ? ('Change location ('+copyHandle.name+')…') : 'Choose file…'; }
+
+// ---- persist the picked file handle across reloads (IndexedDB) so auto-save resumes without re-picking ----
+function idbHandle(mode,val){ return new Promise((res,rej)=>{ const o=indexedDB.open('splatEditor',1);
+  o.onupgradeneeded=()=>{ if(!o.result.objectStoreNames.contains('kv')) o.result.createObjectStore('kv'); };
+  o.onerror=()=>rej(o.error);
+  o.onsuccess=()=>{ try{ const db=o.result, tx=db.transaction('kv',mode==='get'?'readonly':'readwrite'), st=tx.objectStore('kv');
+    const rq = mode==='get' ? st.get('copyHandle') : st.put(val,'copyHandle');
+    rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error); }catch(e){ rej(e); } }; }); }
+async function ensureRW(handle,request){ if(!handle) return false; const opts={mode:'readwrite'};
+  try{ if((await handle.queryPermission(opts))==='granted') return true;
+       if(request && (await handle.requestPermission(opts))==='granted') return true; }catch(e){}
+  return false; }
+
+// After a reload the browser needs ONE user gesture to re-grant write permission. Arm the next click
+// anywhere to silently reconnect, so the user never has to hunt for a button.
+function armReconnectOnGesture(){ if(reconnectArmed||!storedHandle) return; reconnectArmed=true;
+  const h=async()=>{ if(!autoCopyOn||copyHandle||!storedHandle){ cleanup(); return; }
+    if(await ensureRW(storedHandle,true)){ copyHandle=storedHandle; cleanup(); updateAcUI(); acStatus('● linked → '+copyHandle.name+' — saves on next change'); } };   // don't write now: would clobber the good file with default state
+  const cleanup=()=>{ window.removeEventListener('pointerdown',h,true); reconnectArmed=false; };
+  window.addEventListener('pointerdown',h,true); }
+
+async function pickCopyLocation(){
+  if(!window.showSaveFilePicker){ toast('This browser can’t auto-save to a file — use Chrome or Edge (or the Download button).',true); return; }
+  try{
+    const h=await window.showSaveFilePicker({suggestedName:'kitchen-copy.spz',types:[{description:'SPZ splat',accept:{'application/octet-stream':['.spz']}}]});
+    storedHandle=h; copyHandle=h; try{ await idbHandle('put',h); }catch(e){}
+    autoCopyOn=true; $('autocopy-on').checked=true; localStorage.setItem('autoCopyOn','1');
+    updateAcUI(); acStatus('● auto-saving → '+h.name); await saveCopyNow();
+    toast('Linked — saves to '+h.name+' on every change');
+  }catch(e){ if(e.name!=='AbortError'){ console.error(e); toast('Could not link file: '+e.message,true);} }
+}
+$('btn-autocopy-loc').onclick=pickCopyLocation;
+
+$('autocopy-on').addEventListener('change',async()=>{
+  autoCopyOn=$('autocopy-on').checked; localStorage.setItem('autoCopyOn',autoCopyOn?'1':'0');
+  if(!autoCopyOn){ clearTimeout(copySaveTimer); acStatus('off — auto-save paused'); return; }
+  if(!copyHandle && storedHandle && await ensureRW(storedHandle,true)) copyHandle=storedHandle;   // toggle is a user gesture → can re-grant
+  if(copyHandle){ updateAcUI(); acStatus('● linked → '+copyHandle.name+' — saves on next change'); }
+  else { acStatus(storedHandle?'⏸ click anywhere (or "Change location") to reconnect '+storedHandle.name:'auto-save on — click "Choose file…" to pick the file'); armReconnectOnGesture(); }
+});
+
+async function initAutoCopy(){
+  autoCopyOn = localStorage.getItem('autoCopyOn')!=='0';   // default ON
+  $('autocopy-on').checked = autoCopyOn;
+  try{ storedHandle = await idbHandle('get') || null; }catch(e){ storedHandle=null; }
+  if(storedHandle && autoCopyOn && await ensureRW(storedHandle,false)){   // permission survived → resume silently (no write yet — wait for a real edit)
+    copyHandle=storedHandle; updateAcUI(); acStatus('● linked → '+copyHandle.name+' — saves on next change');
+  } else if(storedHandle && autoCopyOn){                                  // have a file, need one click to re-grant
+    updateAcUI(); acStatus('⏸ click anywhere to reconnect '+storedHandle.name+' (browser needs one click)'); armReconnectOnGesture();
+  } else {
+    updateAcUI(); acStatus(autoCopyOn?'auto-save on — click "Choose file…" to pick the Unity file':'off — auto-save paused');
+  }
+}
+initAutoCopy();
 
 /* ===== similarity registration: align source cloud onto the cabinets (target) ===== */
 function subPos(pos,n){ const N=pos.length/3, step=Math.max(1,(N/n)|0), o=[]; for(let i=0;i<N;i+=step) o.push(pos[i*3],pos[i*3+1],pos[i*3+2]); return new Float64Array(o); }
