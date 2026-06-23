@@ -1,0 +1,42 @@
+{
+  "category": "Kitchens",
+  "image": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\SENSO_494\\hero.webp",
+  "name": "SENSO 494",
+  "description": "Pure lightness: refreshing jade. Ceiling-high cupboards and a kitchen completely in jade with all-round terrazzo elements form the foundation of this refreshingly new design. Highlight: continuous recessed grip handles throughout.",
+  "product": {
+    "brand": "Nobilia",
+    "name": "SENSO 494",
+    "color": "Jade",
+    "productType": "kitchen",
+    "headline": "Pure lightness: Jade refreshes.",
+    "description": "Pure lightness: refreshing jade. Ceiling-high cupboards and a kitchen completely in jade with all-round terrazzo elements form the foundation of this refreshingly new design. Highlight: continuous recessed grip handles throughout.",
+    "priceLabel": "Price on request",
+    "productPageUrl": "https://www.nobilia.de/en/products/kitchens/modern-kitchens/senso-494/",
+    "front": "Front 494, Premium honed jade",
+    "carcase": "Carcase colour 106, White",
+    "worktop": "Worktop 322, White Terrazzo reproduction",
+    "handle": "Recessed handle LINE N, Yellow gold-coloured (024)",
+    "frontImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\SENSO_494\\elements\\front.webp",
+    "carcaseImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\SENSO_494\\elements\\carcase.webp",
+    "worktopImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\SENSO_494\\elements\\worktop.webp",
+    "handleImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\SENSO_494\\elements\\handle.webp",
+    "heroImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\SENSO_494\\hero.webp",
+    "additionalImages": [
+      "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\SENSO_494\\gallery\\g1.webp",
+      "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\SENSO_494\\gallery\\g2.webp",
+      "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\SENSO_494\\gallery\\g3.webp",
+      "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\SENSO_494\\gallery\\g4.webp"
+    ],
+    "beforeImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\SENSO_494\\xr\\before.webp",
+    "afterImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\SENSO_494\\xr\\after.webp",
+    "flag": "Jade fronts with a white terrazzo worktop and gold recessed grips - a fresh, spa-like palette that photographs beautifully.",
+    "reviews": [
+      { "rating": 5, "author": "Mette", "country": "Denmark", "date": "16 May 2026", "body": "The jade is calm and luxurious, and the gold recessed handles are a lovely detail. Terrazzo worktop ties it together." },
+      { "rating": 5, "author": "Julien", "country": "France", "date": "28 Apr 2026", "body": "Exactly the refreshing look we wanted. Floor-to-ceiling units make the small kitchen feel huge." },
+      { "rating": 4, "author": "Petra", "country": "Austria", "date": "11 Mar 2026", "body": "Beautiful colour and finish. Knocked a star off only because the gold trim shows smudges." }
+    ],
+    "reviewScore": 4.7,
+    "reviewStars": 4.5,
+    "reviewCount": 3
+  }
+}

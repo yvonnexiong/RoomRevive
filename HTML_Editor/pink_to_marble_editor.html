@@ -108,6 +108,18 @@ summary.dsum:hover{color:var(--text)}
   <div id="viewwrap">
     <canvas id="gl"></canvas>
     <div id="loadsplash"><div id="loadsplash-msg">Auto-loading kitchen…</div><div class="bar"><i id="loadsplash-bar"></i></div></div>
+    <div id="startchooser" style="position:absolute;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(12,13,16,0.97)">
+      <div style="max-width:440px;width:82%;background:#16181d;border:1px solid #333;border-radius:12px;padding:22px;box-shadow:0 12px 40px rgba(0,0,0,.5)">
+        <h1 style="margin:0 0 4px;font-size:18px">Choose a splat to open</h1>
+        <p style="color:#9aa3ad;font-size:12px;margin:0 0 12px">Pick a file from <code>./Splats/</code>, browse your computer, or load the default kitchen.</p>
+        <div id="chooser-list" style="max-height:40vh;overflow:auto">scanning…</div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button id="chooser-browse" style="flex:1">Browse…</button>
+          <button id="chooser-default" class="primary" style="flex:1">Default kitchen</button>
+        </div>
+        <input type="file" id="chooser-fileinput" accept=".spz" style="display:none">
+      </div>
+    </div>
     <div id="hint">drag orbit · <kbd>shift</kbd>/right-drag pan · scroll zoom · double-click set pivot</div>
     <div id="dropzone">
       <div id="dropcard">
@@ -191,13 +203,14 @@ summary.dsum:hover{color:var(--text)}
 
     <div class="sec">
       <h2><span class="ic">🎚️</span>Material look</h2>
-      <div class="btnrow" style="margin-bottom:6px">
-        <button id="btn-cabinet">Load Cabinet preset</button>
-        <button id="btn-counter">Load Worktop preset</button>
+      <div class="row" style="gap:6px;margin-bottom:6px">
+        <select id="preset-select" style="flex:1;min-width:0"></select>
+        <button id="btn-preset-load" style="flex:none">Load</button>
       </div>
       <div class="btnrow" style="margin-bottom:10px">
-        <button id="btn-save-cab" class="ghost">💾 Save → Cabinet</button>
-        <button id="btn-save-wt" class="ghost">💾 Save → Worktop</button>
+        <button id="btn-preset-saveas" class="ghost">💾 Save as new…</button>
+        <button id="btn-preset-update" class="ghost">Update</button>
+        <button id="btn-preset-del" class="ghost">Delete</button>
       </div>
       <div class="row"><label>Tile size</label>
         <input type="range" id="tilesize" min="10" max="400" value="63"><span class="val" id="tilesize-v">0.63 m</span></div>
@@ -259,6 +272,19 @@ summary.dsum:hover{color:var(--text)}
       <div class="row"><label>Z max</label><input type="range" id="cropzmax" min="-10" max="10" step="0.001" value="10"><span class="val" id="cropzmax-v">–</span></div>
       <button id="btn-cropfit" style="width:100%;margin-top:6px">Reset box to full splat</button>
       <p class="note" style="margin-top:6px">Hides splats whose centre is outside the box, in this viewer only — the exported / live Unity copy keeps every splat.</p>
+    </div>
+
+    <div class="sec">
+      <h2><span class="ic">🧹</span>Floaters</h2>
+      <div class="row"><label class="check"><input type="checkbox" id="floater-on"> Hide floaters (isolated splats)</label></div>
+      <div class="row"><label>Density cutoff</label><input type="range" id="floater-dens" min="1" max="60" step="1" value="15"><span class="val" id="floater-dens-v">15</span></div>
+      <p class="note" style="margin-top:6px">Removes splats whose 3×3×3 voxel neighbourhood (6&nbsp;cm cells) holds fewer than this many splats — the airborne “snow”. Affects the Combined view, the export, and the live Unity copy.</p>
+    </div>
+
+    <div class="sec">
+      <h2><span class="ic">🎨</span>Quick combos <span style="font-weight:400;color:var(--muted);font-size:11px">test</span></h2>
+      <div id="combo-btns" style="display:flex;flex-direction:column;gap:6px"></div>
+      <p class="note" style="margin-top:6px">One click applies a cabinet + worktop pair, then auto-saves to the linked Unity file.</p>
     </div>
 
     <div class="sec" style="border-bottom:0;margin-top:auto" data-vis="comb">
@@ -1037,6 +1063,19 @@ const PRESET_DEFAULTS={
 };
 function loadPreset(key){ try{ const s=localStorage.getItem('pm_preset_'+key); if(s) return Object.assign({},PRESET_DEFAULTS[key],JSON.parse(s)); }catch(e){} return Object.assign({},PRESET_DEFAULTS[key]); }
 const presets={ cab:loadPreset('cab'), wt:loadPreset('wt') };
+
+/* ---- named multi-presets per channel (persisted). Each entry is the Material-look + mask settings
+   plus the subdivide params (_detail/_spread/_even/_autoplane) so the whole look is captured. ---- */
+const NAMED_SEED={
+  cab:{ 'Default': Object.assign({}, PRESET_DEFAULTS.cab) },
+  wt :{ 'Default': Object.assign({}, PRESET_DEFAULTS.wt),
+        // captured from the current Worktops look (the screenshot)
+        'Saved worktop look': {hueLo:'304',hueHi:'352',sat:'14',val:'20',tilesize:'295',texrot:'0',grainvar:'11',facetsplit:true,mosaic:'0',contrast:'72',shading:'58',panocolor:'13',keeplight:'129',matchlight:'100',_detail:3.1,_spread:2.36,_even:0.45,_autoplane:true} }
+};
+function loadNamed(key){ try{ const s=localStorage.getItem('pm_named_'+key); if(s){ const o=JSON.parse(s); if(o&&typeof o==='object'&&Object.keys(o).length) return o; } }catch(e){}
+  return JSON.parse(JSON.stringify(NAMED_SEED[key])); }
+function persistNamed(key){ try{ localStorage.setItem('pm_named_'+key, JSON.stringify(namedPresets[key])); }catch(e){} }
+const namedPresets={ cab:loadNamed('cab'), wt:loadNamed('wt') };
 function resetColors(){ if(!scene)return; scene.colors.set(originalColors);
   for(let i=0;i<scene.n;i++){ const row=i>>10,col=(i&1023)<<1; texData[(row*2048+col)*4+3]=colorWord(i); } colorDirty=true; }
 function applyPreset(key){
@@ -1059,10 +1098,44 @@ function presetInCtx(key){
     toast((key==='cab'?'Cabinet':'Worktop')+' preset applied'); }
   else applyPreset(key);
 }
-$('btn-cabinet').onclick=()=>presetInCtx('cab');
-$('btn-counter').onclick=()=>presetInCtx('wt');
-$('btn-save-cab').onclick=()=>savePreset('cab');
-$('btn-save-wt').onclick=()=>savePreset('wt');
+// named presets operate on whichever channel is being adjusted (the cab/wt tab, or editTarget in Combined)
+function presetTarget(){ return detailTarget(); }
+function capturePreset(key){
+  let s;
+  if(viewingCombined){ s=Object.assign({}, chan[key].settings); const p=readSettings(); for(const k of LOOK_KEYS) s[k]=p[k]; }
+  else if(key===active){ s=readSettings(); }
+  else s=Object.assign({}, chan[key].settings);
+  const c=chan[key];                                  // include subdivide so the full look is captured
+  s._detail=c.detail||1; s._spread=c.spread||1.1; s._even=c.even||0; s._autoplane=(c.autoplane!==false);
+  return s;
+}
+function applyNamed(key,name){
+  const p=namedPresets[key] && namedPresets[key][name]; if(!p){ toast('Preset not found',true); return; }
+  const c=chan[key];                                  // restore subdivide first so the re-render densifies with it
+  if('_detail' in p) c.detail=p._detail; if('_spread' in p) c.spread=p._spread;
+  if('_even' in p) c.even=p._even; if('_autoplane' in p) c.autoplane=(p._autoplane!==false);
+  const look={}; for(const k in p) if(k[0]!=='_') look[k]=p[k];
+  presets[key]=Object.assign({}, PRESET_DEFAULTS[key], look);
+  presetInCtx(key);
+  try{ syncDetailSlider(); }catch(e){}
+  toast('Loaded preset “'+name+'”');
+}
+function refreshPresetSelect(){ const sel=$('preset-select'); if(!sel) return;
+  const key=presetTarget(), store=namedPresets[key]||{}, prev=sel.value;
+  sel.innerHTML='';
+  for(const name of Object.keys(store)){ const o=document.createElement('option'); o.value=name; o.textContent=(key==='cab'?'🗄 ':'▦ ')+name; sel.appendChild(o); }
+  if(prev && store[prev]) sel.value=prev;
+}
+$('btn-preset-load').onclick=()=>{ const key=presetTarget(), name=$('preset-select').value; if(name) applyNamed(key,name); };
+$('btn-preset-saveas').onclick=()=>{ const key=presetTarget(); let name=prompt('Name this '+(key==='cab'?'cabinet':'worktop')+' preset:',''); if(name==null) return; name=name.trim();
+  if(!name){ toast('Name required',true); return; }
+  namedPresets[key][name]=capturePreset(key); persistNamed(key); refreshPresetSelect(); $('preset-select').value=name; toast('Saved preset “'+name+'”'); };
+$('btn-preset-update').onclick=()=>{ const key=presetTarget(), name=$('preset-select').value; if(!name) return;
+  namedPresets[key][name]=capturePreset(key); persistNamed(key); toast('Updated preset “'+name+'”'); };
+$('btn-preset-del').onclick=()=>{ const key=presetTarget(), name=$('preset-select').value; if(!name) return;
+  if(Object.keys(namedPresets[key]).length<=1){ toast('Keep at least one preset',true); return; }
+  if(!confirm('Delete preset “'+name+'”?')) return;
+  delete namedPresets[key][name]; persistNamed(key); refreshPresetSelect(); toast('Deleted “'+name+'”'); };
 $('btn-revert').onclick=()=>{ resetColors(); lastApply=null; $('hl').checked=true; gl.uniform1f(uSelMix,0.6); toast('Reverted to original colours'); };
 
 let sliderTimer=null;
@@ -1215,7 +1288,7 @@ function clearChanMaterial(key){ const c=chan[key]; if(c.scene&&c.originalColors
 /* "None" swatch in the Combined tab — drop a region's material, show it as the bare mask, re-merge */
 function combinedClearMat(key){ setEditTarget(key); if(!chan[key].scene) return; clearChanMaterial(key); try{renderGallery();}catch(e){} showCombined(); scheduleCopySave(); }
 const LOOK_KEYS=['tilesize','texrot','grainvar','facetsplit','mosaic','contrast','shading','panocolor','keeplight','panoyaw','matchlight'];
-function setEditTarget(k){ editTarget=k; const e=$('edittarget'); if(e) e.textContent=(k==='cab'?'Cabinets':'Worktops'); try{ syncDetailSlider(); }catch(e){} }
+function setEditTarget(k){ editTarget=k; const e=$('edittarget'); if(e) e.textContent=(k==='cab'?'Cabinets':'Worktops'); try{ syncDetailSlider(); }catch(e){} try{ refreshPresetSelect(); }catch(e){} }
 /* run fn() with globals pointing at chan[key] (out of combined view), then rebuild the combined kitchen */
 function withChannel(key,fn){ setEditTarget(key); viewingCombined=false; active=key; loadChanInto(chan[key]); try{ fn&&fn(); }catch(e){ console.error(e); } showCombined(); scheduleCopySave(); }
 /* swap a region's material from the Combined tab — paints chan[key], then re-merges */
@@ -1267,11 +1340,7 @@ function setTab(t){ for(const k of ['cab','wt','combined']) $('tab-'+k).classLis
   document.querySelectorAll('[data-vis="cw"]').forEach(e=>e.style.display=cw?'':'none');
   document.querySelectorAll('[data-vis="comb"]').forEach(e=>e.style.display=cw?'none':'');
   document.querySelectorAll('[data-vis="setup"]').forEach(e=>e.style.display=(t==='cab')?'':'none');
-  // preset / save buttons are channel-specific (they carry that channel's detection): show only the
-  // active channel's on its own tab, both on Combined.
-  const showCab=(t!=='wt'), showWt=(t!=='cab');
-  for(const id of ['btn-cabinet','btn-save-cab']){ const e=$(id); if(e) e.style.display=showCab?'':'none'; }
-  for(const id of ['btn-counter','btn-save-wt']){ const e=$(id); if(e) e.style.display=showWt?'':'none'; }
+  try{ refreshPresetSelect(); }catch(e){}   // show the presets for whichever channel this tab adjusts
 }
 function switchTab(to){
   if(!viewingCombined && to===active) return;
@@ -1287,7 +1356,7 @@ $('tab-cab').onclick=()=>switchTab('cab');
 $('tab-wt').onclick=()=>switchTab('wt');
 
 /* merge both channels into one de-duplicated kitchen */
-function buildCombined(){
+function buildCombinedCore(){
   saveActive();
   const A=chan.cab,B=chan.wt;
   if(!(A.scene&&B.scene)){ toast('Load a mask splat first',true); return null; }   // materials are optional — unpainted regions show the bare mask
@@ -1435,6 +1504,59 @@ function buildChannelDetailed(key){
     }
   }
   return out;
+}
+
+/* ===== floater removal: drop isolated splats from the combined output (view + export + live Unity copy) =====
+   Voxelize at `cell` m, count solid splats per voxel, and for each splat sum its 3×3×3 (27-cell)
+   neighbourhood. A splat is a floater (removed) when that neighbourhood holds < `Density cutoff` splats.
+   Wraps buildCombinedCore so every consumer (showCombined / download / saveCopyNow) gets the filtered scene. */
+let floaterKeepCache=null, floaterSig='';
+function buildCombined(){ return applyFloaterFilter(buildCombinedCore()); }
+function applyFloaterFilter(out){
+  const cb=$('floater-on');
+  if(!out || !cb || !cb.checked) return out;                       // disabled → zero cost
+  const maxD=Math.max(0,parseFloat($('floater-dens').value)||0), cell=0.06;
+  const p=out.positions, L=p.length;
+  // signature stays stable across material changes (positions don't move) → mask reused, only compaction reruns
+  const sig=out.n+'|'+L+'|'+maxD+'|'+cell+'|'+p[0]+'|'+p[L>>1]+'|'+p[L-1];
+  let keep;
+  if(floaterSig===sig && floaterKeepCache && floaterKeepCache.length===out.n) keep=floaterKeepCache;
+  else { keep=computeFloaterKeep(out.positions,out.alphasU8,out.n,cell,maxD,0.2); floaterKeepCache=keep; floaterSig=sig; }
+  return compactScene(out,keep);
+}
+// Returns Uint8Array: 1 = keep, 0 = floater. JS-safe packed voxel keys (offset to 0, padded for ±1 neighbours).
+function computeFloaterKeep(positions, alphasU8, n, cell, maxD, solidAlpha){
+  const inv=1/cell;
+  const vx=new Int32Array(n), vy=new Int32Array(n), vz=new Int32Array(n);
+  let mnx=Infinity,mny=Infinity,mnz=Infinity,mxx=-Infinity,mxy=-Infinity,mxz=-Infinity;
+  for(let i=0;i<n;i++){ const a=Math.floor(positions[i*3]*inv),b=Math.floor(positions[i*3+1]*inv),c=Math.floor(positions[i*3+2]*inv);
+    vx[i]=a;vy[i]=b;vz[i]=c;
+    if(a<mnx)mnx=a; if(b<mny)mny=b; if(c<mnz)mnz=c; if(a>mxx)mxx=a; if(b>mxy)mxy=b; if(c>mxz)mxz=c; }
+  const nx=(mxx-mnx)+3, ny=(mxy-mny)+3, SX=nx, SXY=nx*ny;   // +3 pad so neighbour keys never collide/underflow
+  const keys=new Float64Array(n), counts=new Map(), st=solidAlpha*255;
+  for(let i=0;i<n;i++){ const k=(vx[i]-mnx+1)+(vy[i]-mny+1)*SX+(vz[i]-mnz+1)*SXY; keys[i]=k;
+    if(!alphasU8 || alphasU8[i]>st) counts.set(k,(counts.get(k)||0)+1); }   // only opaque splats count toward density
+  const ndens=new Map(), keep=new Uint8Array(n);
+  for(let i=0;i<n;i++){ const k=keys[i]; let d=ndens.get(k);
+    if(d===undefined){ d=0;
+      for(let dz=-1;dz<=1;dz++){ const zo=dz*SXY; for(let dy=-1;dy<=1;dy++){ const yo=dy*SX; for(let dx=-1;dx<=1;dx++){ const c=counts.get(k+dx+yo+zo); if(c) d+=c; } } }
+      ndens.set(k,d); }
+    keep[i]= d>=maxD ? 1 : 0; }
+  return keep;
+}
+function compactScene(out, keep){
+  let m=0; for(let i=0;i<keep.length;i++) if(keep[i]) m++;
+  if(m===out.n) return out;                                        // nothing removed → original
+  const o={n:m,shDegree:0,flags:out.flags|0,positions:new Float32Array(m*3),colors:new Float32Array(m*3),
+    scalesLog:new Float32Array(m*3),quats:new Float32Array(m*4),alphasU8:new Uint8Array(m),shBytes:null};
+  let k=0;
+  for(let i=0;i<out.n;i++){ if(!keep[i]) continue;
+    o.positions[k*3]=out.positions[i*3];o.positions[k*3+1]=out.positions[i*3+1];o.positions[k*3+2]=out.positions[i*3+2];
+    o.colors[k*3]=out.colors[i*3];o.colors[k*3+1]=out.colors[i*3+1];o.colors[k*3+2]=out.colors[i*3+2];
+    o.scalesLog[k*3]=out.scalesLog[i*3];o.scalesLog[k*3+1]=out.scalesLog[i*3+1];o.scalesLog[k*3+2]=out.scalesLog[i*3+2];
+    o.quats[k*4]=out.quats[i*4];o.quats[k*4+1]=out.quats[i*4+1];o.quats[k*4+2]=out.quats[i*4+2];o.quats[k*4+3]=out.quats[i*4+3];
+    o.alphasU8[k]=out.alphasU8[i]; k++; }
+  return o;
 }
 function channelWantsPreview(){ if(viewingCombined) return false; const c=chan[active], amt=parseFloat((c&&c.detail)||1)||1;
   return !!(c&&c.scene&&c.lastApply&&Math.round(amt*amt)>1&&c.segData&&c.segData._lf&&c.segData._matD&&c.segData._mcell===0); }
@@ -1678,6 +1800,34 @@ async function applyFolderMaterial(name){
 }
 async function refreshGalleries(){ chan.cab.matNames=await scanFolder(MAT_FOLDER.cab); chan.wt.matNames=await scanFolder(MAT_FOLDER.wt); renderGallery(); }
 
+/* ---- quick combos: one click applies a cabinet+worktop pair, then auto-saves to Unity ----
+   Edit COMBOS to change the pairs (filenames must exist in CabinetMaterials/ and WorktopMaterials/). */
+const COMBOS=[
+  {label:'Walnut + Bianco marble',     cab:'407_Milano_walnut_reproduction.jpg', wt:'235_Venato_Bianco_marble_reproduction.jpg'},
+  {label:'Black matt + White quartz',  cab:'340_Black_supermatt.jpg',            wt:'806_Epic_White_Quartz_stone.jpg'},
+  {label:'Alpine white + Jura greige', cab:'332_Alpine_white_supermatt.jpg',     wt:'237_Jura_greige_marble_reproduction.jpg'},
+];
+let comboBusy=false;
+async function applyCombo(c){
+  if(comboBusy) return; comboBusy=true;
+  try{ toast('Applying '+c.label+'…');
+    await combinedApplyMat('cab', c.cab);          // sequential — combinedApplyMat juggles globals, can't overlap
+    await combinedApplyMat('wt',  c.wt);           // both call scheduleCopySave → one debounced save to Unity
+    toast('Applied '+c.label);
+  }catch(e){ console.error(e); toast('Combo failed: '+e.message,true); }
+  finally{ comboBusy=false; }
+}
+function renderCombos(){ const g=$('combo-btns'); if(!g) return; g.innerHTML='';
+  COMBOS.forEach((c,i)=>{ const b=document.createElement('button'); b.textContent=(i+1)+'.  '+c.label; b.style.width='100%';
+    b.onclick=()=>applyCombo(c); g.appendChild(b); }); }
+renderCombos();
+
+/* ---- floaters: live toggle + density dial → rebuild combined view & re-save to Unity ---- */
+let floaterTimer=null;
+function floaterRebuild(){ if(viewingCombined){ try{ showCombined(); }catch(e){ console.error(e); } } scheduleCopySave(); }
+$('floater-on').addEventListener('change',floaterRebuild);
+$('floater-dens').addEventListener('input',()=>{ $('floater-dens-v').textContent=$('floater-dens').value; clearTimeout(floaterTimer); floaterTimer=setTimeout(floaterRebuild,220); });
+
 async function fetchFile(url){ let last='?';
   for(let a=0;a<7;a++){ try{ const r=await fetch(url,{cache:'no-store'}); if(r.ok){ const b=await r.blob(); return new File([b], decodeURIComponent(url.split('/').pop())); } last='HTTP '+r.status; }catch(e){ last=e.message; }
     await new Promise(r=>setTimeout(r,600)); }
@@ -1730,15 +1880,20 @@ async function loadMask(file){
     toast('Mask loaded — assign a material per region, or leave as None');
   }catch(e){ console.error(e); toast('Mask load failed: '+e.message,true); $('loadsplash').classList.add('hidden'); }
 }
-async function autoload(){
+// maskSrc: a File (browsed), a url string (picked from ./Splats/), or null (use the default mask).
+// The same mask feeds both channels (green→cabinets, pink→worktops). The shading splat / panorama
+// are loaded best-effort, so a chosen mask still opens even if the default shading file doesn't match.
+async function autoload(maskSrc){
   try{
-    $('dropzone').classList.add('hidden');
-    splash('Loading cabinets pink splat…',8);  await loadFile(await fetchFile(DEFAULTS.cabPink));
-    splash('Loading original splat (shading)…',30); await loadOrigSpz(await fetchFile(DEFAULTS.orig));
+    $('dropzone').classList.add('hidden'); hideStartChooser();
+    const getMask = async()=> (maskSrc instanceof File) ? maskSrc : await fetchFile(maskSrc || DEFAULTS.cabPink);
+    const label = (maskSrc instanceof File) ? maskSrc.name : (maskSrc ? decodeURIComponent(maskSrc.split('/').pop()) : 'default kitchen');
+    splash('Loading mask (cabinets): '+label+' …',8);  await loadFile(await getMask());
+    splash('Loading original splat (shading)…',30); try{ await loadOrigSpz(await fetchFile(DEFAULTS.orig)); }catch(e){ console.warn('[startup] shading splat skipped:', e.message); }
     const sharedOrig=orig;
     splash('Loading panorama…',44); try{ loadPanoFile(await fetchFile(DEFAULTS.pano)); }catch(e){}
     saveActive();
-    splash('Loading worktops pink splat…',56); switchTab('wt'); await loadFile(await fetchFile(DEFAULTS.wtPink));
+    splash('Loading mask (worktops)…',56); switchTab('wt'); await loadFile(await getMask());
     orig=sharedOrig; chan.wt.orig=sharedOrig;
     saveActive();
     splash('Scanning material folders…',84); await refreshGalleries();
@@ -1747,13 +1902,41 @@ async function autoload(){
     camSaveEnabled=true;   // from here on, camera moves persist across sessions
     showCombined();        // open straight on the Combined tab, mask only (materials optional)
     splash('Ready',100); setTimeout(()=>$('loadsplash').classList.add('hidden'),400);
-    toast('Mask loaded — assign a material per region, or leave as None');
-  }catch(e){ console.error(e); splash('Auto-load failed: '+e.message,100);
-    toast('Auto-load failed: '+e.message+' — load files manually',true); setTimeout(()=>$('loadsplash').classList.add('hidden'),2600); }
+    toast('Loaded '+label+' — assign a material per region, or leave as None');
+  }catch(e){ console.error(e); splash('Load failed: '+e.message,100);
+    toast('Load failed: '+e.message,true); setTimeout(()=>$('loadsplash').classList.add('hidden'),2600); showStartChooser(); }
 }
 
+// ---- startup file chooser: pick which splat to open (instead of auto-loading the default) ----
+function hideStartChooser(){ const ov=$('startchooser'); if(ov) ov.style.display='none'; }
+async function scanSpz(url){
+  for(let a=0;a<6;a++){
+    try{ const r=await fetch(url,{cache:'no-store'});
+      if(r.ok){ const html=await r.text();
+        const names=[...new Set([...html.matchAll(/href="([^"?]+\.spz)"/gi)].map(m=>decodeURIComponent(m[1].split('/').pop())))].filter(n=>!/^\./.test(n));
+        return names; } }catch(e){}
+    await new Promise(r=>setTimeout(r,400));
+  }
+  return [];
+}
+async function showStartChooser(){
+  const ov=$('startchooser'); if(ov) ov.style.display='flex';
+  const list=$('chooser-list'); if(!list) return;
+  list.textContent='Scanning ./Splats/ …';
+  const names=await scanSpz('./Splats/');
+  list.innerHTML='';
+  if(!names.length){ list.textContent='No .spz files found in ./Splats/ — use Browse, or Default kitchen.'; return; }
+  for(const n of names){ const b=document.createElement('button'); b.textContent=n;
+    b.style.cssText='display:block;width:100%;margin:5px 0;text-align:left';
+    b.onclick=()=>{ hideStartChooser(); autoload('./Splats/'+encodeURIComponent(n)); };
+    list.appendChild(b); }
+}
+$('chooser-default').onclick=()=>{ hideStartChooser(); autoload(); };
+$('chooser-browse').onclick=()=>$('chooser-fileinput').click();
+$('chooser-fileinput').onchange=e=>{ const f=e.target.files&&e.target.files[0]; if(f){ hideStartChooser(); autoload(f); } };
+
 writeSettings(presets.cab); chan.cab.settings=Object.assign({},presets.cab); setTab('cab'); updateCombineBtns();
-autoload();
+showStartChooser();
 </script>
 </body>
 </html>

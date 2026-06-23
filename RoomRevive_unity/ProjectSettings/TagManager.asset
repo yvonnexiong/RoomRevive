@@ -11,9 +11,10 @@ TagManager:
   - 
   - Water
   - UI
-  - 
-  - 
+  - Objects
+  - MainGaussianSplat
   - Hotspot
+  - OldGaussianSplat
   - 
   - 
   - 
@@ -35,8 +36,7 @@ TagManager:
   - 
   - 
   - 
-  - 
-  - 
+  - RR_CaptureOnly
   m_SortingLayers:
   - name: Default
     uniqueID: 0

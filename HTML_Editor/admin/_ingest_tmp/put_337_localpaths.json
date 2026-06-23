@@ -1,0 +1,16 @@
+{
+  "image": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\TOUCH_337\\hero.webp",
+  "product": {
+    "heroImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\TOUCH_337\\hero.webp",
+    "frontImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\TOUCH_337\\elements\\front.webp",
+    "carcaseImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\TOUCH_337\\elements\\carcase.webp",
+    "worktopImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\TOUCH_337\\elements\\worktop.webp",
+    "handleImage": "",
+    "additionalImages": [
+      "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\TOUCH_337\\gallery\\g1.webp",
+      "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\TOUCH_337\\gallery\\g2.webp"
+    ],
+    "beforeImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\TOUCH_337\\xr\\before.webp",
+    "afterImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\TOUCH_337\\xr\\after.webp"
+  }
+}

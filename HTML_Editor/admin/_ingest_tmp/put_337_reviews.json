@@ -1,0 +1,12 @@
+{
+  "product": {
+    "reviewScore": 4.7,
+    "reviewStars": 4.5,
+    "reviewCount": 3,
+    "reviews": [
+      { "rating": 5, "author": "Sofie", "country": "Denmark", "date": "14 May 2026", "body": "The aqua fronts give our kitchen a holiday feel every morning, and the handleless grip rail is so clean to wipe down." },
+      { "rating": 4, "author": "Markus", "country": "Germany", "date": "2 Apr 2026", "body": "Aqua with the Sierra oak worktop looks even better in person. One star off only because we waited a while for delivery." },
+      { "rating": 5, "author": "Ingrid", "country": "Norway", "date": "18 Mar 2026", "body": "We previewed it in the room first and the installed kitchen looks identical. Very happy with the supermatt finish." }
+    ]
+  }
+}

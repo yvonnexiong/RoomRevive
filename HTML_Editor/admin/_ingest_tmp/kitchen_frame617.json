@@ -1,0 +1,42 @@
+{
+  "category": "Kitchens",
+  "image": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\FRAME_617\\hero.webp",
+  "name": "FRAME 617",
+  "description": "Frame 617 brings warm naturalness into the bathroom. The lacquered laminate front in olive wood texture looks calm and modern. Handle 262 in titanium colour discreetly complements the clear frame look. The body in white creates a fresh contrast. The top in greige Jura marble picks up on the natural look and has a high-quality feel.",
+  "product": {
+    "brand": "Nobilia",
+    "name": "FRAME 617",
+    "color": "Olive",
+    "productType": "bathroom",
+    "headline": "Warm naturalness for the bathroom.",
+    "description": "Frame 617 brings warm naturalness into the bathroom. The lacquered laminate front in olive wood texture looks calm and modern. Handle 262 in titanium colour discreetly complements the clear frame look. The body in white creates a fresh contrast. The top in greige Jura marble picks up on the natural look and has a high-quality feel.",
+    "priceLabel": "Price on request",
+    "productPageUrl": "https://www.nobilia.de/en/products/bathroom-designs/frame-617/",
+    "front": "Front 617, Lacquer laminate, wood texture olive",
+    "carcase": "Carcase colour 106, White",
+    "worktop": "Countertops 237, Jura greige marble reproduction",
+    "handle": "Handle 262, Metal handle, Titanium-coloured",
+    "frontImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\FRAME_617\\elements\\front.webp",
+    "carcaseImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\FRAME_617\\elements\\carcase.webp",
+    "worktopImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\FRAME_617\\elements\\worktop.webp",
+    "handleImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\FRAME_617\\elements\\handle.webp",
+    "heroImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\FRAME_617\\hero.webp",
+    "additionalImages": [
+      "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\FRAME_617\\gallery\\g1.webp",
+      "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\FRAME_617\\gallery\\g2.webp",
+      "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\FRAME_617\\gallery\\g3.webp",
+      "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\FRAME_617\\gallery\\g4.webp"
+    ],
+    "beforeImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\FRAME_617\\xr\\before.webp",
+    "afterImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\FRAME_617\\xr\\after.webp",
+    "flag": "Olive-wood front over a greige Jura marble top is a warm, spa-like pairing - and the titanium handle hides fingerprints well.",
+    "reviews": [
+      { "rating": 5, "author": "Annika", "country": "Sweden", "date": "9 May 2026", "body": "The olive wood front makes our bathroom feel like a spa. Marble top is gorgeous and easy to keep clean." },
+      { "rating": 5, "author": "Paolo", "country": "Italy", "date": "21 Apr 2026", "body": "Beautiful warm tones and the titanium handles feel premium. Looks exactly like the preview." },
+      { "rating": 4, "author": "Lea", "country": "Germany", "date": "3 Mar 2026", "body": "Lovely calm design. The white carcase keeps it fresh. Only wish there were more storage options." }
+    ],
+    "reviewScore": 4.7,
+    "reviewStars": 4.5,
+    "reviewCount": 3
+  }
+}

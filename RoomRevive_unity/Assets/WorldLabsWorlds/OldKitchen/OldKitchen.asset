@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33b71fae31e6c7d438e8566dc713e666, type: 3}
+  m_Name: OldKitchen
+  m_EditorClassIdentifier: 
+  m_FormatVersion: 20240801
+  m_SplatCount: 1920000
+  m_BoundsMin: {x: -11.7890625, y: -12.8125, z: -17.71875}
+  m_BoundsMax: {x: 15.9140625, y: 12.2421875, z: 13.3046875}
+  m_DataHash:
+    serializedVersion: 2
+    Hash: 004c1d00a1d934010000000000000000
+  m_LayerInfo:
+  - x: 0
+    y: 1920000
+  m_PosFormat: 2
+  m_ScaleFormat: 2
+  m_SHFormat: 3
+  m_ColorFormat: 2
+  m_clusteredSHData: {fileID: 0}
+  m_layerData:
+  - layer: 0
+    m_PosData: {fileID: 4900000, guid: 31e3eaaa128bbc94b8498f837b326d54, type: 3}
+    m_ColorData: {fileID: 4900000, guid: 42e0b4fd7e644db46ad90a64f2de4262, type: 3}
+    m_OtherData: {fileID: 4900000, guid: e7a54e0a53f579b428b17462b46e06d9, type: 3}
+    m_SHData: {fileID: 4900000, guid: d57ce4203e6501c4ebcbbd55be785d0b, type: 3}
+    m_ChunkData: {fileID: 4900000, guid: 34399d89eb0b44f4e8908d5108def418, type: 3}
+  m_Cameras: []

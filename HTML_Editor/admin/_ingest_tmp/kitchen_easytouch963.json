@@ -1,0 +1,40 @@
+{
+  "category": "Kitchens",
+  "image": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\EASYTOUCH_963\\hero.webp",
+  "name": "EASYTOUCH 963",
+  "description": "A shining example of an expressive eat-in kitchen. The rust-red colour scheme in combination with graphite black creates a lively atmosphere and gives your kitchen personality and a creative touch.",
+  "product": {
+    "brand": "Nobilia",
+    "name": "EASYTOUCH 963",
+    "color": "Rust red",
+    "productType": "kitchen",
+    "headline": "Bold rust red with a creative edge.",
+    "description": "A shining example of an expressive eat-in kitchen. The rust-red colour scheme in combination with graphite black creates a lively atmosphere and gives your kitchen personality and a creative touch.",
+    "priceLabel": "Price on request",
+    "productPageUrl": "https://www.nobilia.de/en/products/kitchens/modern-kitchens/easytouch-963/",
+    "front": "Front 963, Rust red ultra matt",
+    "carcase": "Graphite black",
+    "worktop": "",
+    "handle": "",
+    "frontImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\EASYTOUCH_963\\elements\\front.webp",
+    "carcaseImage": "",
+    "worktopImage": "",
+    "handleImage": "",
+    "heroImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\EASYTOUCH_963\\hero.webp",
+    "additionalImages": [
+      "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\EASYTOUCH_963\\gallery\\g1.webp",
+      "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\EASYTOUCH_963\\gallery\\g2.webp"
+    ],
+    "beforeImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\EASYTOUCH_963\\xr\\before.webp",
+    "afterImage": "C:\\Unity-Git\\RoomRevive\\HTML_Editor\\3D-models\\Kitchens\\EASYTOUCH_963\\xr\\after.webp",
+    "flag": "Rust red against graphite black is a bold, warm eat-in look - works best in a room with plenty of daylight.",
+    "reviews": [
+      { "rating": 5, "author": "Sara", "country": "Italy", "date": "7 May 2026", "body": "So much personality. The rust red wakes up the whole room and the matt finish feels great." },
+      { "rating": 4, "author": "Niklas", "country": "Sweden", "date": "19 Apr 2026", "body": "Striking colour combo with the graphite black. Bold choice but we love it." },
+      { "rating": 5, "author": "Eva", "country": "Germany", "date": "2 Mar 2026", "body": "Our friends always comment on it. The eat-in layout is cosy and the colour is unique." }
+    ],
+    "reviewScore": 4.7,
+    "reviewStars": 4.5,
+    "reviewCount": 3
+  }
+}

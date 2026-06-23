@@ -1,0 +1,24 @@
+{
+  "category": "Kitchens",
+  "image": "TOUCH_337_main.webp",
+  "name": "TOUCH 337",
+  "description": "Thanks to its striking aqua coloured fronts, this kitchen suggestion radiates holiday mood - and at the same time - makes the daily routine as comfortable as possible.",
+  "product": {
+    "name": "TOUCH 337 - Aqua supermatt",
+    "brand": "Nobilia",
+    "range": "Modern kitchens",
+    "front": "Front 337, Aqua supermatt",
+    "carcase": "Carcase 198, Sierra oak reproduction",
+    "worktop": "Worktop 198, Sierra oak reproduction",
+    "handle": "",
+    "frontImage": "TOUCH_337_front.webp",
+    "carcaseImage": "TOUCH_337_carcase.webp",
+    "worktopImage": "TOUCH_337_worktop.webp",
+    "handleImage": "",
+    "heroImage": "TOUCH_337_main.webp",
+    "productPageUrl": "https://www.nobilia.de/en/products/kitchens/modern-kitchens/touch-337/",
+    "_handleNote": "No handle listed on the product page (handleless/grip design)",
+    "_source": "nobilia.de",
+    "_dataQuality": "page-scrape"
+  }
+}

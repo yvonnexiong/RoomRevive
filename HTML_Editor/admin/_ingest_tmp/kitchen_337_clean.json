@@ -1,0 +1,34 @@
+{
+  "category": "Kitchens",
+  "image": "TOUCH_337/hero.webp",
+  "name": "TOUCH 337",
+  "description": "Thanks to its striking aqua coloured fronts, this kitchen suggestion radiates holiday mood - and at the same time - makes the daily routine as comfortable as possible.",
+  "product": {
+    "brand": "Nobilia",
+    "name": "TOUCH 337",
+    "color": "Aqua",
+    "productType": "kitchen",
+    "headline": "Holiday mood, every day.",
+    "description": "Thanks to its striking aqua coloured fronts, this kitchen suggestion radiates holiday mood - and at the same time - makes the daily routine as comfortable as possible.",
+    "priceLabel": "Price on request",
+    "productPageUrl": "https://www.nobilia.de/en/products/kitchens/modern-kitchens/touch-337/",
+    "front": "Front 337, Aqua supermatt",
+    "carcase": "Carcase 198, Sierra oak reproduction",
+    "worktop": "Worktop 198, Sierra oak reproduction",
+    "handle": "Handleless - integrated grip rail",
+    "frontImage": "TOUCH_337/elements/front.webp",
+    "carcaseImage": "TOUCH_337/elements/carcase.webp",
+    "worktopImage": "TOUCH_337/elements/worktop.webp",
+    "handleImage": "",
+    "heroImage": "TOUCH_337/hero.webp",
+    "additionalImages": ["TOUCH_337/gallery/g1.webp", "TOUCH_337/gallery/g2.webp"],
+    "beforeImage": "TOUCH_337/xr/before.webp",
+    "afterImage": "TOUCH_337/xr/after.webp",
+    "flag": { "by": "Luis", "note": "Aqua fronts over a Sierra-oak worktop warm up a north-facing kitchen - a good call for low-light rooms." },
+    "reviews": [
+      { "rating": 5, "country": "Denmark", "date": "14 May 2026", "title": "Brightened the whole flat", "body": "The aqua fronts give our kitchen a holiday feel every morning, and the handleless grip rail is so clean to wipe down.", "author": "Sofie, Copenhagen" },
+      { "rating": 4, "country": "Germany", "date": "2 Apr 2026", "title": "Lovely colour, oak ties it together", "body": "Aqua with the Sierra oak worktop looks even better in person. One star off only because we waited a while for delivery.", "author": "Markus, Hamburg" },
+      { "rating": 5, "country": "Norway", "date": "18 Mar 2026", "title": "Exactly like the XR preview", "body": "We previewed it in the room first and the installed kitchen looks identical. Very happy with the supermatt finish.", "author": "Ingrid, Oslo" }
+    ]
+  }
+}

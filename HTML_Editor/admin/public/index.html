@@ -100,6 +100,40 @@
   .detail-tbl tr:last-child td{border-bottom:none}
   .detail-tbl td:first-child{color:var(--mut);width:36%;white-space:nowrap}
   .detail-tbl td.detail-sec{width:auto;color:var(--acc);font-size:11px;text-transform:uppercase;letter-spacing:.08em;padding-top:14px;font-weight:600}
+  .price-tag.soft{font-weight:600;color:var(--mut);font-size:12px}
+  .card-rev{display:flex;align-items:center;gap:6px;font-size:12px;margin:3px 0}
+  .card-rev b{font-weight:700}
+  .card-revn{color:var(--mut)}
+  /* kitchen details panel */
+  .kpanel{margin-bottom:14px}
+  .kp-hero{width:100%;border-radius:10px;display:block;margin-bottom:6px}
+  .kp-sec{color:var(--acc);font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin:14px 0 7px}
+  .kp-els{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .kp-el{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:6px}
+  .kp-sw{width:44px;height:44px;border-radius:6px;overflow:hidden;flex:none;background:var(--line)}
+  .kp-sw img{width:100%;height:100%;object-fit:cover;display:block}
+  .kp-el b{font-size:12px}
+  .kp-elv{font-size:11.5px;color:var(--mut)}
+  .kp-strip{display:flex;gap:6px;flex-wrap:wrap}
+  .kp-strip img{width:96px;height:64px;object-fit:cover;border-radius:6px;display:block}
+  .kp-ba{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .kp-ba figure{margin:0}
+  .kp-ba img{width:100%;height:120px;object-fit:cover;border-radius:8px;display:block;border:1px solid var(--line)}
+  .kp-ba figcaption{font-size:11px;color:var(--mut);margin-top:3px}
+  .kp-flag{background:var(--line);border-radius:8px;padding:8px 10px;font-size:12.5px}
+  .starbar{position:relative;display:inline-block;font-size:13px;letter-spacing:2px;line-height:1;white-space:nowrap;vertical-align:middle}
+  .starbar .sb-bg{color:rgba(140,140,140,.35)}
+  .starbar .sb-fg{color:#e0a800;position:absolute;left:0;top:0;overflow:hidden;white-space:nowrap}
+  .kp-revtop{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .kp-revscore{font-size:26px;font-weight:800;line-height:1}
+  .kp-revcount{font-size:11px;color:var(--mut);margin-top:3px}
+  .kp-revs{display:flex;flex-direction:column}
+  .kp-rev{border-top:1px solid var(--line);padding:10px 0}
+  .kp-rev:first-child{border-top:none}
+  .kp-revhead{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap}
+  .kp-revname{font-size:12.5px;font-weight:700}
+  .kp-revmeta{font-size:11px;color:var(--mut)}
+  .kp-revbody{font-size:12.5px}
 </style>
 </style>
 </head>
@@ -135,6 +169,6 @@
 </div>
 
 <div id="modalRoot"></div>
-<script src="app.js?v=11"></script>
+<script src="app.js?v=19"></script>
 </body>
 </html>

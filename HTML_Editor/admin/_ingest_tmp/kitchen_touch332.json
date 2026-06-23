@@ -1,0 +1,23 @@
+{
+  "category": "Kitchens",
+  "image": "TOUCH_332_main.webp",
+  "name": "TOUCH 332",
+  "description": "A dazzling White kitchen makes even the smallest room appear spacious and adds a sizeable feel-good factor. The raised appliances are modern - and with their Stainless steel appearance - a real eye-catcher.",
+  "product": {
+    "name": "TOUCH 332 - Alpine white supermatt",
+    "brand": "Nobilia",
+    "range": "Modern kitchens",
+    "front": "Front 332, Alpine white supermatt",
+    "carcase": "Carcase colour 193, Alpine white",
+    "worktop": "Worktop 193, Alpine white",
+    "handle": "Handle 602, Metal handle, Stainless steel finish Matt",
+    "frontImage": "TOUCH_332_front.webp",
+    "carcaseImage": "TOUCH_332_carcase.webp",
+    "worktopImage": "TOUCH_332_worktop.webp",
+    "handleImage": "TOUCH_332_handle.webp",
+    "heroImage": "TOUCH_332_main.webp",
+    "productPageUrl": "https://www.nobilia.de/en/products/kitchens/modern-kitchens/touch-332/",
+    "_source": "nobilia.de",
+    "_dataQuality": "page-scrape"
+  }
+}

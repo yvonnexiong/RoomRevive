@@ -1,0 +1,11 @@
+{
+  "image": "TOUCH_337/hero.webp",
+  "product": {
+    "frontImage": "TOUCH_337/elements/front.webp",
+    "carcaseImage": "TOUCH_337/elements/carcase.webp",
+    "worktopImage": "TOUCH_337/elements/worktop.webp",
+    "handleImage": "",
+    "heroImage": "TOUCH_337/hero.webp",
+    "gallery": ["TOUCH_337/gallery/g1.webp", "TOUCH_337/gallery/g2.webp"]
+  }
+}

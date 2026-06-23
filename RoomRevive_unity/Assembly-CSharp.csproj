@@ -69,6 +69,7 @@
     <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Runtime\IntentAudioRouter.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Intent\IntentSO.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Util\KeyInput.cs" />
+    <Compile Include="Assets\Scripts\LiveSplatLoader.cs" />
     <Compile Include="Assets\Scripts\AudioManager.cs" />
     <Compile Include="Assets\Scripts\SplatManager.cs" />
     <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Runtime\Product\ProductData.cs" />
@@ -82,6 +83,7 @@
     <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Runtime\IntentStateEvent.cs" />
     <Compile Include="Assets\Scripts\IntersectionRevealSphereEffect.cs" />
     <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Runtime\IntentCardPointerProxy.cs" />
+    <Compile Include="Assets\RoomRevive\Capture\Scripts\Runtime\CameraRenderSet.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Startup\BillboardPanel.cs" />
     <Compile Include="Assets\Scripts\BoxMoverPanel.cs" />
     <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Runtime\IntentSelectorPanelData.cs" />

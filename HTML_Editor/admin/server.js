@@ -134,14 +134,15 @@ function scan(cat) {
     }
 
     // flag items whose file disappeared from an existing folder
+    // (image items — e.g. kitchens — have no model file; never prune them)
     for (const it of cat.items.filter(i => i.category === folder)) {
-      if (!models.includes(it.file)) markMissing(it);
+      if (!it.image && !models.includes(it.file)) markMissing(it);
     }
   }
 
   // flag items whose entire category folder was removed
   for (const it of cat.items) {
-    if (!folderSet.has(it.category)) markMissing(it);
+    if (!it.image && !folderSet.has(it.category)) markMissing(it);
   }
   return result;
 }
@@ -167,6 +168,7 @@ const MIME = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css',
   '.json': 'application/json', '.glb': 'model/gltf-binary', '.fbx': 'application/octet-stream',
   '.gif': 'image/gif', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml',
+  '.webp': 'image/webp',
 };
 
 function serveFile(res, filePath) {
@@ -217,9 +219,11 @@ const server = http.createServer(async (req, res) => {
 
       // cheap change-detection signal for the client to poll
       if (pathname === '/api/version' && method === 'GET') {
-        let rev = 0;
+        let rev = 0, ui = 0;
         try { rev = fs.statSync(CATALOG_PATH).mtimeMs; } catch {}
-        return sendJSON(res, 200, { rev, items: cat.items.length, categories: cat.categories.length });
+        // app.js mtime → clients auto-reload the page when the admin code changes
+        try { ui = fs.statSync(path.join(PUBLIC_DIR, 'app.js')).mtimeMs; } catch {}
+        return sendJSON(res, 200, { rev, ui, items: cat.items.length, categories: cat.categories.length });
       }
 
       if (pathname === '/api/scan' && method === 'POST') {
@@ -285,7 +289,9 @@ const server = http.createServer(async (req, res) => {
           description: b.description || '',
           status: b.status || 'active',
           gif: null, thumb: null, bytes: 0,
-          missing: !b.file,
+          // image items (kitchens) carry a hero image instead of a 3D model file
+          image: b.image || null,
+          missing: !b.file && !b.image,
           product: (b.product && typeof b.product === 'object') ? b.product : {},
           createdAt: Date.now(),
         };
@@ -302,7 +308,7 @@ const server = http.createServer(async (req, res) => {
 
         if (method === 'PUT') {
           const b = await readBody(req);
-          for (const k of ['name', 'description', 'status', 'category']) {
+          for (const k of ['name', 'description', 'status', 'category', 'image']) {
             if (k in b) it[k] = typeof b[k] === 'string' ? b[k] : it[k];
           }
           // product-data fields live in a nested object so they never collide

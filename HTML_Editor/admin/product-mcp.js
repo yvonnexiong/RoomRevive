@@ -74,6 +74,8 @@ const PRODUCT_FIELDS = {
   grill:           { type: 'boolean' },
   grillNote:       { type: 'string' },
   grillPowerW:     { type: 'number' },
+  turntableCm:     { type: 'number' },                 // turntable diameter (cm)
+  weightKg:        { type: 'number' },                 // net weight (kg)
   // coffee machines
   waterTank:       { type: 'number' },                 // litres
   beanContainer:   { type: 'number' },                 // grams (total)

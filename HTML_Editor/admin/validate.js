@@ -26,10 +26,16 @@ const FIELDS = {
   energyClassNote:{type:'string'},
   // microwaves
   capacityL:{type:'number'}, microwavePowerW:{type:'number'}, grill:{type:'boolean'}, grillNote:{type:'string'},
-  grillPowerW:{type:'number'},
+  grillPowerW:{type:'number'}, turntableCm:{type:'number'}, weightKg:{type:'number'},
   // shared notes / provenance metadata
   dimensionsNote:{type:'string'}, _specSource:{type:'string'}, _dataQuality:{type:'string'}, _note:{type:'string'},
   _copySource:{type:'string'}, _copyQuality:{type:'string'},
+  // kitchens (image-based items, rendered in the dedicated kitchen panel)
+  productType:{type:'string'}, priceLabel:{type:'string'}, range:{type:'string'}, flag:{type:'string'},
+  front:{type:'string'}, carcase:{type:'string'}, worktop:{type:'string'}, handle:{type:'string'},
+  frontImage:{type:'string'}, carcaseImage:{type:'string'}, worktopImage:{type:'string'}, handleImage:{type:'string'},
+  heroImage:{type:'string'}, additionalImages:{type:'array'}, beforeImage:{type:'string'}, afterImage:{type:'string'},
+  gallery:{type:'array'}, _source:{type:'string'}, reviewScore:{type:'number'}, reviewStars:{type:'number'},
 };
 const SPEC_FIELDS = ['fridgeCapacity','freezerCapacity','annualEnergy','noise','energyClass','dimensions'];
 
@@ -41,8 +47,9 @@ for (const it of cat.items) {
   const c = per[it.category] ||= { total:0, withProduct:0, hasSpecs:0, hasPageUrl:0, hasSheet:0, complete:0 };
   c.total++;
   const p = it.product;
-  // duplicate detection
-  const key = (p && p.modelKey) || it.file;
+  // duplicate detection — fall back to the unique item id for image-based items
+  // (kitchens) that legitimately have no modelKey/model file.
+  const key = (p && p.modelKey) || it.file || it.id || it.name;
   (dupes[it.category+'|'+key] ||= []).push(it.name);
   if (!p || !Object.keys(p).length) continue;
   c.withProduct++;

@@ -67,6 +67,7 @@
     <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Editor\Product\ProductBrowserPrefabBinder.cs" />
     <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Editor\Product\ProductBrowserPrefabCreator.cs" />
     <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Editor\ProductVariantRouterEditor.cs" />
+    <Compile Include="Assets\RoomRevive\Capture\Scripts\Editor\CameraRenderSetEditor.cs" />
     <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Editor\Product\ProductSwapViewEditor.cs" />
     <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Editor\Product\ProductBrowserCabinetWizard.cs" />
     <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Editor\IntentSelectorPrefabCreator.cs" />
