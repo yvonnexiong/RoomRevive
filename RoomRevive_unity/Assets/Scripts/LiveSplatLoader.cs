@@ -28,8 +28,11 @@ using GaussianSplatting.Runtime;
 public class LiveSplatLoader : MonoBehaviour
 {
     [Header("Source")]
-    [Tooltip("Absolute path to the .spz the browser editor auto-saves. Must match the file you pick in the editor's 'Auto-save copy to file…' dialog.")]
-    public string spzFilePath = @"C:\Unity-Git\RoomRevive\RoomRevive_unity\LiveSplat\kitchen-copy.spz";
+    [Tooltip("Path to the .spz the browser editor auto-saves, relative to the Unity project root (one folder above Assets/). E.g. 'LiveSplat/kitchen-copy.spz'. Pick the same file in the editor's 'Choose file…' dialog.")]
+    public string spzRelativePath = "LiveSplat/kitchen-copy.spz";
+
+    // Resolved at runtime so the path works on any machine regardless of where the repo is cloned.
+    string spzFilePath => Path.GetFullPath(Path.Combine(Application.dataPath, "..", spzRelativePath));
 
     [Tooltip("Renderer to load into. Leave empty to use a GaussianSplatRenderer on this GameObject.")]
     public GaussianSplatRenderer targetRenderer;
