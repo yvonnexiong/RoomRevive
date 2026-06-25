@@ -27,6 +27,8 @@ MonoBehaviour:
   - Class D
   fromPrice: From EUR 7,264
   splatAsset: {fileID: 0}
+  splatCabMaterial: 
+  splatWtMaterial: 
   variants: []
   startsSelectedByDefault: 0
   onSelectedAssetEvent:

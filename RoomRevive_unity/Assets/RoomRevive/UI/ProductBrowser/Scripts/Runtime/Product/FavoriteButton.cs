@@ -43,6 +43,14 @@ namespace RoomRevive.ProductBrowser
         public float fireCooldown = 0.1f;
         float _lastFireTime = -1f;
 
+        // Current favorited state, owned externally via SetFavorited. Defaults to false so the
+        // button is never shown as favorited unless an owner explicitly says so (i.e. the product
+        // is actually present in favorites.json). Re-asserted in OnEnable.
+        bool _isFavorited;
+
+        /// <summary>The last state pushed via <see cref="SetFavorited"/>. Read-only view state.</summary>
+        public bool IsFavorited => _isFavorited;
+
         void Reset()
         {
             button = GetComponent<Button>();
@@ -52,11 +60,17 @@ namespace RoomRevive.ProductBrowser
         void Awake()
         {
             if (button == null) button = GetComponent<Button>();
+            // This script is the ONLY thing allowed to color the button. Turn off Unity's
+            // built-in color transition so hover / press / selected states don't tint it.
+            if (button != null) button.transition = Selectable.Transition.None;
         }
 
         void OnEnable()
         {
             if (button != null) button.onClick.AddListener(Fire);
+            // Re-assert the stored state when the panel is re-shown, so re-enabling never
+            // reverts the visual to the prefab's serialized default.
+            ApplyVisual();
         }
 
         void OnDisable()
@@ -82,17 +96,27 @@ namespace RoomRevive.ProductBrowser
         }
 
         /// <summary>
-        /// Drives the visual state. Owner calls this whenever the favorite flag changes
-        /// (on click, on product change, on enable, etc.).
+        /// Drives the visual state. Owner (the ProductBrowserController, which reads favorites.json)
+        /// calls this whenever the favorite flag changes — on click, on product change, on enable.
         /// </summary>
         public void SetFavorited(bool favorited)
         {
-            if (label != null) label.text = favorited ? favoritedText : notFavoritedText;
+            _isFavorited = favorited;
+            ApplyVisual();
+        }
 
-            if (button != null && button.targetGraphic is Image img)
+        /// <summary>Applies the current <see cref="_isFavorited"/> state to the label + button color.</summary>
+        void ApplyVisual()
+        {
+            if (label != null) label.text = _isFavorited ? favoritedText : notFavoritedText;
+
+            // With the Button's transition disabled, the graphic color we set here sticks —
+            // no state machine fights it. This is the single source of truth for the visual.
+            if (button != null)
             {
-                img.color = favorited ? favoritedColor : notFavoritedColor;
-                button.targetGraphic.CrossFadeColor(Color.white, 0f, true, false);
+                button.transition = Selectable.Transition.None;
+                if (button.targetGraphic != null)
+                    button.targetGraphic.color = _isFavorited ? favoritedColor : notFavoritedColor;
             }
         }
     }

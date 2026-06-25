@@ -67,6 +67,10 @@ namespace RoomRevive.ProductBrowser
         [Tooltip("Fired when the user confirms a product (taps the CTA on the Swap panel).")]
         public ProductIndexEvent onProductConfirmed = new ProductIndexEvent();
 
+        [Header("Editor")]
+        [Tooltip("When off, OnValidate no longer calls ApplyInitialState — the UI stops auto-updating in the editor. Toggle via the inspector button.")]
+        public bool liveBinding = true;
+
         [Header("Debug")]
         public bool debugLogs = true;
 
@@ -113,30 +117,75 @@ namespace RoomRevive.ProductBrowser
             if (favoriteButton != null) favoriteButton.onClicked.RemoveListener(OnFavoriteButtonClicked);
         }
 
+        /// <summary>
+        /// Toggles the favorite state of the currently selected product: writes the pointer
+        /// into favorites.json and flips the button visual. Public so it can be called from
+        /// a key press, the FavoriteButton event, or the inspector's ⋮ context menu.
+        /// </summary>
+        public void ToggleFavorite() => OnFavoriteButtonClicked();
+
         void OnFavoriteButtonClicked()
         {
-            if (_selectedProduct == null) return;
-
-            if (FavoritesManager.Instance == null)
+            if (_selectedProduct == null)
             {
-                Debug.LogWarning("[ProductBrowser] No FavoritesManager in scene — favorite not persisted.", this);
+                if (debugLogs)
+                    Debug.LogWarning("[ProductBrowser] Favorite ignored — no product selected yet.", this);
                 return;
             }
 
-            bool nowFavorited = FavoritesManager.Instance.Toggle(_selectedProduct);
-            favoriteButton?.SetFavorited(nowFavorited);
+            EnsureFavoriteButton();
+
+            // favorites.json is the single source of truth. Toggle relative to what the file
+            // currently says, then write the new state back.
+            bool nowFavorited = !FavoritesJsonStore.IsFavorited(_selectedProduct);
+            bool wrote = FavoritesJsonStore.SetFavorited(_selectedProduct, nowFavorited);
+
+            // Mirror into the optional in-memory manager so any other listener stays in agreement.
+            if (FavoritesManager.Instance != null)
+                FavoritesManager.Instance.SetFavorited(_selectedProduct, nowFavorited);
+
+            // Re-derive the button visual straight from the file so it can never disagree with it —
+            // e.g. if the write failed (no catalogKey / missing folder), the button shows the real,
+            // unchanged state instead of a lie.
+            PushFavoriteStateToButton();
 
             if (debugLogs)
-                Debug.Log($"[ProductBrowser] Favorite {(nowFavorited ? "★" : "☆")} {SafeName(_selectedProduct)}", this);
+                Debug.Log($"[ProductBrowser] Favorite {(nowFavorited ? "★" : "☆")} {SafeName(_selectedProduct)} " +
+                          $"— favorites.json {(wrote ? "written" : "NOT written")}", this);
         }
 
+        /// <summary>Resolves <see cref="favoriteButton"/> from the swap panel if it wasn't wired.</summary>
+        void EnsureFavoriteButton()
+        {
+            if (favoriteButton != null) return;
+            if (view == null) view = GetComponent<ProductBrowserView>();
+            if (view?.swapPanel != null)
+                favoriteButton = view.swapPanel.GetComponentInChildren<FavoriteButton>(true);
+            if (favoriteButton == null)
+                favoriteButton = GetComponentInChildren<FavoriteButton>(true);
+        }
+
+        // ── Inspector ⋮ test hooks (no keyboard focus needed) ────────────────
+        // Right-click the component header or use the ⋮ menu → these appear at the bottom.
+
+        [ContextMenu("★ Toggle Favorite (test)")]
+        void ContextToggleFavorite()
+        {
+            // In edit mode / before Start, make sure a product is selected first.
+            if (_selectedProduct == null) ApplyInitialState();
+            OnFavoriteButtonClicked();
+        }
+
+        /// <summary>
+        /// Drives the favorite button visual from favorites.json (the single source of truth).
+        /// The button shows "favorited" only when the selected product's pointer is present in
+        /// the file — in both edit mode and play mode.
+        /// </summary>
         void PushFavoriteStateToButton()
         {
+            EnsureFavoriteButton();
             if (favoriteButton == null) return;
-            bool fav = Application.isPlaying
-                       && FavoritesManager.Instance != null
-                       && _selectedProduct != null
-                       && FavoritesManager.Instance.IsFavorited(_selectedProduct);
+            bool fav = _selectedProduct != null && FavoritesJsonStore.IsFavorited(_selectedProduct);
             favoriteButton.SetFavorited(fav);
         }
 
@@ -155,6 +204,7 @@ namespace RoomRevive.ProductBrowser
 #if UNITY_EDITOR
         void OnValidate()
         {
+            if (!liveBinding) return;
             UnityEditor.EditorApplication.delayCall += () =>
             {
                 if (this == null) return;
@@ -330,7 +380,8 @@ namespace RoomRevive.ProductBrowser
             _selectedIndex = index;
             _selectedProduct = product;
 
-            if (changed) PushFavoriteStateToButton();
+            // Button visual is refreshed from favorites.json in RefreshView (covers every
+            // navigation + state change), so no per-index push is needed here.
 
             if ((!changed && !reselectSameProductInvokesEvents) || !fireEvents) return;
 
@@ -353,6 +404,9 @@ namespace RoomRevive.ProductBrowser
         {
             if (view == null) return;
             view.SetState(_state, _activeCategory, _selectedIndex, instant: false);
+            // SetState (re)activates the swap panel; refresh the favorite button from
+            // favorites.json afterwards so it always matches the file.
+            PushFavoriteStateToButton();
         }
 
         void HandleKeyboardDebug()
@@ -362,6 +416,7 @@ namespace RoomRevive.ProductBrowser
             if (KeyInput.GetKeyDown(KeyCode.Return) || KeyInput.GetKeyDown(KeyCode.KeypadEnter)) ConfirmSelection();
             if (KeyInput.GetKeyDown(KeyCode.D) && _state == ProductBrowserState.Discover) OpenSwap();
             if (KeyInput.GetKeyDown(KeyCode.Escape)) Close();
+            if (KeyInput.GetKeyDown(KeyCode.Space)) OnFavoriteButtonClicked();
         }
 
         static string SafeName(ProductData p) =>

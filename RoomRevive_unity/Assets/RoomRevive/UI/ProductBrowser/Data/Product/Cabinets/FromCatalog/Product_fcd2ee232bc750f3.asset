@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_fcd2ee232bc750f3
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: fcd2ee232bc750f3
+  catalogKey: fcd2ee232bc750f3
+  brandName: Nobilia
+  productName: RIVA 889
+  subtitle: Designer kitchen
+  emotionalLine: Innovative kitchen design!
+  shortDescription: "Clean lines, exquisite materials and clearly structured architecture
+    \u2013 these are the distinguishing marks of our designer kitchens. Our extensive
+    assortment of smooth, flawless surfaces enable you to customise your small or
+    large lifestyle kitchen to your preferences. Connoisseurs of puristic design
+    are well-served with our handleless LINE N kitchens."
+  productImage: {fileID: 0}
+  specs:
+  - Concrete Slate Grey reproduction
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 889_Concrete_Slate_Grey_reproduction.jpg
+  splatWtMaterial: 373_Grey_slate_reproduction_Xtra.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

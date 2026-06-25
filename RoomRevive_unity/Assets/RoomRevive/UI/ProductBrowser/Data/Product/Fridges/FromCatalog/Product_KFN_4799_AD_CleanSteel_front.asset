@@ -15,7 +15,7 @@ MonoBehaviour:
   id: KFN_4799_AD_CleanSteel_front
   catalogKey: KFN_4799_AD_CleanSteel_front
   brandName: Miele
-  productName: KFN 4799 AD
+  productName: KFN 4799 AD - 1
   subtitle: "Freestanding fridge-freezer \xB7 clean steel"
   emotionalLine: "Professional storage \u2014 fresher for longer"
   shortDescription: PerfectFresh Pro and NoFrost for lasting freshness and added
@@ -28,6 +28,8 @@ MonoBehaviour:
   - Class A
   fromPrice: From EUR 2,559
   splatAsset: {fileID: 0}
+  splatCabMaterial: 
+  splatWtMaterial: 
   variants: []
   startsSelectedByDefault: 0
   onSelectedAssetEvent:

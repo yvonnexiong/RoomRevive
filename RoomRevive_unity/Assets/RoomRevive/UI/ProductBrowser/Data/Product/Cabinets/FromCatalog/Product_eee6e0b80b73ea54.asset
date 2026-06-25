@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_eee6e0b80b73ea54
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: eee6e0b80b73ea54
+  catalogKey: eee6e0b80b73ea54
+  brandName: Nobilia
+  productName: STRUCTURA 406
+  subtitle: Natural & scandinavian kitchen
+  emotionalLine: Stylish organisation
+  shortDescription: "A kitchen perfectly tailored to Sally\u2019s style, with spacious
+    work surfaces, functionality, organisation and easy-care surfaces"
+  productImage: {fileID: 0}
+  specs:
+  - Como oak reproduction
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 406_Como_oak_reproduction.jpg
+  splatWtMaterial: 324_Carrara_bronze_marble_reproduction.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

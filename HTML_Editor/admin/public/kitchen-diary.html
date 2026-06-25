@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Kitchen Diary — tell me about your kitchen</title>
+<style>
+  :root{--bg:#F4F1EA;--card:#fff;--ink:#2b2723;--muted:#8a8178;--accent:#9c5a3c;--line:#e6e0d6;--chip:#f2ece2;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Georgia,"Times New Roman",serif;padding:30px}
+  .wrap{max-width:920px;margin:0 auto}
+  h1{font-size:26px;margin:0 0 2px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 22px}
+  .prompt{font-size:20px;line-height:1.45;margin:0 0 14px}
+  textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:14px;background:var(--card);
+    padding:16px;font:16px/1.55 Georgia,serif;color:var(--ink);resize:vertical}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:12px 0 6px}
+  button{font:15px Georgia,serif;cursor:pointer;border-radius:999px;padding:10px 18px;border:1px solid var(--line);background:var(--card);color:var(--ink);transition:.12s}
+  button:hover{border-color:var(--accent)}
+  .go{background:#2b2723;color:#fff;border-color:#2b2723}
+  .mic.live{background:#b4593f;color:#fff;border-color:#b4593f}
+  .ex{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .ex button{font-size:13px;padding:7px 12px;color:var(--muted)}
+  .hint{font-size:12px;color:var(--muted)}
+  .result{margin-top:26px;display:none}
+  .reflection{font-size:22px;line-height:1.5;font-style:italic;margin:0 0 18px;color:var(--ink)}
+  .heard{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px}
+  .heard .dl{background:var(--chip);border-radius:10px;padding:6px 10px;font-size:13px;display:flex;gap:6px;align-items:center}
+  .heard .dl b{color:var(--muted);font-weight:normal;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+  .heard select{font:13px Georgia,serif;border:none;background:transparent;color:var(--ink);cursor:pointer}
+  .hero{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:20px}
+  .hero img{width:100%;display:block;aspect-ratio:16/10;object-fit:cover;background:#e9e3d8}
+  .hero .body{padding:16px 18px}
+  .hero .kname{font-size:20px;margin:0 0 2px}
+  .hero .kmeta{color:var(--muted);font-size:13px;margin:0 0 8px}
+  .hero .kline{font-size:15px;margin:0}
+  .secn{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
+  .rail{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .mini{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .mini img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#e9e3d8}
+  .mini .mb{padding:8px 10px}
+  .mini .mn{font-size:13px}.mini .ms{font-size:11px;color:var(--muted)}
+  .appl{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .noimg{display:flex;align-items:center;justify-content:center;color:#bbb;font-size:12px;aspect-ratio:4/3}
+  .err{color:#a33;font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Kitchen Diary</h1>
+  <p class="sub">A first-run idea: no forms. Tell it about your life in the kitchen — it reads your kitchen back to you from the real catalogue.</p>
+
+  <p class="prompt">“It's the end of an ordinary day and you walk into this kitchen. Tell me about the life you want in here — who's around, how it should feel, what you'd be doing.”</p>
+
+  <textarea id="story" placeholder="Just talk… e.g. After a long day I want to breathe. It's mostly just the two of us. I love warm wood and soft light, and I can't stand cold, glossy black kitchens."></textarea>
+
+  <div class="controls">
+    <button class="go" id="reveal">Reveal my kitchen →</button>
+    <button class="mic" id="mic">🎤 Speak</button>
+    <span class="hint" id="michint">(mic uses Chrome speech-to-text, on-device)</span>
+  </div>
+  <div class="ex" id="examples"></div>
+
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+let ITEMS=[];
+const P=it=>it.product||{};
+
+/* ---------- image url from stored absolute local path ---------- */
+function imgUrl(path){
+  if(!path)return"";
+  const v=String(path).replace(/\\/g,"/");
+  const i=v.toLowerCase().indexOf("3d-models/");
+  if(i<0)return"";
+  return "/models/"+v.slice(i+"3d-models/".length).split("/").map(encodeURIComponent).join("/");
+}
+function kitImg(it){const p=P(it);return imgUrl(it.image||p.heroImage||p.afterImage||p.frontImage);}
+function applImg(it){const p=P(it);return imgUrl(it.image||p.heroImage)|| (it.file?`/models/${encodeURIComponent(it.category)}/${encodeURIComponent(it.file)}`:"");}
+
+/* ---------- story -> dials (with negation / polarity) ---------- */
+const LEX={
+  intent:{calm:/relax|unwind|calm|quiet|breathe|wind down|peace|cozy|cosy|restorative|slow|end of (a|the|my)? ?day|evening|de-?stress|sanctuary/,
+          host:/host|guest|entertain|friends|gather|social|dinner part|crowd|company|wine|people over|a full table|feed(ing)? (a|the) (family|crowd|table)/,
+          fast:/quick|efficient|fast|busy|rush|weeknight|on the go|practical|functional|no fuss|get (it|things) done|streamlin/},
+  palette:{warm_wood:/wood|oak|walnut|timber|grain|rustic|natural materials/,
+           dark:/dark|moody|dramatic|\bblack\b|deep|graphite|charcoal|brooding/,
+           pop:/colour|color|\bgreen\b|\bblue\b|\bred\b|vibrant|bold colou?r|playful|character/,
+           light:/bright|airy|\bwhite\b|\blight\b|fresh|minimal|clean|scandi/,
+           neutral:/grey|gray|taupe|stone|beige|sand|muted|soft neutral/},
+  lines:{seamless:/handleless|seamless|sleek|no handles|smooth|clean lines|minimal/,
+         handled:/handle|handles|knob|shaker|classic|traditional|farmhouse/},
+  investment:{premium:/premium|the best|luxury|splurge|treat myself|high-?end|invest|no compromise|top of the/,
+              essential:/budget|simple|essential|affordable|smart about money|value|keep it cheap/},
+  extractor:{statement:/statement|centerpiece|show ?off|feature piece/,hidden:/hidden|discreet|disappear|integrated|out of sight/},
+};
+const NEG=/\b(not|no|don'?t|never|without|sick of|tired of|done with|hate|hates|hating|anything but|instead of|rather than|used to|can'?t stand|cannot stand|avoid|away from)\b/;
+function negatedNear(text,idx){const start=Math.max(0,idx-40);return NEG.test(text.slice(start,idx));}
+function pick(text,group){ // returns {value, evidence} best net
+  const score={};const ev={};
+  for(const val in group){const re=group[val];const m=re.exec(text);
+    if(m){const neg=negatedNear(text,m.index);score[val]=(score[val]||0)+(neg?-1:1);if(!neg)ev[val]=m[0];}}
+  // resolve to best positive
+  let best=null,bv=-1;for(const v in score){if(score[v]>bv){bv=score[v];best=v;}}
+  if(bv>=1)return{value:best,ev:ev[best]||""};
+  // all negative -> infer opposite for binary dials
+  const negs=Object.keys(score).filter(v=>score[v]<0);
+  if(negs.length){
+    if(group===LEX.palette&&negs.includes("dark"))return{value:"light",ev:"(not dark)"};
+    if(group===LEX.palette&&negs.includes("light"))return{value:"dark",ev:"(not light)"};
+    if(group===LEX.lines&&negs.includes("handled"))return{value:"seamless",ev:"(no handles)"};
+    if(group===LEX.lines&&negs.includes("seamless"))return{value:"handled",ev:"(wants handles)"};
+  }
+  return{value:null,ev:""};
+}
+function household(text){
+  const kids=/\bkids?\b|children|child|toddler|baby|son|daughter|school|little ones/.test(text)&&!negatedNear(text,(text.search(/kids?|children|child/)||0)+1);
+  let size=null,ev="";
+  if(/big family|large family|lots of (us|people)|whole (crew|tribe)|four kids|five of us|six of us|\b(4|5|6|7)\+? (of us|people|kids)/.test(text)){size="4plus";ev="big household";}
+  else if(/\bfamily\b|the kids|our kids|household of (3|4)|two kids|three of us/.test(text)){size="2-4";ev="a family";}
+  else if(/just me|on my own|by myself|the two of us|just us two|me and my partner|couple|just us\b/.test(text)){size="1-2";ev="just one or two";}
+  if(kids&&!size)size="2-4";
+  return{size,kids,ev};
+}
+function extract(text){
+  const t=" "+text.toLowerCase()+" ";
+  const intent=pick(t,LEX.intent),palette=pick(t,LEX.palette),lines=pick(t,LEX.lines),inv=pick(t,LEX.investment),ext=pick(t,LEX.extractor);
+  const hh=household(t);
+  return {
+    intent:intent.value, palette:palette.value, lines:lines.value,
+    household:hh.size, has_kids:hh.kids, investment:inv.value, extractor:ext.value,
+    evidence:{intent:intent.ev,palette:palette.ev,lines:lines.ev,household:hh.ev,investment:inv.ev}
+  };
+}
+
+/* ---------- kitchen classifiers (verified fields) ---------- */
+const kpalette=it=>{const s=[P(it).color,P(it).front].filter(Boolean).join(" ").toLowerCase();
+  if(/oak|walnut|wood|sierra|havana|bergamo|montreal|timber/.test(s))return"warm_wood";
+  if(/aqua|olive|jade|reed green|rust|coral|blackberry|rose gold/.test(s))return"pop";
+  if(/obsidian|black|graphite|slate|anthracite|concrete|charcoal/.test(s))return"dark";
+  if(/white|alpine|ivory|cream|lotus|pearl/.test(s))return"light";
+  if(/grey|gray|stone|satin|taupe|macchiato|coffee|sand|beige/.test(s))return"neutral";return null;};
+const klines=it=>{const h=(P(it).handle||"").toLowerCase();if(!h)return null;return /handleless|integrated grip|grip rail|recess/.test(h)?"seamless":"handled";};
+const ktier=it=>{const s=[P(it).front,P(it).color].filter(Boolean).join(" ").toLowerCase();
+  return /lacquer|gloss|honed|paint|premium|concrete/.test(s)?"premium":/reproduction|laminate|texture/.test(s)?"essential":"balanced";};
+function desiredStyles(d){const set={};const add=(k,n)=>set[k]=(set[k]||0)+n;
+  if(d.intent==="calm"){add("natural & scandinavian",1);add("cottage style",1);}
+  if(d.intent==="host"){add("designer",1);add("modern",1);}
+  if(d.intent==="fast"){add("modern",1.5);}
+  if(d.palette==="warm_wood"){add("cottage style",1);add("natural & scandinavian",1);}
+  if(d.palette==="dark"){add("designer",1);add("modern",.5);}
+  if(d.palette==="light"){add("modern",.7);add("natural & scandinavian",.7);}
+  if(d.palette==="neutral"){add("modern",.5);add("designer",.5);}
+  if(d.investment==="premium"){add("designer",1);}
+  return set;}
+
+function scoreKitchen(it,d,ds){let s=0;const kp=kpalette(it),kl=klines(it),kt=ktier(it);
+  if(d.palette){if(kp===d.palette)s+=2;else if(kp===null)s+=.4;else s-=.3;}
+  if(d.lines){if(kl===d.lines)s+=1.5;else if(kl===null)s+=.3;}
+  if(d.has_kids){s+=(P(it).antiFingerprint===true)?1.5:-.8;}
+  if(d.investment){if(kt===d.investment)s+=1;else if(kt==="balanced")s+=.3;}
+  s+=(ds[P(it).kitchenType]||0); // soft style-world bias (real kitchenType values)
+  return s;}
+function scoreFridge(it,d){let s=0;const p=P(it),cap=p.fridgeCapacity;const col=(p.color||"").toLowerCase();
+  if(d.household&&cap!=null){const band=cap<240?"1-2":cap<=300?"2-4":"4plus";if(band===d.household)s+=2;else s+=.3;}
+  if(d.has_kids){s+=/clean ?steel/.test(col)?1.2:(/steel look/.test(col)?-.6:0);}
+  if(d.palette==="light"&&/white|clean ?steel|silver/.test(col))s+=.8;
+  if(d.palette==="dark"&&/obsidian|black|graphite|blackboard/.test(col))s+=.8;
+  if(d.investment==="premium"&&/PerfectFresh/.test((p.features||[]).join(" ")))s+=.7;
+  return s;}
+function scoreSecondary(it,d){let s=0;const sub=(P(it).subtitle||"").toUpperCase();const col=(P(it).color||"").toLowerCase();
+  if(d.investment==="premium"&&/PLATINUM|DIAMOND/.test(sub))s+=1;
+  if(d.investment==="essential"&&/SILVER/.test(sub))s+=1;
+  if(d.palette==="light"&&/white|silver|steel/.test(col))s+=.6;
+  if(d.palette==="dark"&&/black|obsidian|graphite/.test(col))s+=.6;
+  if(it.category==="Hoods"&&d.extractor){const st=/wall-mounted|island/.test((P(it).subtitle||"").toLowerCase())?"statement":"hidden";if(st===d.extractor)s+=.8;}
+  return s+Math.random()*0.01;}
+function topN(cat,d,n){return ITEMS.filter(i=>i.category===cat).map(i=>({i,s:scoreSecondary(i,d)})).sort((a,b)=>b.s-a.s).slice(0,n).map(x=>x.i);}
+
+/* ---------- render ---------- */
+const DIAL_OPTS={
+  intent:["calm","host","fast"],palette:["light","dark","warm_wood","pop","neutral"],
+  lines:["seamless","handled"],household:["1-2","2-4","4plus"],
+  has_kids:["yes","no"],investment:["essential","balanced","premium"]
+};
+const LBL={calm:"Calm & unwind",host:"Host & gather",fast:"Fast & focused",light:"Light & airy",dark:"Dark & dramatic",warm_wood:"Warm wood",pop:"Pop of colour",neutral:"Soft neutral",seamless:"Handleless",handled:"Handles","1-2":"Just me / a pair","2-4":"A family","4plus":"A big household",yes:"Kids: yes",no:"Kids: no",essential:"Essential",balanced:"Balanced",premium:"Premium"};
+let DIALS={};
+
+function reflection(d){
+  const iw={calm:"winding down at the end of the day",host:"a place to gather and host",fast:"fast, easy and efficient"}[d.intent]||"a kitchen that fits your life";
+  const hw={"1-2":"just the two of you","2-4":"the family","4plus":"a full, busy house"}[d.household]||"";
+  const pw={light:"bright and airy",dark:"deep and dramatic",warm_wood:"warm and natural",pop:"full of character",neutral:"calm and neutral"}[d.palette]||"";
+  return `So — ${iw}${hw?", "+hw:""}${pw?", and it should feel "+pw:""}. Here's your kitchen.`;
+}
+function dialChips(d){
+  return `<div class="heard">`+Object.keys(DIAL_OPTS).map(k=>{
+    const cur=k==="has_kids"?(d.has_kids?"yes":"no"):(d[k]||"");
+    const ev=d.evidence&&d.evidence[k]?` title="heard: ${d.evidence[k]}"`:"";
+    return `<label class="dl"${ev}><b>${k.replace("_"," ")}</b>
+      <select data-k="${k}">${["",...DIAL_OPTS[k]].map(o=>`<option value="${o}" ${o===cur?"selected":""}>${o?(LBL[o]||o):"—"}</option>`).join("")}</select></label>`;
+  }).join("")+`</div>`;
+}
+function miniCard(it){const im=kitImg(it);const p=P(it);
+  return `<div class="mini">${im?`<img src="${im}" loading="lazy" alt="">`:`<div class="noimg">no image</div>`}
+    <div class="mb"><div class="mn">${p.name||it.name}</div><div class="ms">${p.kitchenType||""}</div></div></div>`;}
+function applCard(it){const im=applImg(it);const p=P(it);
+  return `<div class="mini">${im&&/\.(webp|png|jpg|jpeg|gif)$/i.test(im)?`<img src="${im}" loading="lazy" alt="">`:`<div class="noimg">${p.color||it.category}</div>`}
+    <div class="mb"><div class="mn">${p.name||it.name}</div><div class="ms">${p.subtitle||p.color||""}</div></div></div>`;}
+
+function render(){
+  const d=DIALS;const ds=desiredStyles(d);
+  const ranked=ITEMS.filter(i=>i.category==="Kitchens").map(i=>({i,s:scoreKitchen(i,d,ds)})).sort((a,b)=>b.s-a.s);
+  const hero=ranked[0].i, more=ranked.slice(1,4).map(x=>x.i);
+  const fridge=ITEMS.filter(i=>i.category==="Fridges").map(i=>({i,s:scoreFridge(i,d)})).sort((a,b)=>b.s-a.s)[0].i;
+  const hImg=kitImg(hero),hp=P(hero);
+  document.getElementById("result").style.display="block";
+  document.getElementById("result").innerHTML=`
+    <p class="reflection">${reflection(d)}</p>
+    ${dialChips(d)}
+    <div class="hero">${hImg?`<img src="${hImg}" alt="">`:`<div class="noimg" style="aspect-ratio:16/10">no image</div>`}
+      <div class="body"><div class="kname">${hp.name||hero.name}</div>
+      <div class="kmeta">${hp.kitchenType||""}${hp.front?" · "+hp.front:""}</div>
+      <p class="kline">${hp.emotionalLine||hp.headline||hp.description||""}</p></div></div>
+    <div class="secn">More like this</div><div class="rail">${more.map(miniCard).join("")}</div>
+    <div class="secn">Your fridge</div><div class="appl">${applCard(fridge)}</div>
+    <div class="secn">Completes your kitchen</div>
+    <div class="appl">${[...topN("Hoods",d,1),...topN("Cooktops",d,1),...topN("CoffeeMachines",d,1)].map(applCard).join("")}</div>
+  `;
+  document.querySelectorAll(".heard select").forEach(s=>s.onchange=()=>{
+    const k=s.dataset.k,v=s.value;
+    if(k==="has_kids")DIALS.has_kids=v==="yes"?true:(v==="no"?false:null);
+    else DIALS[k]=v||null;
+    render();
+  });
+  document.getElementById("result").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+function go(){const text=document.getElementById("story").value.trim();
+  if(!text){document.getElementById("story").focus();return;}
+  DIALS=extract(text);render();}
+
+/* ---------- examples + voice ---------- */
+const EXAMPLES=[
+  ["Calm couple, warm wood","After a long day I just want to breathe. It's mostly the two of us. I love warm wood and soft natural light — and I can't stand cold glossy black kitchens."],
+  ["Big family, bright & easy-clean","We're a busy family with three kids, so everything has to be easy to wipe down. I want it bright and airy, nothing that shows every fingerprint."],
+  ["Host, dark & premium","I love having friends over for dinner and wine. I want something dramatic and dark, real statement pieces, the best of everything."],
+  ["Fast & minimal, just me","It's just me. I want it fast, efficient and minimal — sleek handleless cabinets, clean and simple, no fuss."],
+];
+document.getElementById("examples").innerHTML=EXAMPLES.map((e,i)=>`<button data-i="${i}">${e[0]}</button>`).join("");
+document.querySelectorAll("#examples button").forEach(b=>b.onclick=()=>{document.getElementById("story").value=EXAMPLES[b.dataset.i][1];go();});
+document.getElementById("reveal").onclick=go;
+
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!SR){document.getElementById("mic").disabled=true;document.getElementById("michint").textContent="(voice needs Chrome / Edge)";}
+else{
+  const rec=new SR();rec.continuous=true;rec.interimResults=true;rec.lang="en-US";
+  let on=false,base="";
+  const mic=document.getElementById("mic");
+  rec.onresult=e=>{let txt="";for(let i=0;i<e.results.length;i++)txt+=e.results[i][0].transcript;
+    document.getElementById("story").value=(base?base+" ":"")+txt;};
+  rec.onend=()=>{on=false;mic.classList.remove("live");mic.textContent="🎤 Speak";};
+  mic.onclick=()=>{if(on){rec.stop();return;}base=document.getElementById("story").value.trim();on=true;mic.classList.add("live");mic.textContent="● Listening… (tap to stop)";rec.start();};
+}
+
+(async()=>{
+  for(const u of ["/api/catalog","catalog.json","../catalog.json"]){
+    try{const r=await fetch(u);if(r.ok){const dt=await r.json();if(dt&&dt.items){ITEMS=dt.items;break;}}}catch(e){}
+  }
+  if(!ITEMS.length){document.getElementById("result").style.display="block";
+    document.getElementById("result").innerHTML='<p class="err">Could not load the catalogue. Open this via the admin server: http://localhost:4173/kitchen-diary.html</p>';}
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_402940dcac2d0a0a
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 402940dcac2d0a0a
+  catalogKey: 402940dcac2d0a0a
+  brandName: Nobilia
+  productName: CASCADA 776
+  subtitle: Cottage style kitchen
+  emotionalLine: A place in the green.
+  shortDescription: Green meets cosiness - this kitchen combines modern country house
+    style with fresh elegance. Subtle reed nuances and the generous stone decor worktop
+    create a relaxed atmosphere with character. Clever storage space solutions and
+    creative ideas, such as an integrated workstation niche, make it the perfect
+    mix of functionality and homeliness.
+  productImage: {fileID: 0}
+  specs:
+  - Reed green
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 776_Reed_green.jpg
+  splatWtMaterial: 807_Epic_Easy_Clay_Quartz_stone.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

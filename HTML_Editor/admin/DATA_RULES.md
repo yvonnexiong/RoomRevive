@@ -58,12 +58,23 @@ The pipeline above is the **miele.dk recipe**. For any other domain: first look 
 - **Data:** material number from the URL → `media.miele.com/downloads/k-/da/FS_<material>_DKD_DK-da.pdf` → `WebFetch` (saves binary) → `Read` the PDF. Folder `k-/da/` is universal across categories.
 - **Gotchas:** no EU energy label for coffee machines / hobs (`energyClass:null` + note); some old `/c/<slug>.htm` URLs are dead; price is never on the datasheet.
 
+### nobilia.de (design elements — proven 2026-06-23)
+- **List:** `WebFetch` the English design-element pages directly (NOT bot-blocked): `/en/products/design-elements/{carcase-colours,worktops,fronts,handles}/`. Each tile = `number | name | image-path`.
+- **Data:** images live under `https://www.nobilia.de/fileadmin/assets/produkte/_kuechen/ausstattungen/<set>/…` where `<set>` is `korpusfarben` (carcase), `arbeitsplatten` (worktops, `<num>_big.jpg`), `fronten` (fronts, `front_<collection>_<num>_d.jpg` — collection prefix varies, keep the exact filename), `griffe` (handles, `<num>.jpg`). Download with `curl --ssl-no-revoke -A "Mozilla/5.0 …"` (Windows schannel needs `--ssl-no-revoke`).
+- **Storage:** these are a reference LIBRARY, not products — store under the top-level `designElements` key in catalog.json (NOT as scanned items, so `AUTO_PRUNE_MISSING` can't touch them), images in `3D-models/DesignElements/<Sub>/<number>.jpg`. Each entry keeps `number, name, type, image, sourceImage`.
+- **Gotchas:** front numbers are unique within fronts but the on-disk URL filename carries a collection prefix; store `image` as `3D-models/DesignElements/…` so the admin's `assetUrl()` resolves it.
+
 ## Definition of done
 - Every product in the run's list has a catalog entry; required fields populated or explicitly blank-with-reason.
 - `validate.js` passes; no duplicates.
 - Nothing fabricated — datasheet-verified vs best-effort is marked.
 
 ## Journal (append-only — newest first)
+
+### 2026-06-24 — Kitchens: antiFingerprint boolean on all 83
+- Added `antiFingerprint` (boolean) to every Kitchens product: 21 true, 62 false. Registered the field in BOTH validate.js FIELDS and product-mcp.js PRODUCT_FIELDS (typeOk already handled 'boolean'). Wrote via PUT /api/items/:id {product:{antiFingerprint}} (single writer), throttled ~0.35s/write with EBUSY+5xx retry/backoff (no EBUSY hit). Kitchens validate: 0 type errors, 0 dupe keys.
+- **Detection: the "ANTI FINGER PRINT" badge is NOT on my local elements/front.webp** — those swatches are clean; the badge is overlaid client-side (JS) on the Nobilia page. And the literal string "anti-fingerprint" is in EVERY product page's static HTML (global nav/footer), so neither is a per-product signal. Authoritative source = Nobilia's dedicated page `nobilia.de/en/anti-fingerprint/`, which enumerates the exact AFP fronts. Cross-checked twice (consistent).
+- AFP fronts (21): SENSO honed 485/488/490/491/492/494/495/496; EASYTOUCH ultramatt 961/963/964/966/967/968/969/970; SOFTLINE honed 507/508/509/510; NATURA 744. **Boundary that matters: matt ≠ honed** — SENSO 483 (Premium matte) and SOFTLINE 504/505 (Perfect matt) are NOT AFP; only "honed" SENSO/SOFTLINE are. All TOUCH supermatt = NOT AFP. NATURA 744 (a wood-repro front) IS AFP per the source — surprising but explicit.
 
 ### 2026-06-20 — Hoods (50) + Microwaves (12): copy-fill, same recipe as cooktops
 - All 62 had datasheet specs but empty copy. Filled subtitle/headline/features/color on every one by reading each productPageUrl via r.jina.ai and reusing Miele's OWN page wording (tier line SILVER/GOLD/PLATINUM/DIAMOND → subtitle; "med …"-tagline → headline; Produktdetaljer bullets → features; finish → color). description left blank everywhere — none of these pages carries a prose paragraph (only feature bullets), so blank-with-reason. Provenance _copySource:product-page / _copyQuality:product-page-verified. Specs untouched. validate.js: 0 type errors, 0 dupes.

@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_4ae880012a7c7f85
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 4ae880012a7c7f85
+  catalogKey: 4ae880012a7c7f85
+  brandName: Nobilia
+  productName: CASCADA 774
+  subtitle: Cottage style kitchen
+  emotionalLine: "Cottage style minus the clich\xE9."
+  shortDescription: Enjoy holiday living and a fresh breeze in the morning with the
+    northern-inspired kitchen, which combines modern elements such as elegant upright
+    panels with selected cottage style details such as wooden handles and pull-outs
+    with fronts made from solid wood.
+  productImage: {fileID: 0}
+  specs:
+  - White
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 774_White.jpg
+  splatWtMaterial: 201_Concrete_Sand_reproduction.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

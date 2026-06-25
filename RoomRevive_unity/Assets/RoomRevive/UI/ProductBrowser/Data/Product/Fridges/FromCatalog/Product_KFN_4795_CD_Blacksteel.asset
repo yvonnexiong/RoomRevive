@@ -15,7 +15,7 @@ MonoBehaviour:
   id: KFN_4795_CD_Blacksteel
   catalogKey: KFN_4795_CD_Blacksteel
   brandName: Miele
-  productName: KFN 4795 CD
+  productName: KFN 4795 CD - 2
   subtitle: "Freestanding fridge-freezer \xB7 black steel"
   emotionalLine: Spacious drawer with moisture control
   shortDescription: DailyFresh, NoFrost, DynaCool and added convenience.
@@ -27,6 +27,8 @@ MonoBehaviour:
   - Class C
   fromPrice: From EUR 2,130
   splatAsset: {fileID: 0}
+  splatCabMaterial: 
+  splatWtMaterial: 
   variants: []
   startsSelectedByDefault: 0
   onSelectedAssetEvent:

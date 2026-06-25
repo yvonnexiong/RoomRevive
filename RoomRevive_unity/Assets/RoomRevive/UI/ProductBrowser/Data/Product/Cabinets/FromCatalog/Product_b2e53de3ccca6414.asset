@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_b2e53de3ccca6414
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: b2e53de3ccca6414
+  catalogKey: b2e53de3ccca6414
+  brandName: Nobilia
+  productName: RIVA 843
+  subtitle: Natural & scandinavian kitchen
+  emotionalLine: Comfortably modern
+  shortDescription: Those who love nature appreciate sustainability and authenticity,
+    including at home. A modern design featuring straight lines and hearty wooden
+    tones creates a feeling of harmony and connection with nature. It lets you enjoy
+    every day consciously.A bold finish. The new Bergamo oak reproduction has a natural,
+    highly modern effect thanks to its elegant vertical grain. Large fronts put an
+    additional emphasis on the look. The ultramatt taupe grey acts as a gentle contrast,
+    while the taupe grey worktop with its basalt-like fibre blends in as the perfect
+    match.
+  productImage: {fileID: 0}
+  specs:
+  - Bergamo oak reproduction
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 843_Bergamo_oak_reproduction.jpg
+  splatWtMaterial: 
+  variants: []
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

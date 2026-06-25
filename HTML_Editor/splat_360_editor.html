@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Splat 360 — panorama capture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#14161a;--panel:#1b1e24;--panel2:#22262e;--line:#2e333d;--text:#e9e7e1;--muted:#9097a3;--accent:#5be08a;--mono:'IBM Plex Mono',ui-monospace,monospace;--ui:'Space Grotesk',system-ui,sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0}html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--ui);font-size:13px}
+#app{display:grid;grid-template-rows:52px 1fr;grid-template-columns:1fr 300px;height:100%}
+#topbar{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+#wordmark{font-weight:600;letter-spacing:.12em}#wordmark em{font-style:normal;color:var(--accent)}
+#filemeta{font-family:var(--mono);font-size:11px;color:var(--muted);flex:1}
+#stats{font-family:var(--mono);font-size:11px;color:var(--muted)}#stats b{color:var(--text)}
+#viewwrap{position:relative;overflow:hidden;background:radial-gradient(1200px 700px at 45% 30%,#1a1d23 0%,#101216 70%)}
+canvas#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#hint{position:absolute;left:14px;bottom:12px;font-family:var(--mono);font-size:10.5px;color:var(--muted);pointer-events:none;line-height:1.7}
+kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;padding:0 4px;font-family:var(--mono);font-size:10px;color:var(--text);background:var(--panel2)}
+#dropzone{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(16,18,22,.92);z-index:20}
+#dropzone.hidden{display:none}
+#dropcard{max-width:460px;text-align:center;padding:42px 38px;border:1px dashed var(--line);border-radius:10px;background:var(--panel)}
+#dropcard h1{font-size:19px;font-weight:600;margin-bottom:10px}#dropcard h1 em{font-style:normal;color:var(--accent)}
+#dropcard p{color:var(--muted);line-height:1.65;margin-bottom:6px}
+#dropzone.drag #dropcard{border-color:var(--accent)}
+#panel{border-left:1px solid var(--line);background:var(--panel);overflow-y:auto}
+.sec{padding:14px 16px;border-bottom:1px solid var(--line)}
+.sec h2{font-size:10.5px;letter-spacing:.18em;color:var(--muted);font-weight:600;margin-bottom:11px;text-transform:uppercase}
+.row{display:flex;align-items:center;gap:8px;margin-bottom:9px}.row:last-child{margin-bottom:0}
+.row label{flex:1;color:var(--muted)}
+.val{font-family:var(--mono);font-size:11px;color:var(--text)}
+input[type=number]{width:62px;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:5px;padding:4px 5px;font-family:var(--mono);font-size:11px}
+input[type=range]{flex:1.4;appearance:none;height:3px;background:var(--line);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;border-radius:50%;background:var(--accent);border:2px solid var(--panel);cursor:pointer}
+select{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:5px;padding:5px 6px;font-family:var(--mono);font-size:11px}
+button{font-family:var(--ui);font-size:12.5px;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:7px 11px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);color:#06140c;border-color:var(--accent);font-weight:600;width:100%}
+button.primary:hover{filter:brightness(1.06)}
+.check{display:flex;align-items:center;gap:8px;color:var(--muted);cursor:pointer;user-select:none}.check input{accent-color:var(--accent)}
+.note{font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:10px}.note b{color:var(--text)}
+.btnrow{display:flex;gap:6px}
+#overlay{position:fixed;inset:0;background:rgba(8,9,11,.82);z-index:50;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+#overlay .bar{width:300px;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+#overlay .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+#overlay .msg{font-family:var(--mono);font-size:12px;color:var(--text)}
+#result{position:fixed;inset:0;background:rgba(8,9,11,.9);z-index:60;display:none;align-items:center;justify-content:center}
+#result .card{background:#1b1e24;border:1px solid #2e333d;border-radius:10px;padding:16px;max-width:94vw;max-height:92vh;display:flex;flex-direction:column;gap:10px}
+#result img{max-width:88vw;max-height:74vh;border-radius:6px;background:#000;display:block}
+#result .hd{display:flex;align-items:center;gap:12px}#result .hd b{flex:1}
+</style></head>
+<body>
+<div id="app">
+  <div id="topbar"><div id="wordmark">SPLAT<em> 360</em></div><div id="filemeta">no scene loaded</div><div id="stats"><b id="stat-pts">–</b> splats</div></div>
+  <div id="viewwrap"><canvas id="gl"></canvas>
+    <div id="hint">drag orbit · <kbd>shift</kbd>/right-drag pan · scroll zoom · <kbd>W A S D</kbd> walk · <kbd>Q</kbd>/<kbd>E</kbd> down/up · double-click a surface → set capture point · <kbd>space</kbd> pivot here · <kbd>Enter</kbd> render 360</div>
+    <div id="dropzone"><div id="dropcard"><h1>SPLAT<em> 360</em></h1>
+      <p>Load a Gaussian-splat scene, walk to a spot, and bake a 360° equirectangular panorama from that exact position.</p>
+      <p style="margin-top:12px">Drop <b style="color:var(--text)">.ply / .spz</b> to view.</p>
+      <div style="margin-top:18px"><button id="btn-open">Open scene .ply / .spz</button><input type="file" id="fileinput" accept=".ply,.spz" style="display:none"></div>
+    </div></div>
+  </div>
+  <div id="panel">
+    <div class="sec"><h2>Capture point</h2>
+      <div class="row"><label>X</label><input type="number" id="cpx" step="0.05"></div>
+      <div class="row"><label>Y (height)</label><input type="number" id="cpy" step="0.05"></div>
+      <div class="row"><label>Z</label><input type="number" id="cpz" step="0.05"></div>
+      <div class="row"><label>Eye height above floor</label><input type="number" id="eyeh" step="0.05" value="1.50"></div>
+      <div class="btnrow"><button id="cp-center" style="flex:1">Use view center</button><button id="cp-floor" style="flex:1">Snap to floor</button></div>
+      <p class="note">Double-click any surface in the view to drop the capture point there (X/Z from the hit, Y = <b>floor + eye height</b>). The green sphere marks where the panorama is shot from.</p>
+    </div>
+    <div class="sec"><h2>Panorama</h2>
+      <div class="row"><label>Resolution</label>
+        <select id="panres">
+          <option value="2048">2048 × 1024</option>
+          <option value="4096" selected>4096 × 2048</option>
+          <option value="8192">8192 × 4096</option>
+        </select></div>
+      <div class="row"><label>Background</label>
+        <select id="panbg"><option value="black" selected>Black</option><option value="white">White</option><option value="grey">Mid grey</option></select></div>
+      <button id="btn-render" class="primary" style="margin-top:4px">Render 360° &amp; download</button>
+      <p class="note">Renders 6 cube faces from the capture point and stitches them into an equirectangular PNG (2:1). Saves alongside as <b>panorama_x_y_z.png</b> — drop it in <b>HTML_Editor/Panoramas/</b>.</p>
+    </div>
+    <div class="sec"><h2>Room crop</h2>
+      <div class="row"><label class="check"><input type="checkbox" id="crophide"> Hide splats outside box</label></div>
+      <div class="row"><label class="check"><input type="checkbox" id="cropshow" checked> Show box</label></div>
+      <div class="row"><label>Center X</label><input type="number" id="ccx" step="0.1"></div>
+      <div class="row"><label>Center Y</label><input type="number" id="ccy" step="0.1"></div>
+      <div class="row"><label>Center Z</label><input type="number" id="ccz" step="0.1"></div>
+      <div class="row"><label>Size X</label><input type="number" id="csx" step="0.1" min="0.1"></div>
+      <div class="row"><label>Size Y</label><input type="number" id="csy" step="0.1" min="0.1"></div>
+      <div class="row"><label>Size Z</label><input type="number" id="csz" step="0.1" min="0.1"></div>
+      <div class="btnrow"><button id="cropreset" style="flex:1">Fit to scene</button></div>
+      <p class="note">Optional: clip away splats outside the room so the panorama has clean walls instead of exterior junk.</p>
+    </div>
+    <div class="sec"><h2>Floaters</h2>
+      <div class="row"><label class="check"><input type="checkbox" id="floaterhide"> Hide floaters</label></div>
+      <div class="row"><label class="check"><input type="checkbox" id="floaters"> Highlight (yellow)</label></div>
+      <div class="row"><label>Voxel cell (m)</label><input type="number" id="floatercell" step="0.01" min="0.01" value="0.06"></div>
+      <div class="row"><label>Max density</label><input type="number" id="floaterdens" step="1" min="1" value="15"></div>
+      <div class="row"><label>Solid alpha</label><input type="number" id="floatersolid" step="0.05" min="0" max="1" value="0.20"></div>
+      <div class="row"><label>Found</label><span class="val" id="floatct">–</span></div>
+      <p class="note">Voxelises space into <b>cell</b>-sized cubes, counts opaque (alpha &gt; <b>solid</b>) splats per cell, and flags any splat whose 3×3×3 neighbourhood holds fewer than <b>max density</b> splats as an isolated floater. <b>Cell</b> 5–8 cm and <b>max density</b> ≈15 suit room-scale kitchens. <b>Max density</b> is the main dial — raise to cut more fuzz. Applies to the live view and the 360 render.</p>
+    </div>
+    <div class="sec"><h2>View</h2>
+      <div class="row"><label>Splat size</label><input type="range" id="splatscale" min="40" max="300" value="220"><span class="val" id="splatscale-v">2.20×</span></div>
+      <div class="row"><label>Exposure</label><input type="range" id="exposure" min="50" max="200" value="115"><span class="val" id="exposure-v">1.15×</span></div>
+      <div class="row"><label>Walk speed</label><input type="range" id="walkspd" min="2" max="40" value="12"><span class="val" id="walkspd-v">0.12</span></div>
+      <div class="row"><label class="check"><input type="checkbox" id="flipv" checked> Flip upside down</label></div>
+    </div>
+    <div class="sec"><h2>Camera</h2>
+      <div class="row"><label>Position</label><span class="val" id="campos">–</span></div>
+      <div class="row"><label>Looking at</label><span class="val" id="camtgt">–</span></div>
+      <div class="btnrow"><button id="camsave" style="flex:1">Save view</button><button id="camreset" style="flex:1">Reset</button></div>
+    </div>
+  </div>
+</div>
+<div id="overlay"><div class="msg" id="ov-msg">Rendering…</div><div class="bar"><i id="ov-bar"></i></div></div>
+<div id="result"><div class="card">
+  <div class="hd"><b>360° panorama from <span id="res-loc" style="font-family:var(--mono);color:var(--accent)"></span></b>
+    <button id="res-dl">Download PNG</button><button id="res-close">Close</button></div>
+  <img id="res-img" alt="panorama">
+</div></div>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
+const pf=v=>{const n=parseFloat(String(v).replace(',','.'));return isFinite(n)?n:0;}; // tolerant float parse (comma decimals)
+const SH_C0=0.28209479177387814;
+function lookAt(eye,t,up){let zx=eye[0]-t[0],zy=eye[1]-t[1],zz=eye[2]-t[2];let zl=Math.hypot(zx,zy,zz)||1;zx/=zl;zy/=zl;zz/=zl;
+ let xx=up[1]*zz-up[2]*zy,xy=up[2]*zx-up[0]*zz,xz=up[0]*zy-up[1]*zx;let xl=Math.hypot(xx,xy,xz)||1;xx/=xl;xy/=xl;xz/=xl;
+ const yx=zy*xz-zz*xy,yy=zz*xx-zx*xz,yz=zx*xy-zy*xx;
+ return new Float32Array([xx,yx,zx,0,xy,yy,zy,0,xz,yz,zz,0,-(xx*eye[0]+xy*eye[1]+xz*eye[2]),-(yx*eye[0]+yy*eye[1]+yz*eye[2]),-(zx*eye[0]+zy*eye[1]+zz*eye[2]),1]);}
+function perspective(f0,a,n,f){const g=1/Math.tan(f0/2),nf=1/(n-f);return new Float32Array([g/a,0,0,0,0,g,0,0,0,0,(f+n)*nf,-1,0,0,2*f*n*nf,0]);}
+const _fb=new Float32Array(1),_ib=new Int32Array(_fb.buffer);
+function toHalf(v){_fb[0]=v;const x=_ib[0];let b=(x>>16)&0x8000,m=(x>>12)&0x07ff;const e=(x>>23)&0xff;
+ if(e<103)return b;if(e>142){b|=0x7c00;b|=(e===255?0:1)&&(x&0x007fffff);return b;}if(e<113){m|=0x0800;b|=(m>>(114-e))+((m>>(113-e))&1);return b;}b|=((e-112)<<10)|(m>>1);b+=m&1;return b;}
+const packHalf2x16=(a,b)=>(toHalf(a)|(toHalf(b)<<16))>>>0;
+const SPZ_MAGIC=0x5053474e;
+function parseSPZ(bytes){const dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+ if(dv.getUint32(0,true)!==SPZ_MAGIC)throw new Error('Not an SPZ file');
+ const version=dv.getUint32(4,true);if(version!==2&&version!==1)throw new Error('Bad SPZ version');
+ const n=dv.getUint32(8,true),frac=dv.getUint8(13);let off=16;
+ const positions=new Float32Array(n*3),div=1/(1<<frac);
+ for(let i=0;i<n*3;i++){let v=bytes[off]|(bytes[off+1]<<8)|(bytes[off+2]<<16);if(v&0x800000)v-=0x1000000;positions[i]=v*div;off+=3;}
+ const alphasU8=bytes.slice(off,off+n);off+=n;
+ const cb=bytes.slice(off,off+n*3);off+=n*3;const colors=new Float32Array(n*3);
+ for(let i=0;i<n*3;i++)colors[i]=clamp(0.5+((cb[i]/255-0.5)/0.15)*SH_C0,0,1);
+ const scalesLog=new Float32Array(n*3);for(let i=0;i<n*3;i++)scalesLog[i]=bytes[off+i]/16-10;off+=n*3;
+ const quats=new Float32Array(n*4);
+ for(let i=0;i<n;i++){const x=bytes[off]/127.5-1,y=bytes[off+1]/127.5-1,z=bytes[off+2]/127.5-1;off+=3;const w=Math.sqrt(Math.max(0,1-x*x-y*y-z*z));quats[i*4]=w;quats[i*4+1]=x;quats[i*4+2]=y;quats[i*4+3]=z;}
+ return {n,positions,alphasU8,colors,scalesLog,quats};}
+function parsePLY(bytes){
+ let hEnd=0;
+ for(let i=0;i<bytes.length-11;i++){
+  if(bytes[i]===101&&bytes[i+1]===110&&bytes[i+2]===100&&bytes[i+3]===95&&bytes[i+4]===104&&
+     bytes[i+5]===101&&bytes[i+6]===97&&bytes[i+7]===100&&bytes[i+8]===101&&bytes[i+9]===114){
+   hEnd=i+10; while(hEnd<bytes.length&&(bytes[hEnd]===10||bytes[hEnd]===13))hEnd++; break;
+  }
+ }
+ if(!hEnd)throw new Error('PLY end_header not found');
+ const hdr=new TextDecoder().decode(bytes.slice(0,hEnd));
+ const lines=hdr.split('\n').map(l=>l.trim()).filter(l=>l.length);
+ if(!lines[0].startsWith('ply'))throw new Error('Not a PLY file');
+ const fmt=lines.find(l=>l.startsWith('format'));
+ if(!fmt||!fmt.includes('binary_little_endian'))throw new Error('Only binary_little_endian PLY supported');
+ const vl=lines.find(l=>l.startsWith('element vertex'));
+ if(!vl)throw new Error('No vertex element in PLY');
+ const n=parseInt(vl.split(/\s+/)[2]);
+ const TS={char:1,uchar:1,short:2,ushort:2,int:4,uint:4,float:4,double:8,int8:1,uint8:1,int16:2,uint16:2,int32:4,uint32:4,float32:4,float64:8};
+ const props=[];let off=0,inV=false;
+ for(const l of lines){
+  if(l.startsWith('element')){inV=l.startsWith('element vertex');continue;}
+  if(!inV||!l.startsWith('property')||l.startsWith('property list'))continue;
+  const parts=l.split(/\s+/);props.push({nm:parts[2],off,sz:TS[parts[1]]||4});off+=TS[parts[1]]||4;
+ }
+ const stride=off;const idx={};props.forEach(p=>idx[p.nm]=p);
+ const positions=new Float32Array(n*3),alphasU8=new Uint8Array(n);
+ const colors=new Float32Array(n*3),scalesLog=new Float32Array(n*3),quats=new Float32Array(n*4);
+ const dv=new DataView(bytes.buffer,bytes.byteOffset+hEnd);
+ const gf=(nm,row)=>{const p=idx[nm];if(!p)return 0;return dv.getFloat32(row*stride+p.off,true);};
+ for(let i=0;i<n;i++){
+  positions[i*3]=gf('x',i);positions[i*3+1]=gf('y',i);positions[i*3+2]=gf('z',i);
+  const op=gf('opacity',i);alphasU8[i]=Math.round(255/(1+Math.exp(-op)));
+  colors[i*3]=clamp(0.5+SH_C0*gf('f_dc_0',i),0,1);
+  colors[i*3+1]=clamp(0.5+SH_C0*gf('f_dc_1',i),0,1);
+  colors[i*3+2]=clamp(0.5+SH_C0*gf('f_dc_2',i),0,1);
+  scalesLog[i*3]=gf('scale_0',i);scalesLog[i*3+1]=gf('scale_1',i);scalesLog[i*3+2]=gf('scale_2',i);
+  const qw=gf('rot_0',i),qx=gf('rot_1',i),qy=gf('rot_2',i),qz=gf('rot_3',i);
+  const ql=Math.sqrt(qw*qw+qx*qx+qy*qy+qz*qz)||1;
+  quats[i*4]=qw/ql;quats[i*4+1]=qx/ql;quats[i*4+2]=qy/ql;quats[i*4+3]=qz/ql;
+ }
+ return {n,positions,alphasU8,colors,scalesLog,quats};}
+async function gunzip(buf){return new Uint8Array(await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer());}
+
+const canvas=$('gl');const gl=canvas.getContext('webgl2',{antialias:false,alpha:true,premultipliedAlpha:true});
+if(!gl){document.body.innerHTML='WebGL2 required';throw new Error('no webgl2');}
+const VS=`#version 300 es
+precision highp float;precision highp int;precision highp usampler2D;
+uniform usampler2D u_data;uniform highp usampler2D u_sel;uniform mat4 u_view,u_proj;uniform vec2 u_focal,u_viewport;
+uniform float u_splatScale,u_exposure,u_cropOn,u_floaterHL,u_floaterHide;uniform vec3 u_cropC,u_cropH;
+in vec2 a_corner;in int a_index;out vec4 vColor;out vec2 vPos;
+void main(){int ix=(a_index&1023)<<1;int iy=a_index>>10;uvec4 t0=texelFetch(u_data,ivec2(ix,iy),0);
+ vec3 p=vec3(uintBitsToFloat(t0.x),uintBitsToFloat(t0.y),uintBitsToFloat(t0.z));
+ if(u_cropOn>0.5){vec3 q=abs(p-u_cropC);if(q.x>u_cropH.x||q.y>u_cropH.y||q.z>u_cropH.z){gl_Position=vec4(0.,0.,2.,1.);return;}}
+ vec4 cam=u_view*vec4(p,1.0);vec4 cp=u_proj*cam;float clip=1.2*cp.w;
+ if(cp.z<-clip||cp.x<-clip||cp.x>clip||cp.y<-clip||cp.y>clip){gl_Position=vec4(0.,0.,2.,1.);return;}
+ uvec4 t1=texelFetch(u_data,ivec2(ix|1,iy),0);
+ vec2 c0=unpackHalf2x16(t1.x),c1=unpackHalf2x16(t1.y),c2=unpackHalf2x16(t1.z);
+ mat3 S=mat3(c0.x,c0.y,c1.x,c0.y,c1.y,c2.x,c1.x,c2.x,c2.y);float tz=cam.z;
+ mat3 J=mat3(-u_focal.x/tz,0.,0.,0.,-u_focal.y/tz,0.,u_focal.x*cam.x/(tz*tz),u_focal.y*cam.y/(tz*tz),0.);
+ mat3 M=J*mat3(u_view);mat3 C=M*S*transpose(M);
+ float cxx=C[0][0]+0.3,cyy=C[1][1]+0.3,cxy=C[1][0];float mid=0.5*(cxx+cyy),rad=length(vec2(0.5*(cxx-cyy),cxy));
+ float l1=mid+rad,l2=mid-rad;if(l2<0.){gl_Position=vec4(0.,0.,2.,1.);return;}
+ vec2 dir=normalize(vec2(cxy,l1-cxx));vec2 major=min(sqrt(2.*l1),1024.)*u_splatScale*dir;vec2 minor=min(sqrt(2.*l2),1024.)*u_splatScale*vec2(dir.y,-dir.x);
+ uint col=t0.w;vec3 rgb=vec3(float(col&255u),float((col>>8)&255u),float((col>>16)&255u))/255.;
+ float a=float((col>>24)&255u)/255.;rgb*=u_exposure;
+ uint sel=texelFetch(u_sel,ivec2(a_index&1023,iy),0).x;
+ if((sel&2u)!=0u&&u_floaterHide>0.5){gl_Position=vec4(0.,0.,2.,1.);return;}
+ if((sel&2u)!=0u&&u_floaterHL>0.5){rgb=vec3(1.,0.92,0.12);a=max(a,0.85);}
+ vColor=vec4(rgb,a);vPos=a_corner;vec2 ndc=cp.xy/cp.w;
+ gl_Position=vec4(ndc+a_corner.x*major/u_viewport+a_corner.y*minor/u_viewport,0.,1.);}`;
+const FS=`#version 300 es
+precision highp float;in vec4 vColor;in vec2 vPos;out vec4 frag;
+void main(){float A=-dot(vPos,vPos);if(A<-4.)discard;float B=exp(A)*vColor.a;frag=vec4(B*vColor.rgb,B);}`;
+function compile(t,s){const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(sh));return sh;}
+const prog=gl.createProgram();gl.attachShader(prog,compile(gl.VERTEX_SHADER,VS));gl.attachShader(prog,compile(gl.FRAGMENT_SHADER,FS));gl.linkProgram(prog);
+if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(prog));
+const U=n=>gl.getUniformLocation(prog,n);
+const uView=U('u_view'),uProj=U('u_proj'),uFocal=U('u_focal'),uVp=U('u_viewport'),uSplatScale=U('u_splatScale'),uExposure=U('u_exposure');
+const uCropOn=U('u_cropOn'),uCropC=U('u_cropC'),uCropH=U('u_cropH'),uFloaterHL=U('u_floaterHL'),uFloaterHide=U('u_floaterHide');
+// line program — capture-point sphere marker + crop box
+const LVS=`#version 300 es
+precision highp float;uniform mat4 u_view,u_proj;uniform vec2 u_viewport;uniform float u_halfpx;
+in float a_t;in float a_side;in vec3 a_A;in vec3 a_B;
+void main(){vec4 cA=u_proj*u_view*vec4(a_A,1.),cB=u_proj*u_view*vec4(a_B,1.);vec4 c=mix(cA,cB,a_t);
+ vec2 sA=cA.xy/cA.w,sB=cB.xy/cB.w;vec2 d=normalize((sB-sA)*u_viewport);vec2 nrm=vec2(-d.y,d.x);
+ c.xy+=a_side*nrm/u_viewport*u_halfpx*2.*c.w;gl_Position=c;}`;
+const LFS=`#version 300 es
+precision highp float;uniform vec3 u_color;out vec4 frag;void main(){frag=vec4(u_color,1.);}`;
+const lprog=gl.createProgram();gl.attachShader(lprog,compile(gl.VERTEX_SHADER,LVS));gl.attachShader(lprog,compile(gl.FRAGMENT_SHADER,LFS));gl.linkProgram(lprog);
+const luView=gl.getUniformLocation(lprog,'u_view'),luProj=gl.getUniformLocation(lprog,'u_proj'),luVp=gl.getUniformLocation(lprog,'u_viewport'),luHalf=gl.getUniformLocation(lprog,'u_halfpx'),luColor=gl.getUniformLocation(lprog,'u_color');
+const laT=gl.getAttribLocation(lprog,'a_t'),laS=gl.getAttribLocation(lprog,'a_side'),laA=gl.getAttribLocation(lprog,'a_A'),laB=gl.getAttribLocation(lprog,'a_B');
+const stripBuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,stripBuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([0,-1,0,1,1,-1,1,1]),gl.STATIC_DRAW);
+const EDGES=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+function lineVAO(buf){const vao=gl.createVertexArray();gl.bindVertexArray(vao);
+ gl.bindBuffer(gl.ARRAY_BUFFER,stripBuf);gl.enableVertexAttribArray(laT);gl.vertexAttribPointer(laT,1,gl.FLOAT,false,8,0);gl.enableVertexAttribArray(laS);gl.vertexAttribPointer(laS,1,gl.FLOAT,false,8,4);
+ gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.enableVertexAttribArray(laA);gl.vertexAttribPointer(laA,3,gl.FLOAT,false,24,0);gl.vertexAttribDivisor(laA,1);gl.enableVertexAttribArray(laB);gl.vertexAttribPointer(laB,3,gl.FLOAT,false,24,12);gl.vertexAttribDivisor(laB,1);
+ gl.bindVertexArray(null);return vao;}
+function sphereAB(cx,cy,cz,r,n){const out=[];
+ for(let pl=0;pl<3;pl++)for(let i=0;i<n;i++){const a0=i/n*6.2831853,a1=(i+1)/n*6.2831853;
+  const f=a=>{const cs=Math.cos(a),sn=Math.sin(a);return pl===0?[0,cs,sn]:pl===1?[cs,0,sn]:[cs,sn,0];};
+  const A=f(a0),B=f(a1);out.push(cx+A[0]*r,cy+A[1]*r,cz+A[2]*r,cx+B[0]*r,cy+B[1]*r,cz+B[2]*r);}
+ return new Float32Array(out);}
+const markBuf=gl.createBuffer();const markVAO=lineVAO(markBuf);let markSeg=0;
+function rebuildMarker(){const ab=sphereAB(capture[0],capture[1],capture[2],0.09,26);markSeg=ab.length/6;
+ gl.bindBuffer(gl.ARRAY_BUFFER,markBuf);gl.bufferData(gl.ARRAY_BUFFER,ab,gl.DYNAMIC_DRAW);}
+// crop box geometry
+const CROP={c:[0,1,0],h:[5,3,5]};const cropAB=new Float32Array(EDGES.length*6);
+const cropBuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,cropBuf);gl.bufferData(gl.ARRAY_BUFFER,cropAB,gl.DYNAMIC_DRAW);
+const cropVAO=lineVAO(cropBuf);
+function rebuildCrop(){const c=CROP.c,h=CROP.h;const mk=(sx,sz,sy)=>[c[0]+sx*h[0],c[1]+sy*h[1],c[2]+sz*h[2]];
+ const cor=[mk(-1,-1,-1),mk(1,-1,-1),mk(1,1,-1),mk(-1,1,-1),mk(-1,-1,1),mk(1,-1,1),mk(1,1,1),mk(-1,1,1)];
+ for(let e=0;e<EDGES.length;e++){const[i,j]=EDGES[e];cropAB.set(cor[i],e*6);cropAB.set(cor[j],e*6+3);}
+ gl.bindBuffer(gl.ARRAY_BUFFER,cropBuf);gl.bufferData(gl.ARRAY_BUFFER,cropAB,gl.DYNAMIC_DRAW);
+ gl.useProgram(prog);gl.uniform3f(uCropC,c[0],c[1],c[2]);gl.uniform3f(uCropH,h[0],h[1],h[2]);gl.uniform1f(uCropOn,$('crophide').checked?1:0);}
+// splat draw state
+const svao=gl.createVertexArray();gl.bindVertexArray(svao);
+const quadBuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,quadBuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-2,-2,2,-2,-2,2,2,2]),gl.STATIC_DRAW);
+const aCorner=gl.getAttribLocation(prog,'a_corner');gl.enableVertexAttribArray(aCorner);gl.vertexAttribPointer(aCorner,2,gl.FLOAT,false,0,0);
+const idxBuf=gl.createBuffer();const aIndex=gl.getAttribLocation(prog,'a_index');gl.bindBuffer(gl.ARRAY_BUFFER,idxBuf);gl.enableVertexAttribArray(aIndex);gl.vertexAttribIPointer(aIndex,1,gl.INT,0,0);gl.vertexAttribDivisor(aIndex,1);
+gl.bindVertexArray(null);
+const dataTex=gl.createTexture(),selTex=gl.createTexture();
+for(const[u,t] of [[0,dataTex],[1,selTex]]){gl.activeTexture(gl.TEXTURE0+u);gl.bindTexture(gl.TEXTURE_2D,t);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);}
+gl.pixelStorei(gl.UNPACK_ALIGNMENT,1);
+let scene=null,texRows=0,texData=null,selected=null,sortIdx=null,drawCount=0,floorY=0;
+const cam={target:[0,1,0],theta:0.6,phi:1.35,radius:6,fov:60*Math.PI/180};
+const capture=[0,1.5,0];
+let viewMat=null,projMat=null,needSort=true;
+function quatToCov(qw,qx,qy,qz,sx,sy,sz,o){const r00=1-2*(qy*qy+qz*qz),r01=2*(qx*qy-qw*qz),r02=2*(qx*qz+qw*qy),r10=2*(qx*qy+qw*qz),r11=1-2*(qx*qx+qz*qz),r12=2*(qy*qz-qw*qx),r20=2*(qx*qz-qw*qy),r21=2*(qy*qz+qw*qx),r22=1-2*(qx*qx+qy*qy);
+ const m00=r00*sx,m01=r01*sy,m02=r02*sz,m10=r10*sx,m11=r11*sy,m12=r12*sz,m20=r20*sx,m21=r21*sy,m22=r22*sz;
+ o[0]=m00*m00+m01*m01+m02*m02;o[1]=m00*m10+m01*m11+m02*m12;o[2]=m00*m20+m01*m21+m02*m22;o[3]=m10*m10+m11*m11+m12*m12;o[4]=m10*m20+m11*m21+m12*m22;o[5]=m20*m20+m21*m21+m22*m22;}
+function colorWord(i){const r=clamp(Math.round(scene.colors[i*3]*255),0,255),g=clamp(Math.round(scene.colors[i*3+1]*255),0,255),b=clamp(Math.round(scene.colors[i*3+2]*255),0,255);return(r|(g<<8)|(b<<16)|(scene.alphasU8[i]<<24))>>>0;}
+function buildGPUData(){const n=scene.n;texRows=Math.ceil(n/1024);texData=new Uint32Array(2048*texRows*4);const f2u=new Uint32Array(1),f2f=new Float32Array(f2u.buffer),cov=new Float32Array(6);selected=new Uint8Array(1024*texRows);
+ for(let i=0;i<n;i++){const row=i>>10,col=(i&1023)<<1,base=(row*2048+col)*4;
+  f2f[0]=scene.positions[i*3];texData[base]=f2u[0];f2f[0]=scene.positions[i*3+1];texData[base+1]=f2u[0];f2f[0]=scene.positions[i*3+2];texData[base+2]=f2u[0];texData[base+3]=colorWord(i);
+  const sx=Math.exp(scene.scalesLog[i*3]),sy=Math.exp(scene.scalesLog[i*3+1]),sz=Math.exp(scene.scalesLog[i*3+2]);
+  quatToCov(scene.quats[i*4],scene.quats[i*4+1],scene.quats[i*4+2],scene.quats[i*4+3],sx,sy,sz,cov);
+  texData[base+4]=packHalf2x16(cov[0],cov[1]);texData[base+5]=packHalf2x16(cov[2],cov[3]);texData[base+6]=packHalf2x16(cov[4],cov[5]);texData[base+7]=0;}
+ gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,dataTex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA32UI,2048,texRows,0,gl.RGBA_INTEGER,gl.UNSIGNED_INT,texData);
+ gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,selTex);gl.texImage2D(gl.TEXTURE_2D,0,gl.R8UI,1024,texRows,0,gl.RED_INTEGER,gl.UNSIGNED_BYTE,selected);needSort=true;}
+function uploadSel(){gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,selTex);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,1024,texRows,gl.RED_INTEGER,gl.UNSIGNED_BYTE,selected);}
+// ── Floater detection: voxel grid + 3×3×3 neighbourhood density filter ──
+// Bins each splat into a `cell`-metre voxel, counts opaque (alpha > solid) splats per voxel,
+// then for each splat sums its 27-cell neighbourhood. Density < maxDensity ⇒ floater (bit 2).
+function detectFloaters(){if(!scene||!selected)return;const n=scene.n,p=scene.positions,op=scene.alphasU8;
+ const CELL=Math.max(0.005,parseFloat($('floatercell').value)||0.06);
+ const MIN=Math.max(1,parseInt($('floaterdens').value)||15);
+ const SOLID=Math.round(clamp(parseFloat($('floatersolid').value)||0.2,0,1)*255);
+ const OFF=1<<19,SP=1<<20;                                  // pack 3 voxel axes into one key
+ const vx=new Int32Array(n),vy=new Int32Array(n),vz=new Int32Array(n),counts=new Map();
+ for(let i=0;i<n;i++){const a=Math.floor(p[i*3]/CELL),b=Math.floor(p[i*3+1]/CELL),c=Math.floor(p[i*3+2]/CELL);vx[i]=a;vy[i]=b;vz[i]=c;
+  if(op[i]>=SOLID){const k=((a+OFF)*SP+(b+OFF))*SP+(c+OFF);counts.set(k,(counts.get(k)||0)+1);}}
+ let cnt=0;
+ for(let i=0;i<n;i++){const a=vx[i],b=vy[i],c=vz[i];let dens=0;
+  for(let dx=-1;dx<=1;dx++){const A=(a+dx+OFF)*SP;for(let dy=-1;dy<=1;dy++){const AB=(A+(b+dy+OFF))*SP+(c+OFF);
+   dens+=(counts.get(AB-1)||0)+(counts.get(AB)||0)+(counts.get(AB+1)||0);}}
+  const fl=dens<MIN?2:0;selected[i]=fl;if(fl)cnt++;}
+ uploadSel();$('floatct').textContent=cnt.toLocaleString()+' floaters';}
+// 180° rotation about X (proper rotation, not a mirror): y→−y, z→−z, and quat (w,x,y,z)→(−x,w,−z,y).
+// Involution — calling twice restores the original, so it doubles as a reversible toggle.
+function flipScene(){if(!scene)return;const p=scene.positions,q=scene.quats,n=scene.n;
+ for(let i=0;i<n;i++){p[i*3+1]=-p[i*3+1];p[i*3+2]=-p[i*3+2];
+  const w=q[i*4],x=q[i*4+1],y=q[i*4+2],z=q[i*4+3];q[i*4]=-x;q[i*4+1]=w;q[i*4+2]=-z;q[i*4+3]=y;}
+ buildGPUData();}
+// shift the splat so its bounding-box centre lands on the world origin (0,0,0)
+let sceneHalf=[1,1,1];
+function recenterScene(){if(!scene)return;const p=scene.positions,n=scene.n,op=scene.alphasU8;let mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];
+ for(let i=0;i<n;i++){if(op[i]<60)continue;for(let k=0;k<3;k++){const v=p[i*3+k];if(v<mn[k])mn[k]=v;if(v>mx[k])mx[k]=v;}}
+ if(!isFinite(mn[0]))return;const c=[(mn[0]+mx[0])/2,(mn[1]+mx[1])/2,(mn[2]+mx[2])/2];
+ sceneHalf=[(mx[0]-mn[0])/2,(mx[1]-mn[1])/2,(mx[2]-mn[2])/2];
+ for(let i=0;i<n;i++){p[i*3]-=c[0];p[i*3+1]-=c[1];p[i*3+2]-=c[2];}
+ buildGPUData();}
+// put the camera EYE exactly at the capture point, keeping the current look direction
+function cameraAtCapture(){const sp=Math.sin(cam.phi),dir=[sp*Math.sin(cam.theta),Math.cos(cam.phi),sp*Math.cos(cam.theta)];
+ cam.target=[capture[0]-cam.radius*dir[0],capture[1]-cam.radius*dir[1],capture[2]-cam.radius*dir[2]];needSort=true;}
+function detectFloorY(){const n=scene.n,p=scene.positions,op=scene.alphasU8;let ymin=Infinity,ymax=-Infinity;
+ for(let i=0;i<n;i++){if(op[i]<128)continue;const y=p[i*3+1];if(y<ymin)ymin=y;if(y>ymax)ymax=y;}
+ const NB=140,h=new Float64Array(NB),sc=NB/Math.max(1e-6,ymax-ymin);
+ for(let i=0;i<n;i++){if(op[i]<128)continue;let b=((p[i*3+1]-ymin)*sc)|0;if(b<0)b=0;if(b>=NB)b=NB-1;h[b]++;}
+ let bst=0,bc=-1;for(let b=0;b<Math.ceil(NB*0.4);b++)if(h[b]>bc){bc=h[b];bst=b;}floorY=ymin+(bst+0.5)/sc;return floorY;}
+function eyePos(){return[cam.target[0]+cam.radius*Math.sin(cam.phi)*Math.sin(cam.theta),cam.target[1]+cam.radius*Math.cos(cam.phi),cam.target[2]+cam.radius*Math.sin(cam.phi)*Math.cos(cam.theta)];}
+function updateMatrices(){const dpr=Math.min(window.devicePixelRatio||1,2);const W=Math.max(1,Math.round(canvas.clientWidth*dpr)),H=Math.max(1,Math.round(canvas.clientHeight*dpr));
+ if(canvas.width!==W||canvas.height!==H){canvas.width=W;canvas.height=H;}
+ viewMat=lookAt(eyePos(),cam.target,[0,1,0]);projMat=perspective(cam.fov,W/H,0.05,600);gl.viewport(0,0,W,H);const f=(H/2)/Math.tan(cam.fov/2);
+ gl.useProgram(prog);gl.uniformMatrix4fv(uView,false,viewMat);gl.uniformMatrix4fv(uProj,false,projMat);gl.uniform2f(uFocal,f,f);gl.uniform2f(uVp,W,H);
+ gl.useProgram(lprog);gl.uniformMatrix4fv(luView,false,viewMat);gl.uniformMatrix4fv(luProj,false,projMat);gl.uniform2f(luVp,W,H);}
+let mtD=null,mtC=null,mtS=null,lastKey='';
+function sortSplats(zx,zy,zz){const n=scene.n,p=scene.positions;if(!mtD||mtD.length!==n)mtD=new Int32Array(n);if(!mtC){mtC=new Uint32Array(65536);mtS=new Uint32Array(65536);}
+ let mn=Infinity,mx=-Infinity;for(let i=0;i<n;i++){const v=-(zx*p[i*3]+zy*p[i*3+1]+zz*p[i*3+2]);const q=(v*4096)|0;mtD[i]=q;if(q<mn)mn=q;if(q>mx)mx=q;}
+ mtC.fill(0);const sc=65535/Math.max(1,mx-mn);for(let i=0;i<n;i++){const b=((mtD[i]-mn)*sc)|0;mtD[i]=b;mtC[b]++;}mtS[0]=0;for(let i=1;i<65536;i++)mtS[i]=mtS[i-1]+mtC[i-1];
+ const out=new Int32Array(n);for(let i=0;i<n;i++)out[mtS[mtD[i]]++]=i;sortIdx=out;gl.bindVertexArray(svao);gl.bindBuffer(gl.ARRAY_BUFFER,idxBuf);gl.bufferData(gl.ARRAY_BUFFER,sortIdx,gl.DYNAMIC_DRAW);gl.bindVertexArray(null);drawCount=n;}
+gl.clearColor(0,0,0,0);
+// ── WASD walk ──
+const keys={};
+window.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if('wasdqe'.includes(k)){keys[k]=true;}});
+window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
+function applyWalk(){if(!scene)return;const spd=parseInt($('walkspd').value)/100;
+ let fx=0,fz=0,sx=0,sz=0,uy=0;
+ // camera forward on ground plane (from eye to target)
+ const e=eyePos(),t=cam.target;let dx=t[0]-e[0],dz=t[2]-e[2];const L=Math.hypot(dx,dz)||1;dx/=L;dz/=L;
+ const rx=dz,rz=-dx; // right = forward × up(y)
+ if(keys.w){fx+=dx;fz+=dz;}if(keys.s){fx-=dx;fz-=dz;}
+ if(keys.d){sx+=rx;sz+=rz;}if(keys.a){sx-=rx;sz-=rz;}
+ if(keys.e)uy+=1;if(keys.q)uy-=1;
+ if(fx||fz||sx||sz||uy){cam.target[0]+=(fx+sx)*spd;cam.target[2]+=(fz+sz)*spd;cam.target[1]+=uy*spd;needSort=true;}}
+let camTick=0;
+function frame(){requestAnimationFrame(frame);if(!scene)return;applyWalk();updateMatrices();
+ if((++camTick%8)===0){const e=eyePos(),t=cam.target;$('campos').textContent=`${e[0].toFixed(2)}, ${e[1].toFixed(2)}, ${e[2].toFixed(2)}`;$('camtgt').textContent=`${t[0].toFixed(2)}, ${t[1].toFixed(2)}, ${t[2].toFixed(2)}`;}
+ const zk=viewMat[2].toFixed(3)+','+viewMat[6].toFixed(3)+','+viewMat[10].toFixed(3);if(needSort||zk!==lastKey){needSort=false;lastKey=zk;sortSplats(viewMat[2],viewMat[6],viewMat[10]);}
+ gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,canvas.width,canvas.height);
+ gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.useProgram(prog);gl.disable(gl.DEPTH_TEST);gl.enable(gl.BLEND);gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA,gl.ONE,gl.ONE_MINUS_DST_ALPHA,gl.ONE);
+ gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,dataTex);gl.uniform1i(U('u_data'),0);
+ gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,selTex);gl.uniform1i(U('u_sel'),1);
+ if(drawCount>0){gl.bindVertexArray(svao);gl.drawArraysInstanced(gl.TRIANGLE_STRIP,0,4,drawCount);gl.bindVertexArray(null);}
+ gl.useProgram(lprog);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.uniform1f(luHalf,3.0);
+ gl.uniform3f(luColor,0.36,0.88,0.54);gl.bindVertexArray(markVAO);gl.drawArraysInstanced(gl.TRIANGLE_STRIP,0,4,markSeg);gl.bindVertexArray(null);
+ if($('cropshow').checked){gl.uniform3f(luColor,0.85,0.85,0.95);gl.bindVertexArray(cropVAO);gl.drawArraysInstanced(gl.TRIANGLE_STRIP,0,4,EDGES.length);gl.bindVertexArray(null);}}
+requestAnimationFrame(frame);
+// ── orbit / pan / zoom ──
+let drag=null,downXY=null;
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+canvas.addEventListener('pointerdown',e=>{if(!scene)return;canvas.setPointerCapture(e.pointerId);const pan=e.button===2||e.button===1||e.shiftKey;drag={mode:pan?'pan':'orbit',x:e.clientX,y:e.clientY};downXY=[e.clientX,e.clientY];});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;if(drag.mode==='orbit'){cam.theta-=(e.clientX-drag.x)*0.006;cam.phi=clamp(cam.phi-(e.clientY-drag.y)*0.006,0.05,Math.PI-0.05);drag.x=e.clientX;drag.y=e.clientY;}
+ else{const dx=e.clientX-drag.x,dy=e.clientY-drag.y,s=cam.radius*0.0016;cam.target[0]-=(viewMat[0]*dx-viewMat[1]*dy)*s;cam.target[1]-=(viewMat[4]*dx-viewMat[5]*dy)*s;cam.target[2]-=(viewMat[8]*dx-viewMat[9]*dy)*s;drag.x=e.clientX;drag.y=e.clientY;}needSort=true;});
+window.addEventListener('pointerup',()=>{drag=null;});
+canvas.addEventListener('wheel',e=>{if(!scene)return;e.preventDefault();cam.radius=clamp(cam.radius*Math.exp(e.deltaY*0.0011),0.3,80);needSort=true;},{passive:false});
+// double-click a surface → set capture point there
+canvas.addEventListener('dblclick',e=>{if(!scene)return;const rect=canvas.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;
+ const W=canvas.clientWidth,H=canvas.clientHeight,vm=viewMat,pm=projMat,p=scene.positions,op=scene.alphasU8;let best=-1,bz=Infinity;
+ for(let i=0;i<scene.n;i++){if(op[i]<60)continue;const x=p[i*3],y=p[i*3+1],z=p[i*3+2];
+  const cz=vm[2]*x+vm[6]*y+vm[10]*z+vm[14];if(cz>=-0.05)continue;const cx=vm[0]*x+vm[4]*y+vm[8]*z+vm[12],cy=vm[1]*x+vm[5]*y+vm[9]*z+vm[13],w=-cz;
+  const sx=((pm[0]*cx)/w*0.5+0.5)*W,sy=(0.5-(pm[5]*cy)/w*0.5)*H,ddx=sx-mx,ddy=sy-my;if(ddx*ddx+ddy*ddy>121)continue;if(w<bz){bz=w;best=i;}}
+ if(best>=0){capture[0]=p[best*3];capture[2]=p[best*3+2];capture[1]=floorY+(parseFloat($('eyeh').value)||1.5);setCaptureInputs();rebuildMarker();}});
+// ── capture-point UI ──
+function setCaptureInputs(){$('cpx').value=capture[0].toFixed(2);$('cpy').value=capture[1].toFixed(2);$('cpz').value=capture[2].toFixed(2);}
+['cpx','cpy','cpz'].forEach((id,k)=>$(id).addEventListener('input',()=>{capture[k]=pf($(id).value);rebuildMarker();cameraAtCapture();}));
+$('cp-center').onclick=()=>{const e=eyePos();capture[0]=e[0];capture[2]=e[2];capture[1]=floorY+(pf($('eyeh').value)||1.5);setCaptureInputs();rebuildMarker();cameraAtCapture();};
+$('cp-floor').onclick=()=>{capture[1]=floorY+(pf($('eyeh').value)||1.5);setCaptureInputs();rebuildMarker();cameraAtCapture();};
+$('eyeh').addEventListener('input',()=>{capture[1]=floorY+(pf($('eyeh').value)||1.5);setCaptureInputs();rebuildMarker();cameraAtCapture();});
+// ── crop UI ──
+function setCropInputs(){$('ccx').value=CROP.c[0].toFixed(2);$('ccy').value=CROP.c[1].toFixed(2);$('ccz').value=CROP.c[2].toFixed(2);
+ $('csx').value=(CROP.h[0]*2).toFixed(2);$('csy').value=(CROP.h[1]*2).toFixed(2);$('csz').value=(CROP.h[2]*2).toFixed(2);}
+function applyCrop(){CROP.c=[+$('ccx').value,+$('ccy').value,+$('ccz').value];CROP.h=[Math.max(0.05,+$('csx').value/2),Math.max(0.05,+$('csy').value/2),Math.max(0.05,+$('csz').value/2)];rebuildCrop();}
+function cropToScene(){if(!scene)return;const p=scene.positions,n=scene.n;let mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];
+ for(let i=0;i<n;i+=7){if(scene.alphasU8[i]<60)continue;for(let k=0;k<3;k++){const v=p[i*3+k];if(v<mn[k])mn[k]=v;if(v>mx[k])mx[k]=v;}}
+ CROP.c=[(mn[0]+mx[0])/2,(mn[1]+mx[1])/2,(mn[2]+mx[2])/2];CROP.h=[(mx[0]-mn[0])/2,(mx[1]-mn[1])/2,(mx[2]-mn[2])/2];setCropInputs();rebuildCrop();}
+['ccx','ccy','ccz','csx','csy','csz'].forEach(id=>$(id).addEventListener('input',applyCrop));
+$('cropreset').onclick=cropToScene;
+$('crophide').addEventListener('change',()=>{gl.useProgram(prog);gl.uniform1f(uCropOn,$('crophide').checked?1:0);});
+// ── view UI ──
+$('splatscale').addEventListener('input',()=>{const v=parseInt($('splatscale').value)/100;gl.useProgram(prog);gl.uniform1f(uSplatScale,v);$('splatscale-v').textContent=v.toFixed(2)+'×';});
+$('exposure').addEventListener('input',()=>{const v=parseInt($('exposure').value)/100;gl.useProgram(prog);gl.uniform1f(uExposure,v);$('exposure-v').textContent=v.toFixed(2)+'×';});
+$('walkspd').addEventListener('input',()=>{$('walkspd-v').textContent=(parseInt($('walkspd').value)/100).toFixed(2);});
+const floatersActive=()=>$('floaterhide').checked||$('floaters').checked;
+$('floaterhide').addEventListener('change',()=>{gl.useProgram(prog);gl.uniform1f(uFloaterHide,$('floaterhide').checked?1:0);if(floatersActive())detectFloaters();needSort=true;});
+$('floaters').addEventListener('change',()=>{gl.useProgram(prog);gl.uniform1f(uFloaterHL,$('floaters').checked?1:0);if(floatersActive())detectFloaters();needSort=true;});
+['floatercell','floaterdens','floatersolid'].forEach(id=>$(id).addEventListener('input',()=>{if(floatersActive())detectFloaters();}));
+$('flipv').addEventListener('change',()=>{if(!scene)return;flipScene();detectFloorY();cropToScene();
+ capture[0]=0;capture[2]=0;capture[1]=floorY+(pf($('eyeh').value)||1.5);
+ cam.theta=0;cam.phi=Math.PI/2;cam.radius=2;cameraAtCapture();
+ if(floatersActive())detectFloaters();setCaptureInputs();rebuildMarker();needSort=true;});
+function frameAll(){if(!scene)return;const p=scene.positions,n=scene.n;let mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];
+ for(let i=0;i<n;i+=11){if(scene.alphasU8[i]<60)continue;for(let k=0;k<3;k++){const v=p[i*3+k];if(v<mn[k])mn[k]=v;if(v>mx[k])mx[k]=v;}}
+ cam.target=[(mn[0]+mx[0])/2,(mn[1]+mx[1])/2,(mn[2]+mx[2])/2];cam.radius=Math.max(mx[0]-mn[0],mx[1]-mn[1],mx[2]-mn[2])*1.7+1.5;needSort=true;}
+$('camsave').onclick=()=>{localStorage.setItem('s360_cam',JSON.stringify({t:cam.target,th:cam.theta,ph:cam.phi,r:cam.radius}));};
+$('camreset').onclick=()=>{localStorage.removeItem('s360_cam');frameAll();};
+function restoreCam(){try{const s=localStorage.getItem('s360_cam');if(!s)return;const c=JSON.parse(s);cam.target=c.t.slice();cam.theta=c.th;cam.phi=c.ph;cam.radius=c.r;}catch(e){}}
+
+// ══════════════ 360° EQUIRECTANGULAR CAPTURE ══════════════
+let fbo=null,fboTex=null,fboSize=0;
+function ensureFBO(size){if(fbo&&fboSize===size)return;if(fbo){gl.deleteFramebuffer(fbo);gl.deleteTexture(fboTex);}
+ fboSize=size;fboTex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,fboTex);
+ gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,size,size,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+ fbo=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,fboTex,0);gl.bindFramebuffer(gl.FRAMEBUFFER,null);}
+// render one 90°-FOV cube face from `eye` looking along `fwd`; returns {img (top-to-bottom RGBA), size, r,u,f basis}
+function renderFace(eye,fwd,up,size){const tgt=[eye[0]+fwd[0],eye[1]+fwd[1],eye[2]+fwd[2]];
+ const vm=lookAt(eye,tgt,up),pm=perspective(Math.PI/2,1,0.05,600),f=size/2;
+ gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);gl.viewport(0,0,size,size);
+ gl.useProgram(prog);gl.uniformMatrix4fv(uView,false,vm);gl.uniformMatrix4fv(uProj,false,pm);gl.uniform2f(uFocal,f,f);gl.uniform2f(uVp,size,size);
+ sortSplats(vm[2],vm[6],vm[10]);
+ gl.disable(gl.DEPTH_TEST);gl.enable(gl.BLEND);gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA,gl.ONE,gl.ONE_MINUS_DST_ALPHA,gl.ONE);
+ gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+ gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,dataTex);gl.uniform1i(U('u_data'),0);
+ gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,selTex);gl.uniform1i(U('u_sel'),1);
+ gl.bindVertexArray(svao);gl.drawArraysInstanced(gl.TRIANGLE_STRIP,0,4,drawCount);gl.bindVertexArray(null);
+ const px=new Uint8Array(size*size*4);gl.readPixels(0,0,size,size,gl.RGBA,gl.UNSIGNED_BYTE,px);
+ gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+ const img=new Uint8Array(size*size*4);const rs=size*4;
+ for(let y=0;y<size;y++)img.set(px.subarray((size-1-y)*rs,(size-1-y)*rs+rs),y*rs); // flip to top-to-bottom
+ return {img,size,r:[vm[0],vm[4],vm[8]],u:[vm[1],vm[5],vm[9]],f:[-vm[2],-vm[6],-vm[10]]};}
+function nextFrameWait(){return new Promise(r=>requestAnimationFrame(()=>r()));}
+async function render360(){if(!scene)return;
+ const W=parseInt($('panres').value),H=W/2,size=W/4;
+ ensureFBO(size);
+ const bgName=$('panbg').value,bg=bgName==='white'?255:bgName==='grey'?128:0;
+ $('overlay').style.display='flex';$('ov-msg').textContent='Rendering cube faces…';$('ov-bar').style.width='5%';
+ await nextFrameWait();
+ const eye=capture.slice();
+ const dirs=[[[1,0,0],[0,-1,0]],[[-1,0,0],[0,-1,0]],[[0,1,0],[0,0,1]],[[0,-1,0],[0,0,-1]],[[0,0,1],[0,-1,0]],[[0,0,-1],[0,-1,0]]];
+ const faces=[];
+ for(let k=0;k<6;k++){faces.push(renderFace(eye,dirs[k][0],dirs[k][1],size));$('ov-bar').style.width=(5+k/6*40)+'%';await nextFrameWait();}
+ $('ov-msg').textContent='Stitching equirectangular…';$('ov-bar').style.width='48%';await nextFrameWait();
+ const out=new Uint8ClampedArray(W*H*4);
+ const fx=faces.map(f=>f.f[0]),fy=faces.map(f=>f.f[1]),fz=faces.map(f=>f.f[2]);
+ const rx=faces.map(f=>f.r[0]),ry=faces.map(f=>f.r[1]),rz=faces.map(f=>f.r[2]);
+ const ux=faces.map(f=>f.u[0]),uy=faces.map(f=>f.u[1]),uz=faces.map(f=>f.u[2]);
+ const imgs=faces.map(f=>f.img),s=size,s1=size-1;
+ let rowReport=Math.max(1,Math.floor(H/12));
+ for(let j=0;j<H;j++){
+  const lat=(0.5-(j+0.5)/H)*Math.PI,cl=Math.cos(lat),sl=Math.sin(lat);
+  for(let i=0;i<W;i++){
+   const lon=((i+0.5)/W*2-1)*Math.PI;
+   const wx=cl*Math.sin(lon),wy=sl,wz=cl*Math.cos(lon);
+   // pick the face whose forward axis is most aligned with this direction
+   let bi=0,bc=wx*fx[0]+wy*fy[0]+wz*fz[0];
+   for(let k=1;k<6;k++){const c=wx*fx[k]+wy*fy[k]+wz*fz[k];if(c>bc){bc=c;bi=k;}}
+   const a=wx*rx[bi]+wy*ry[bi]+wz*rz[bi],b=wx*ux[bi]+wy*uy[bi]+wz*uz[bi],c=bc;
+   const ufp=(0.5+0.5*(a/c))*s1,vfp=(0.5-0.5*(b/c))*s1;
+   let X0=ufp|0,Y0=vfp|0;if(X0<0)X0=0;if(X0>s1)X0=s1;if(Y0<0)Y0=0;if(Y0>s1)Y0=s1;
+   const X1=X0<s1?X0+1:X0,Y1=Y0<s1?Y0+1:Y0,tx=ufp-X0,ty=vfp-Y0,im=imgs[bi];
+   const o00=(Y0*s+X0)*4,o10=(Y0*s+X1)*4,o01=(Y1*s+X0)*4,o11=(Y1*s+X1)*4,di=(j*W+i)*4;
+   for(let ch=0;ch<3;ch++){const top=im[o00+ch]*(1-tx)+im[o10+ch]*tx,bot=im[o01+ch]*(1-tx)+im[o11+ch]*tx;
+    out[di+ch]=top*(1-ty)+bot*ty;} // premultiplied splat color over chosen bg
+   // composite over background using alpha from face
+   const at=im[o00+3]*(1-tx)+im[o10+3]*tx,ab=im[o01+3]*(1-tx)+im[o11+3]*tx,alpha=(at*(1-ty)+ab*ty)/255;
+   out[di]  +=bg*(1-alpha);out[di+1]+=bg*(1-alpha);out[di+2]+=bg*(1-alpha);out[di+3]=255;
+  }
+  if(j%rowReport===0){$('ov-bar').style.width=(48+j/H*45)+'%';await nextFrameWait();}
+ }
+ $('ov-msg').textContent='Encoding PNG…';$('ov-bar').style.width='95%';await nextFrameWait();
+ const cv=document.createElement('canvas');cv.width=W;cv.height=H;cv.getContext('2d').putImageData(new ImageData(out,W,H),0,0);
+ const loc=`${eye[0].toFixed(2)}, ${eye[1].toFixed(2)}, ${eye[2].toFixed(2)}`;
+ const fname=`panorama_${eye[0].toFixed(2)}_${eye[1].toFixed(2)}_${eye[2].toFixed(2)}.png`.replace(/-/g,'m');
+ cv.toBlob(b=>{const url=URL.createObjectURL(b);
+   const a=document.createElement('a');a.href=url;a.download=fname;a.click();
+   $('res-img').src=url;$('res-loc').textContent=loc;$('res-dl').onclick=()=>{const a2=document.createElement('a');a2.href=url;a2.download=fname;a2.click();};
+   $('overlay').style.display='none';$('result').style.display='flex';needSort=true;
+ },'image/png');
+}
+$('btn-render').onclick=render360;
+$('res-close').onclick=()=>{$('result').style.display='none';};
+window.addEventListener('keydown',e=>{if(e.key==='Enter'&&scene&&$('overlay').style.display!=='flex'&&$('result').style.display!=='flex')render360();
+ else if(e.key==='Escape'){$('result').style.display='none';}
+ else if((e.key==='f'||e.key==='F')&&!keys.f)frameAll();
+ else if(e.key===' '){e.preventDefault();if(scene){const eye=eyePos();capture[0]=eye[0];capture[1]=eye[1];capture[2]=eye[2];setCaptureInputs();rebuildMarker();needSort=true;}}});
+
+// ── load ──
+async function loadFile(file){try{const raw=await file.arrayBuffer();let buf=new Uint8Array(raw);if(buf[0]===0x1f&&buf[1]===0x8b)buf=await gunzip(buf);
+ scene=(buf[0]===0x70&&buf[1]===0x6c&&buf[2]===0x79)?parsePLY(buf):parseSPZ(buf);
+ if($('flipv').checked)flipScene();else buildGPUData();
+ recenterScene();
+ gl.useProgram(prog);gl.uniform1f(uSplatScale,parseInt($('splatscale').value)/100);gl.uniform1f(uExposure,parseInt($('exposure').value)/100);gl.uniform1f(uCropOn,$('crophide').checked?1:0);
+ gl.uniform1f(uFloaterHL,$('floaters').checked?1:0);gl.uniform1f(uFloaterHide,$('floaterhide').checked?1:0);
+ detectFloorY();cropToScene();
+ capture[0]=0;capture[2]=0;capture[1]=floorY+(pf($('eyeh').value)||1.5);
+ cam.theta=0;cam.phi=Math.PI/2;cam.radius=2;cameraAtCapture();
+ setCaptureInputs();rebuildMarker();
+ if(floatersActive())detectFloaters();
+ $('dropzone').classList.add('hidden');$('filemeta').textContent=file.name;$('stat-pts').textContent=scene.n.toLocaleString();
+ }catch(err){alert('Could not load: '+err.message);console.error(err);}}
+$('btn-open').onclick=()=>$('fileinput').click();
+$('fileinput').addEventListener('change',e=>{if(e.target.files[0])loadFile(e.target.files[0]);});
+const dz=$('dropzone');window.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+window.addEventListener('dragleave',e=>{if(e.relatedTarget===null)dz.classList.remove('drag');});
+window.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');const f=[...e.dataTransfer.files].find(f=>/\.(ply|spz)$/i.test(f.name));if(f)loadFile(f);});
+// allow ?ply= / ?spz= auto-load when served over http
+(function(){const q=new URLSearchParams(location.search),u=q.get('ply')||q.get('spz')||q.get('src');
+ if(u)fetch(u).then(r=>r.blob()).then(b=>{b.name=u.split('/').pop();return loadFile(b);}).catch(()=>{});})();
+</script></body></html>

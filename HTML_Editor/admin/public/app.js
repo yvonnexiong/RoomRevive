@@ -114,12 +114,23 @@ function card(it) {
   const src = it.file ? `/models/${encodeURIComponent(it.category)}/${encodeURIComponent(it.file)}` : '';
   const ext = (it.file.split('.').pop() || '').toLowerCase();
   const canPreview = ext === 'glb' || ext === 'gltf';
+  const p = it.product || {};
+  const hasP = !!(it.product && Object.keys(p).length);
   let preview;
   if (it.image) {
-    // image items (e.g. kitchens) have no 3D model — the hero photo IS the preview
+    // image items (e.g. kitchens, swatches) have no 3D model — the image IS the preview
     const isrc = assetUrl(it, it.image);
     preview = `<div class="preview imageview">
       <img src="${isrc}" loading="lazy" alt="${esc(it.name || '')}"
+        style="width:100%;height:100%;object-fit:cover;display:block">
+    </div>`;
+  } else if (!it.missing && p.heroImage) {
+    // appliance with a hero photo — show the photo; 3D/gallery live in Details
+    const hsrc = assetUrl(it, p.heroImage);
+    const badge = canPreview ? '🧊 3D in details' : (it.file ? esc(ext.toUpperCase()) : '');
+    preview = `<div class="preview imageview">
+      ${badge ? `<span class="badge">${badge}</span>` : ''}
+      <img src="${hsrc}" loading="lazy" alt="${esc(p.name || it.name || '')}"
         style="width:100%;height:100%;object-fit:cover;display:block">
     </div>`;
   } else if (it.missing || !it.file) {
@@ -139,8 +150,6 @@ function card(it) {
       <div class="fileicon">📦<span>${esc(ext.toUpperCase())}</span><small>no live preview</small></div>
     </div>`;
   }
-  const p = it.product || {};
-  const hasP = !!(it.product && Object.keys(p).length);
 
   const price = p.price != null ? `<span class="price-tag">${fmtPrice(p.price, p.currency)}</span>`
     : (p.priceLabel ? `<span class="price-tag soft">${esc(p.priceLabel)}</span>` : '');
@@ -194,6 +203,8 @@ function card(it) {
   const rScore = p.reviewScore != null ? Number(p.reviewScore) : null;
   const rStars = p.reviewStars != null ? Number(p.reviewStars) : (rScore != null ? Math.round(rScore * 2) / 2 : 0);
   const reviewBadge = p.reviewCount ? `<div class="card-rev">${starbar(rStars)}<b>${(rScore != null ? rScore : 0).toFixed(1)}</b><span class="card-revn">(${p.reviewCount})</span></div>` : '';
+  // anti-fingerprint badge — only shown on kitchens where the field is true
+  const afBadge = (it.image && p.antiFingerprint === true) ? `<span class="af-badge" title="Anti-fingerprint finish">Anti-fingerprint</span>` : '';
 
   el.innerHTML = `
     ${preview}
@@ -203,6 +214,7 @@ function card(it) {
       ${sub}
       <div class="meta"><span class="status-dot s-${it.status}"></span>${it.status}${p.brand ? ` · ${esc(p.brand)}` : ''}${energy}</div>
       ${reviewBadge}
+      ${afBadge}
       ${finish}
       ${specsHTML}
       ${featHTML}
@@ -302,6 +314,7 @@ function kitchenDetail(it, p) {
   row('Headline', esc(p.headline));
   row('Description', esc(p.description || it.description));
   row('Price', esc(p.priceLabel || (p.price != null ? fmtPrice(p.price, p.currency) : '')));
+  row('Anti-fingerprint', p.antiFingerprint != null ? (p.antiFingerprint ? '<span class="af-badge">Anti-fingerprint</span>' : 'No') : '');
   row('Product page', p.productPageUrl ? `<a class="linkbtn" href="${esc(p.productPageUrl)}" target="_blank" rel="noopener">Open page ↗</a>` : '');
   modal({
     wide: true,
@@ -353,6 +366,7 @@ function productDetail(it) {
   row('Variant group', esc(p.variantGroup));
   row('Product sheet', p.productSheetUrl ? `<a class="linkbtn" href="${esc(p.productSheetUrl)}" target="_blank" rel="noopener">Open PDF ↗</a>` : '');
   row('Product page', p.productPageUrl ? `<a class="linkbtn" href="${esc(p.productPageUrl)}" target="_blank" rel="noopener">Open page ↗</a>` : '');
+  row('Local image', p.localImage ? `<img src="${assetUrl(it, p.localImage)}" alt="" style="max-width:140px;border-radius:6px;display:block"><div class="meta"><code>${esc(p.localImage)}</code></div>` : '');
   row('File size', fmtBytes(it.bytes));
 
   // Schema-agnostic: render any product field the bot added that has no curated row above,
@@ -363,12 +377,21 @@ function productDetail(it) {
     extra.forEach(k => row(prettyLabel(k), fmtVal(p[k])));
   }
 
+  // hero photo + gallery strip for appliances (same look as the kitchen panel)
+  const heroSrc = p.heroImage ? assetUrl(it, p.heroImage) : '';
+  const gallery = (Array.isArray(p.additionalImages) ? p.additionalImages : []).filter(Boolean);
+  const mediaBlock = `
+    ${heroSrc ? `<img class="kp-hero" src="${heroSrc}" alt="${esc(p.name || it.name || '')}">` : ''}
+    ${gallery.length ? `<div class="kp-sec">Additional images</div>
+      <div class="kp-strip">${gallery.map(g => `<img src="${assetUrl(it, g)}" alt="" loading="lazy">`).join('')}</div>` : ''}`;
+
   modal({
     wide: true,
     title: esc(p.name || it.name),
     bodyHTML: `
-      ${it.image ? kitchenPanel(it, p) : ''}
-      ${src && !it.missing && canPreview ? `<div class="preview" style="aspect-ratio:16/9;border-radius:10px;overflow:hidden">
+      ${mediaBlock}
+      ${src && !it.missing && canPreview ? `<div class="kp-sec">3D model</div>
+        <div class="preview" style="aspect-ratio:16/9;border-radius:10px;overflow:hidden">
         <model-viewer src="${src}" camera-controls auto-rotate camera-orbit="35deg 75deg auto" style="width:100%;height:100%"></model-viewer></div>` : ''}
       <table class="detail-tbl"><tbody>${rows.join('')}</tbody></table>
       ${reviewsHTML(p) ? `<div class="kp-sec">Reviews</div>${reviewsHTML(p)}` : ''}`,
@@ -434,6 +457,7 @@ function editKitchen(it) {
         <div class="field"><label>Price label</label><input id="k_price" value="${esc(p.priceLabel || '')}" placeholder="Price on request"></div>
         <div class="field"><label>Product page URL</label><input id="k_page" value="${esc(p.productPageUrl || '')}"></div>
       </div>
+      <div class="field"><label class="cb-label"><input type="checkbox" id="k_af" ${p.antiFingerprint ? 'checked' : ''}> Anti-fingerprint finish</label></div>
 
       <div class="form-sec">The four elements <span class="hint">— value + image path</span></div>
       ${['front', 'carcase', 'worktop', 'handle'].map(elRow).join('')}
@@ -482,6 +506,7 @@ function editKitchen(it) {
           additionalImages: $('#k_adds').value.split('\n').map(s => s.trim()).filter(Boolean),
           beforeImage: v('#k_before'), afterImage: v('#k_after'),
           flag: v('#k_flagnote'),
+          antiFingerprint: $('#k_af').checked,
           reviews, reviewScore, reviewStars, reviewCount,
         };
         const d = {
@@ -816,7 +841,7 @@ function fmtPrice(v, c) { try { return new Intl.NumberFormat(undefined, { style:
 const DETAIL_KNOWN = new Set(['brand', 'name', 'subtitle', 'sku', 'modelKey', 'emotionalLine',
   'headline', 'description', 'features', 'fridgeCapacity', 'freezerCapacity', 'annualEnergy',
   'noise', 'energyClass', 'dimensions', 'color', 'swatchColor', 'price', 'priceDKK', 'currency', 'rating',
-  'reviewCount', 'reviewScore', 'reviewStars', 'reviews', 'variantGroup', 'productSheetUrl', 'productPageUrl',
+  'reviewCount', 'reviewScore', 'reviewStars', 'reviews', 'variantGroup', 'productSheetUrl', 'productPageUrl', 'localImage',
   // category spec fields (rendered as curated rows above)
   'capacityL', 'microwavePowerW', 'grill', 'grillPowerW', 'turntableCm', 'weightKg',
   'placeSettings', 'energyPer100Cycles', 'waterPerCycle', 'noiseClass',

@@ -60,6 +60,15 @@ namespace RoomRevive.ProductBrowser
         [Tooltip("Splat asset rendered when this product is active. Used by ProductVariantRouter in GaussianSplat mode.")]
         public GaussianSplatAsset splatAsset;
 
+        [Header("Splat Editor Swap (Kitchens)")]
+        [Tooltip("Cabinet-front material filename in HTML_Editor/CabinetMaterials, sent to the live splat editor as 'cab'. " +
+                 "Auto-filled by the catalog sync from the kitchen's front design element. Empty for non-kitchen products.")]
+        public string splatCabMaterial;
+
+        [Tooltip("Worktop material filename in HTML_Editor/WorktopMaterials, sent to the live splat editor as 'wt'. " +
+                 "Auto-filled by the catalog sync from the kitchen's worktop design element. Empty when the kitchen has no worktop.")]
+        public string splatWtMaterial;
+
         [Header("Variants")]
         [Tooltip("Ordered list of selectable variants (colours, finishes, models). Optional.")]
         public ProductVariantData[] variants;

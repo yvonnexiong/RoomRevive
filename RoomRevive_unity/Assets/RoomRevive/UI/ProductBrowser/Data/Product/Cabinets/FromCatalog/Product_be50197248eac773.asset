@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_be50197248eac773
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: be50197248eac773
+  catalogKey: be50197248eac773
+  brandName: Nobilia
+  productName: TOUCH 338
+  subtitle: Modern kitchen
+  emotionalLine: Very little space for a lot of kitchen.
+  shortDescription: This compact, functional kitchen is ideal for minimalists and
+    first-time buyers. Timeless, due to its softmatt fronts in popular lacquered
+    laminate. Ergonomic, with raised built-in oven. Easy care due to intelligent
+    surface design. And with niche cladding boasting a digitally printed Vector Art
+    motif, it is also a focal point.
+  productImage: {fileID: 0}
+  specs:
+  - Satin grey supermatt
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 338_Satin_grey_supermatt.jpg
+  splatWtMaterial: 354_Concrete_Slate_Grey_reproduction.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

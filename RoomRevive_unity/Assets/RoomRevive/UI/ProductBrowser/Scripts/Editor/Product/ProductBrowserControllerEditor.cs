@@ -104,6 +104,27 @@ namespace RoomRevive.ProductBrowser.EditorTools
 
             EditorGUILayout.Space(4);
 
+            // Live-binding toggle — prominent so it's easy to find.
+            Color prevBgToggle = GUI.backgroundColor;
+            GUI.backgroundColor = controller.liveBinding
+                ? new Color(0.4f, 0.75f, 0.4f)   // green when on
+                : new Color(0.6f, 0.6f, 0.6f);    // grey when off
+            string toggleLabel = controller.liveBinding
+                ? "🔴  Live Binding ON  (click to pause auto-update)"
+                : "▶  Live Binding OFF (click to resume auto-update)";
+            if (GUILayout.Button(toggleLabel, GUILayout.Height(28)))
+            {
+                Undo.RecordObject(controller, "Toggle Live Binding");
+                controller.liveBinding = !controller.liveBinding;
+                EditorUtility.SetDirty(controller);
+                // If turning back on, apply immediately.
+                if (controller.liveBinding)
+                    controller.SendMessage("OnValidate", null, SendMessageOptions.DontRequireReceiver);
+            }
+            GUI.backgroundColor = prevBgToggle;
+
+            EditorGUILayout.Space(4);
+
             using (new EditorGUI.DisabledScope(Application.isPlaying))
             {
                 if (GUILayout.Button("📸  Export Snapshot (read-only)", GUILayout.Height(24)))

@@ -1,0 +1,40 @@
+# ── secrets ──────────────────────────────────────────────────────────────────
+boxer/.env
+
+# ── large binary scene / model files ─────────────────────────────────────────
+*.spz
+*.ply
+*.pt
+boxer/weights/
+
+# ── external repo (has its own .git) ─────────────────────────────────────────
+boxer/boxer_repo/
+
+# ── intermediate renders & debug images ──────────────────────────────────────
+boxer/frames/
+boxer/frames_orbit/
+boxer/frames_focus/
+boxer/dets/
+boxer/overlay/
+boxer/surf/
+boxer/walk/
+boxer/det10/
+boxer/axis/
+boxer/*.png
+boxer/*.npy
+
+# ── detection cache / run outputs ────────────────────────────────────────────
+boxer/dets_*.json
+boxer/detections.json
+boxer/scores.csv
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+
+# ── root-level generated images ──────────────────────────────────────────────
+panorama_from_cube.png
+
+# ── Claude Code internal ──────────────────────────────────────────────────────
+.claude/

@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_9f5df52f952f606d
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 9f5df52f952f606d
+  catalogKey: 9f5df52f952f606d
+  brandName: Nobilia
+  productName: SYLT 848
+  subtitle: Cottage style kitchen
+  emotionalLine: Tradition, naturally inspired
+  shortDescription: Exclusivity is evident in the details! The sand tone lends the
+    fronts a style-defining elegance that is perfectly complemented by the elegant
+    worktop in quartzite amber look. The harmoniously integrated wooden elements
+    in oak look radiate natural warmth and, together with the inviting seating area,
+    create an atmosphere that invites you to linger and enjoy.
+  productImage: {fileID: 0}
+  specs:
+  - Sand Perfect matt
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 848_Sand_Perfect_matt.jpg
+  splatWtMaterial: 238_Amber_quartzite_reproduction.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

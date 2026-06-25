@@ -13,6 +13,7 @@ const FIELDS = {
   color:{type:'string'}, swatchColor:{type:'string'}, variantGroup:{type:'string'},
   price:{type:'number'}, currency:{type:'string'}, rating:{type:'number'}, reviewCount:{type:'number'},
   reviews:{type:'array'}, productSheetUrl:{type:'string'}, productPageUrl:{type:'string'}, modelKey:{type:'string'},
+  localImage:{type:'string'},   // /models-resolvable path to the rendered local image (png/gif)
   // dishwasher / cross-category
   placeSettings:{type:'number'}, energyPer100Cycles:{type:'number'}, waterPerCycle:{type:'number'}, noiseClass:{type:'string'},
   // coffee machines
@@ -31,16 +32,18 @@ const FIELDS = {
   dimensionsNote:{type:'string'}, _specSource:{type:'string'}, _dataQuality:{type:'string'}, _note:{type:'string'},
   _copySource:{type:'string'}, _copyQuality:{type:'string'},
   // kitchens (image-based items, rendered in the dedicated kitchen panel)
-  productType:{type:'string'}, priceLabel:{type:'string'}, range:{type:'string'}, flag:{type:'string'},
+  productType:{type:'string'}, priceLabel:{type:'string'}, range:{type:'string'}, flag:{type:'string'}, kitchenType:{type:'string'},
   front:{type:'string'}, carcase:{type:'string'}, worktop:{type:'string'}, handle:{type:'string'},
   frontImage:{type:'string'}, carcaseImage:{type:'string'}, worktopImage:{type:'string'}, handleImage:{type:'string'},
   heroImage:{type:'string'}, additionalImages:{type:'array'}, beforeImage:{type:'string'}, afterImage:{type:'string'},
   gallery:{type:'array'}, _source:{type:'string'}, reviewScore:{type:'number'}, reviewStars:{type:'number'},
+  antiFingerprint:{type:'boolean'},
+  designElementRefs:{type:'object'},   // kitchen -> {front,carcase,worktop,handle} design-element ids
 };
 const SPEC_FIELDS = ['fridgeCapacity','freezerCapacity','annualEnergy','noise','energyClass','dimensions'];
 
 const cat = JSON.parse(fs.readFileSync(CAT, 'utf8'));
-const typeOk = (v,t) => t==='array' ? Array.isArray(v) : t==='number' ? typeof v==='number' : t==='boolean' ? typeof v==='boolean' : typeof v==='string';
+const typeOk = (v,t) => t==='array' ? Array.isArray(v) : t==='number' ? typeof v==='number' : t==='boolean' ? typeof v==='boolean' : t==='object' ? (typeof v==='object' && !Array.isArray(v)) : typeof v==='string';
 
 const per = {}; const typeErrors = []; const missingReq = []; const dupes = {};
 for (const it of cat.items) {

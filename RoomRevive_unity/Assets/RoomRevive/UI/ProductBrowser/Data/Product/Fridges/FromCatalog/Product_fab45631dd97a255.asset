@@ -23,6 +23,8 @@ MonoBehaviour:
   specs: []
   fromPrice: 
   splatAsset: {fileID: 0}
+  splatCabMaterial: 
+  splatWtMaterial: 
   variants: []
   startsSelectedByDefault: 0
   onSelectedAssetEvent:

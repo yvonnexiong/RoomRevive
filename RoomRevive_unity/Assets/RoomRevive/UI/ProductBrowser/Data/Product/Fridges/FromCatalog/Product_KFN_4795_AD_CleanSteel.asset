@@ -15,7 +15,7 @@ MonoBehaviour:
   id: KFN_4795_AD_CleanSteel
   catalogKey: KFN_4795_AD_CleanSteel
   brandName: Miele
-  productName: KFN 4795 AD
+  productName: KFN 4795 AD - 2
   subtitle: "Freestanding fridge-freezer \xB7 clean steel"
   emotionalLine: Spacious drawer with moisture control
   shortDescription: DailyFresh, NoFrost, DynaCool and added convenience.
@@ -27,6 +27,8 @@ MonoBehaviour:
   - Class A
   fromPrice: From EUR 2,452
   splatAsset: {fileID: 0}
+  splatCabMaterial: 
+  splatWtMaterial: 
   variants: []
   startsSelectedByDefault: 0
   onSelectedAssetEvent:

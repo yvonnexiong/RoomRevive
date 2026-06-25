@@ -25,6 +25,10 @@ namespace RoomRevive
                  "Turn off for a one-time snap (then you can edit the transform freely).")]
         public bool matchEveryFrame = true;
 
+        [Tooltip("Per-axis padding as a fraction of the collider half-extent. " +
+                 "0 = exact match, 0.3 = +30% larger, -0.3 = 30% smaller (inset).")]
+        public Vector3 paddingPercent = Vector3.zero;
+
         void OnEnable() => Match();
 
         void Update()
@@ -56,6 +60,12 @@ namespace RoomRevive
             // Collider world half-extents = (size * 0.5) scaled by the collider transform's lossy scale.
             // The cutout's world half-extents equal its own lossy scale, so this is our target world scale.
             Vector3 worldHalf = Vector3.Scale(target.size * 0.5f, ct.lossyScale);
+
+            // Grow / shrink the matched region by a per-axis fraction (0.3 = +30%, -0.3 = inset 30%).
+            worldHalf = new Vector3(
+                worldHalf.x * (1f + paddingPercent.x),
+                worldHalf.y * (1f + paddingPercent.y),
+                worldHalf.z * (1f + paddingPercent.z));
 
             transform.SetPositionAndRotation(worldCenter, worldRot);
 

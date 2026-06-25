@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_78902f0b73548835
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 78902f0b73548835
+  catalogKey: 78902f0b73548835
+  brandName: Nobilia
+  productName: SENSO 483
+  subtitle: Designer kitchen
+  emotionalLine: Natural aesthetics
+  shortDescription: Modern homeliness meets the current zeitgeist. The warm earth
+    tone Macchiato creates a calm, stylish ambience and appeals to customers with
+    a particular affinity for design. In combination with a light wood decor, it
+    creates a high-quality Look, which is ideal for sophisticated kitchens and living
+    concepts. The kitchen has a push-to-open function and is therefore completely
+    handleless.
+  productImage: {fileID: 0}
+  specs:
+  - Paint, Macchiato Premium matte
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 483_Macchiato_Premium_matte.jpg
+  splatWtMaterial: 198_Sierra_oak_reproduction.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

@@ -65,6 +65,7 @@
     <Compile Include="Assets\RoomRevive\Scripts\UI\FaceCamera.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Hotspot\ProductCardUI.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\BeforeAfter\BeforeAfterSlider.cs" />
+    <Compile Include="Assets\RoomRevive\Scripts\Splat\GaussianCutoutPadding.cs" />
     <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Runtime\Product\FavoriteButton.cs" />
     <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Runtime\IntentAudioRouter.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Intent\IntentSO.cs" />
@@ -74,8 +75,10 @@
     <Compile Include="Assets\Scripts\SplatManager.cs" />
     <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Runtime\Product\ProductData.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Intent\IntentSelectorUI.cs" />
+    <Compile Include="Assets\RoomRevive\VFX\GaussianRegionDesaturate\Scripts\Runtime\GaussianRegionDesaturate.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\ProductCard\ProductDetailsUI.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Startup\SplatOpacitySlider.cs" />
+    <Compile Include="Assets\RoomRevive\VFX\OutsideColliderClip\Scripts\Runtime\OutsideColliderClip.cs" />
     <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Runtime\IntentSelectorTheme.cs" />
     <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Runtime\HeadFollowWorldUI.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Intent\IntentManager.cs" />
@@ -92,12 +95,15 @@
     <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Runtime\Product\ProductBrowserView.cs" />
     <Compile Include="Assets\Scripts\AssignMaterialToChildren.cs" />
     <Compile Include="Assets\Scripts\FaceCameraAdvanced.cs" />
+    <Compile Include="Assets\RoomRevive\VFX\CameraBoxRegionEffect\Scripts\Runtime\CameraBoxRegionEffect.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\ProductCard\MetaRayProductCardMenu.cs" />
     <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Runtime\Product\ProductDiscoverView.cs" />
+    <Compile Include="Assets\RoomRevive\SplatEditorBridge\Scripts\Runtime\SplatMaterialSwapClient.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Product\ProductSO.cs" />
     <Compile Include="Assets\Scripts\MetaRayIntentCardHitbox.cs" />
     <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Runtime\IntentVisibilityRouter.cs" />
     <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Runtime\Product\ProductSwapView.cs" />
+    <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Runtime\Product\CabinetMaterialSwapRouter.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Hotspot\HotspotVisual.cs" />
     <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Runtime\Product\ProductBrowserController.cs" />
     <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Runtime\Product\ProductCategoryData.cs" />
@@ -115,6 +121,7 @@
     <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Runtime\IntentSelectorController.cs" />
     <Compile Include="Assets\Scripts\GaussianSplatBoxColliderCutoutBinder.cs" />
     <Compile Include="Assets\Scripts\MetaRayIntentCardData.cs" />
+    <Compile Include="Assets\Scripts\DisableOnEnable.cs" />
     <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Runtime\IntentSelectorView.cs" />
     <Compile Include="Assets\Scripts\MetaRayIntentCardMenu.cs" />
     <Compile Include="Assets\Scripts\SetupManager.cs" />
@@ -144,16 +151,19 @@
     <Compile Include="Assets\RoomRevive\Scripts\UI\HeadFollowCanvas.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\Hotspot\HotspotSO.cs" />
     <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Runtime\IntentStateCatalog.cs" />
+    <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Runtime\Product\FavoritesJsonStore.cs" />
     <Compile Include="Assets\RoomRevive\Scripts\ProductCard\VariantCarouselUI.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
+    <None Include="Assets\RoomRevive\VFX\CameraBoxRegionEffect\Shaders\ExcludeMaskWhite.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Overlay.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile-2-Pass.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap.shader" />
     <None Include="Assets\Shaders\SphereRoomChangeSurfaceURP.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Mobile.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF SSD.shader" />
+    <None Include="Assets\RoomRevive\VFX\GaussianRegionDesaturate\Shaders\RenderGaussianSplats_RegionDesaturate.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Surface-Mobile.shader" />
     <None Include="Assets\RoomRevive\Shader\YinanSpriteSphereIntersectionURP.shader" />
     <None Include="Assets\XRCC\GeneratedShaders\XRCC_CyaniluxStyleForcefieldURP.shader" />
@@ -172,7 +182,9 @@
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Surface.cginc" />
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Following Characters.txt" />
     <None Include="Assets\RoomRevive\Shader\HotspotPulseURP.shader" />
+    <None Include="Assets\RoomRevive\VFX\CameraBoxRegionEffect\Shaders\BoxRegionBlurGray.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Masking.shader" />
+    <None Include="Assets\RoomRevive\VFX\OutsideColliderClip\Shaders\OutsideColliderHighlight.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF Overlay.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap-Mobile.shader" />
     <None Include="Assets\TextMesh Pro\Fonts\LiberationSans - OFL.txt" />

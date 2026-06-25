@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_4c125991e70bfdbd
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 4c125991e70bfdbd
+  catalogKey: 4c125991e70bfdbd
+  brandName: Nobilia
+  productName: FRAME 617
+  subtitle: Cottage style kitchen
+  emotionalLine: Warm naturalness for the bathroom.
+  shortDescription: Frame 617 brings warm naturalness into the bathroom. The lacquered
+    laminate front in olive wood texture looks calm and modern. Handle 262 in titanium
+    colour discreetly complements the clear frame look. The body in white creates
+    a fresh contrast. The top in greige Jura marble picks up on the natural look
+    and has a high-quality feel.
+  productImage: {fileID: 0}
+  specs:
+  - Olive
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 617_Wood_texture_olive.jpg
+  splatWtMaterial: 237_Jura_greige_marble_reproduction.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

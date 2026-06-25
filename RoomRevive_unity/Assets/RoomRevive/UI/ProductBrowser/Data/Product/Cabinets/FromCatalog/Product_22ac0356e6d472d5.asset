@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_22ac0356e6d472d5
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 22ac0356e6d472d5
+  catalogKey: 22ac0356e6d472d5
+  brandName: Nobilia
+  productName: NOVALUX 516
+  subtitle: Modern kitchen
+  emotionalLine: A purist moment of pleasure
+  shortDescription: 'Stylish, smart and anything but ordinary: glossy white kitchen
+    modules meet a highboard with elegant, semi-transparent glass fronts - perfect
+    for all your kitchen essentials. The worktop, creatively designed as a counter,
+    demonstrates taste in three layers. Natural wood elements provide homely contrasts
+    and give the room a warm, inviting atmosphere.'
+  productImage: {fileID: 0}
+  specs:
+  - Alpine white high gloss
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 516_Alpine_white_high_gloss.jpg
+  splatWtMaterial: 367_Artisan_oak_reproduction_Xtra.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

@@ -15,7 +15,7 @@ MonoBehaviour:
   id: KFN_4797_CD_CleanSteel
   catalogKey: KFN_4797_CD_CleanSteel
   brandName: Miele
-  productName: KFN 4797 CD
+  productName: KFN 4797 CD - 1
   subtitle: "Freestanding fridge-freezer \xB7 clean steel"
   emotionalLine: "Professional storage \u2014 fresher for longer"
   shortDescription: PerfectFresh Pro and NoFrost for lasting freshness and added
@@ -28,6 +28,8 @@ MonoBehaviour:
   - Class C
   fromPrice: From EUR 1,983
   splatAsset: {fileID: 0}
+  splatCabMaterial: 
+  splatWtMaterial: 
   variants: []
   startsSelectedByDefault: 0
   onSelectedAssetEvent:

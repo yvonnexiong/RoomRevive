@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_c0e6ef3c71635431
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: c0e6ef3c71635431
+  catalogKey: c0e6ef3c71635431
+  brandName: Nobilia
+  productName: NORDIC 786
+  subtitle: Cottage style kitchen
+  emotionalLine: Pure Cosiness
+  shortDescription: "Your first home together, first child, first kitchen there\u2019s
+    always a lot for young families to do so it\u2019s good to have support. A cottage
+    style kitchen is perfect for the different phases of family life, for organising
+    everyday life and it is also a placewhere you feel good whenever you\u2019re
+    there. Items for lovers of the modern cottage style: the shade slate grey is
+    the charming, more muted alternative to our light shades and looks contemporary,
+    modern and individual. Eye-catching: the framed glass doors in a Scandinavian
+    design provide lovely glimpses."
+  productImage: {fileID: 0}
+  specs:
+  - Slate grey matt
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 786_Slate_grey_matt.jpg
+  splatWtMaterial: 792_Belgian_Blue_Stone_reproduction_Xtra_Ceramic.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

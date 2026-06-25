@@ -27,6 +27,12 @@ namespace RoomRevive.ProductBrowser
         [Tooltip("Product index to preview.")]
         [Min(0)] public int previewIndex = 0;
 
+        [Tooltip("When you change Preview Index in the editor, also POST the previewed kitchen's cabinet/worktop " +
+                 "materials to the live splat editor so the splat swaps to match. Editor-only, fire-and-forget.")]
+        public bool swapSplatOnPreview = false;
+        [Tooltip("Splat-editor server URL used for the preview swap.")]
+        public string splatEditorUrl = "http://localhost:8766";
+
         [Header("Prefab Wiring — Header")]
         public TextMeshProUGUI categoryLabel;
         [Tooltip("Small colored dot left of the brand. Tinted with the category accent color.")]
@@ -98,13 +104,34 @@ namespace RoomRevive.ProductBrowser
         // ── Editor live-preview ──────────────────────────────────────────────
 
 #if UNITY_EDITOR
+        string _lastSwapKey;
+
         void OnValidate()
         {
             UnityEditor.EditorApplication.delayCall += () =>
             {
                 if (this == null) return;
                 if (previewCategory != null) Bind(previewCategory, previewIndex);
+                if (swapSplatOnPreview) TrySwapPreview();
             };
+        }
+
+        // Edit-mode: push the previewed kitchen's materials to the splat editor. Deduped on the
+        // previewed (index + materials) so editing unrelated wiring fields doesn't re-send a swap.
+        void TrySwapPreview()
+        {
+            ProductCatalog catalog = previewCategory != null ? previewCategory.catalog : null;
+            if (catalog == null) return;
+            ProductData product = catalog.GetProduct(previewIndex);
+            if (product == null) return;
+
+            string cab = product.splatCabMaterial, wt = product.splatWtMaterial;
+            if (string.IsNullOrEmpty(cab) && string.IsNullOrEmpty(wt)) return;   // not a kitchen / no splat materials
+
+            string key = previewIndex + "|" + cab + "|" + wt;
+            if (key == _lastSwapKey) return;
+            _lastSwapKey = key;
+            RoomRevive.SplatEditorBridge.SplatMaterialSwapClient.SwapMaterialsEditor(splatEditorUrl, cab, wt);
         }
 #endif
 
@@ -143,8 +170,11 @@ namespace RoomRevive.ProductBrowser
             // Price row: split a leading "From" off the value so it shows as
             // [From] [value] (e.g. "From $7,400" → From + "$7,400", "€870" → From + "€870").
             bool hasPrice = !string.IsNullOrEmpty(product.fromPrice);
+            // Only show the static "From" label for real "From …" prices — not for text labels
+            // like "Price on request" (Nobilia kitchens carry those instead of a number).
+            bool hasFrom  = hasPrice && product.fromPrice.TrimStart().StartsWith("From", System.StringComparison.OrdinalIgnoreCase);
             if (priceLabel != null) priceLabel.text = StripFromPrefix(product.fromPrice);
-            if (fromLabel != null)  fromLabel.gameObject.SetActive(hasPrice);
+            if (fromLabel != null)  fromLabel.gameObject.SetActive(hasFrom);
             if (priceRow != null)   priceRow.SetActive(hasPrice);
 
             RefreshSpecChips(product);

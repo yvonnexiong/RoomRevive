@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Recommendation Funnel — narrow the catalog to a recommendation</title>
+<style>
+  :root{
+    --bg:#F4F1EA;--card:#fff;--ink:#2b2723;--muted:#8a8178;--accent:#9c5a3c;
+    --line:#e6e0d6;--bar:#c9bfb1;--barfill:#9c5a3c;--ok:#3c7a4a;--bad:#b4593f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Georgia,"Times New Roman",serif;padding:26px}
+  .wrap{max-width:1120px;margin:0 auto}
+  h1{font-size:23px;margin:0 0 3px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 18px}
+  .grid{display:grid;grid-template-columns:380px 1fr;gap:22px;align-items:start}
+  @media(max-width:860px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .gtitle{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px}
+  .gtitle:first-child{margin-top:0}
+  .q{margin-bottom:13px}
+  .q h3{font-size:13.5px;margin:0 0 2px;font-weight:normal}
+  .q .cuts{color:var(--muted);font-size:11px;margin:0 0 6px;font-style:italic}
+  .opts{display:flex;flex-wrap:wrap;gap:6px}
+  .opt{font:12px/1.15 Georgia,serif;border:1px solid var(--line);background:#faf8f4;color:var(--ink);
+    padding:6px 10px;border-radius:10px;cursor:pointer;transition:.12s;text-align:center}
+  .opt:hover{border-color:var(--bar)}
+  .opt.on{background:#2b2723;color:#fff;border-color:#2b2723}
+  .opt .os{display:block;font-size:10px;color:var(--muted)}
+  .opt.on .os{color:#cfc7ba}
+  .reset{margin-top:10px;font:13px Georgia,serif;background:none;border:none;color:var(--accent);cursor:pointer;text-decoration:underline}
+  .total{font-size:15px;margin:0 0 14px;color:var(--muted)}
+  .total b{color:var(--ink);font-size:22px}
+  .row{display:grid;grid-template-columns:160px 1fr 78px 64px;gap:10px;align-items:center;margin:8px 0}
+  .row .name{font-size:14px}
+  .track{height:15px;background:#efe9df;border-radius:8px;overflow:hidden}
+  .fill{height:100%;background:var(--barfill);width:0;transition:width .25s}
+  .count{text-align:right;font-size:13px;color:var(--muted)}
+  .count b{color:var(--ink)}
+  .badge{font-size:11px;text-align:center;border-radius:999px;padding:2px 0}
+  .badge.ok{background:#e3efe4;color:var(--ok)}
+  .badge.bad{background:#f3e2dc;color:var(--bad)}
+  .comp .fill{background:var(--bar)}.comp .name,.comp .count{color:var(--muted)}
+  details{margin-top:16px;font-size:13px;color:var(--muted)}
+  summary{cursor:pointer;color:var(--accent)}
+  .rules{margin-top:8px;border-left:2px solid var(--line);padding-left:12px}
+  .rules code{background:#f2ece2;padding:1px 4px;border-radius:4px;font-size:12px}
+  .kits{margin-top:10px;font-size:13px;max-height:200px;overflow:auto;border-top:1px dashed var(--line);padding-top:10px}
+  .kits span{display:inline-block;background:#f2ece2;border-radius:6px;padding:3px 8px;margin:0 5px 5px 0;font-size:12px}
+  .err{color:#a33}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Recommendation Funnel</h1>
+  <p class="sub">6 narrowers decide <i>which</i> objects; 3 refiners pick the <i>best</i> one. Green badge = that category is down to a recommendable handful (&lt; 10).</p>
+  <div class="grid">
+    <div class="panel" id="questions"></div>
+    <div class="panel">
+      <p class="total" id="total">Loading catalog…</p>
+      <div id="results"></div>
+      <div class="kits" id="kits"></div>
+      <details>
+        <summary>How each answer maps to the catalog</summary>
+        <div class="rules" id="rules"></div>
+      </details>
+    </div>
+  </div>
+</div>
+<script>
+const CAB=["Kitchens"], APPL=["Fridges","Dishwashers","Cooktops","Hoods","Microwaves","CoffeeMachines"];
+const COMPONENTS=["Fronts","Handles","Worktops","CarcaseColours"];
+const TARGETS=[...CAB,...APPL];
+
+/* ---------- classifiers (all read real catalog fields) ---------- */
+const P=it=>it.product||{};
+const styleOf=it=>{if(it.category!=="Kitchens")return null;const u=(P(it).productPageUrl||"").toLowerCase();
+  return /modern-kitchens/.test(u)?"modern":/design/.test(u)?"designer":/country|cottage/.test(u)?"cottage":/scandi|natural/.test(u)?"scandi":null;};
+const paletteOf=it=>{const s=[P(it).color,P(it).front].filter(Boolean).join(" ").toLowerCase();
+  if(/oak|walnut|wood|sierra|havana|bergamo|montreal/.test(s))return"wood";
+  if(/aqua|olive|jade|reed green|rust|coral|blackberry|rose gold/.test(s))return"colour";
+  if(/obsidian|black|graphite|slate|anthracite|concrete|\bdark\b/.test(s))return"dark";
+  if(/white|alpine|ivory|sand|cream|grey|gray|stone|satin|steel|clean|silver|lotus|pearl/.test(s))return"light";
+  return null;};
+const handleOf=it=>{if(it.category!=="Kitchens")return null;const h=(P(it).handle||"").toLowerCase();if(!h)return null;
+  return /handleless|integrated grip|grip rail|recess/.test(h)?"seamless":"handled";};
+const sizeOf=it=>{const p=P(it);
+  if(it.category==="Fridges"&&p.fridgeCapacity!=null){const c=p.fridgeCapacity;return c<240?"1-2":c<=300?"2-4":"4+";}
+  if(it.category==="Dishwashers"&&p.placeSettings!=null){const n=p.placeSettings;return n<=9?"1-2":n<=13?"2-4":"4+";}
+  return null;};
+// kid-proofing: high-gloss & polished steel show every fingerprint/scratch; matt/honed/CleanSteel hide them
+const kidProof=it=>{const s=[P(it).color,P(it).front].filter(Boolean).join(" ").toLowerCase();
+  if(/high gloss|ultra high gloss|steel look/.test(s))return"prone";
+  if(/supermatt|ultra ?matt|\bmatt\b|matte|honed|clean ?steel|blackboard/.test(s))return"ok";return null;};
+// household composition → size tier + whether kids are around
+const HH={solo:{size:"1-2",kids:false},family:{size:"2-4",kids:true},big:{size:"4+",kids:true},host:{size:"4+",kids:false}};
+const tierOf=it=>{const p=P(it),cat=it.category,sub=(p.subtitle||"").toUpperCase();
+  if(cat==="Hoods"||cat==="Cooktops"){if(/DIAMOND|PLATINUM/.test(sub))return"premium";if(/GOLD/.test(sub))return"balanced";if(/SILVER/.test(sub))return"essential";return null;}
+  if(cat==="Fridges"){const f=(p.features||[]).join(" ");return /PerfectFresh/.test(f)?"premium":/DailyFresh/.test(f)?"balanced":"essential";}
+  if(cat==="Kitchens"){const s=[p.front,p.color].filter(Boolean).join(" ").toLowerCase();
+    return /lacquer|gloss|honed|paint|premium/.test(s)?"premium":/reproduction|laminate|texture/.test(s)?"essential":"balanced";}
+  if(cat==="CoffeeMachines"){const f=(p.features||[]).join(" ");return /milk|onetouch|cappuccino/i.test(f)?"premium":"balanced";}
+  return null;};
+const extractorOf=it=>{if(it.category!=="Hoods")return null;const s=(P(it).subtitle||"").toLowerCase();
+  if(/wall-mounted|island/.test(s))return"statement";
+  if(/pull-out|ceiling|downdraft|under-cabinet|canopy|integrat/.test(s))return"hidden";return null;};
+const quietOf=it=>{const p=P(it);
+  if(it.category==="Fridges"&&p.noise!=null)return p.noise<=34?"quiet":"normal";
+  if(it.category==="Dishwashers"&&p.noiseClass)return /^[AB]/.test(p.noiseClass)?"quiet":"normal";return null;};
+const iceOf=it=>{if(it.category!=="Fridges")return null;const f=(P(it).features||[]).join(" ");return /ice|water dispenser|myice/i.test(f)?"yes":"no";};
+const coffeeOf=it=>{if(it.category!=="CoffeeMachines")return null;const f=(P(it).features||[]).join(" ");return /milk|cappuccino|latte|onetouch/i.test(f)?"milk":"black";};
+
+/* ---------- questions ---------- */
+const QUESTIONS=[
+ {grp:"NARROWERS — decide which",key:"style",q:"01 · Style — what's the vibe?",cuts:"cuts Kitchens",classify:styleOf,applies:CAB,
+  opts:[["any","Any"],["modern","Clean & uncluttered","modern"],["designer","Bold & striking","designer"],["cottage","Warm & lived-in","cottage"],["scandi","Calm, natural woods","scandi"]]},
+ {key:"palette",q:"02 · Palette — what feels like home?",cuts:"cuts Kitchens + appliance colour",classify:paletteOf,applies:TARGETS,
+  opts:[["any","Any"],["light","Light & airy"],["dark","Dark & dramatic"],["wood","Warm wood"],["colour","A pop of colour"]]},
+ {key:"lines",q:"03 · Lines — under your hand?",cuts:"cuts Kitchens",classify:handleOf,applies:CAB,
+  opts:[["any","Any"],["seamless","Sleek & handleless","line N"],["handled","A handle to hold","classic"]]},
+ {key:"household",q:"04 · Household — who lives here?",cuts:"size → Fridges + Dishwashers · kids → easy-clean finishes everywhere",
+  predicate:(it,val)=>{const prof=HH[val];if(!prof)return true;
+    if(it.category==="Fridges"||it.category==="Dishwashers"){const sz=sizeOf(it);if(sz!==null&&sz!==prof.size)return false;}
+    if(prof.kids&&kidProof(it)==="prone")return false; return true;},
+  opts:[["any","Anyone"],["solo","Just me / a pair","compact"],["family","A family with kids","kid-proof"],["big","A big, busy family","max · kid-proof"],["host","A couple who love to host","entertaining"]]},
+ {key:"tier",q:"05 · Investment — where to invest?",cuts:"cuts Kitchens, Fridges, Hoods, Cooktops, Coffee",classify:tierOf,applies:["Kitchens","Fridges","Hoods","Cooktops","CoffeeMachines"],
+  opts:[["any","Show everything"],["essential","Smart & simple","essential"],["balanced","Balanced","signature"],["premium","Go premium","premium"]]},
+ {key:"extractor",q:"06 · Extractor — feature or vanish?",cuts:"cuts Hoods",classify:extractorOf,applies:["Hoods"],
+  opts:[["any","Any"],["statement","A statement piece"],["hidden","Hidden & integrated"]]},
+ {grp:"REFINERS — pick the best (power the “why”)",key:"quiet",q:"Does a quiet kitchen matter?",cuts:"refines Fridges + Dishwashers",classify:quietOf,applies:["Fridges","Dishwashers"],
+  opts:[["any","No preference"],["quiet","Keep it quiet"]]},
+ {key:"ice",q:"Ice & chilled water on tap?",cuts:"refines Fridges",classify:iceOf,applies:["Fridges"],
+  opts:[["any","Either"],["yes","Yes, on tap"],["no","Don't need it"]]},
+ {key:"coffee",q:"Your coffee ritual?",cuts:"refines Coffee machines",classify:coffeeOf,applies:["CoffeeMachines"],
+  opts:[["any","Any"],["milk","Cappuccinos & lattes"],["black","Just great black"]]},
+];
+const answers={};QUESTIONS.forEach(q=>answers[q.key]="any");
+let ITEMS=[];
+
+function passes(it){
+  for(const q of QUESTIONS){const val=answers[q.key];
+    if(val==="any")continue;
+    if(q.predicate){ if(!q.predicate(it,val))return false; continue; } // custom multi-field (household)
+    if(!q.applies.includes(it.category))continue;
+    const v=q.classify(it); if(v===null)continue; // unknown passes
+    if(v!==val)return false;
+  }
+  return true;
+}
+
+function buildQuestions(){
+  const host=document.getElementById("questions");let html="";
+  for(const q of QUESTIONS){
+    if(q.grp)html+=`<div class="gtitle">${q.grp}</div>`;
+    html+=`<div class="q"><h3>${q.q}</h3><div class="cuts">${q.cuts}</div><div class="opts">`+
+      q.opts.map(o=>`<button class="opt ${answers[q.key]===o[0]?'on':''}" data-k="${q.key}" data-v="${o[0]}">
+        <span class="ol">${o[1]}</span>${o[2]?`<span class="os">${o[2]}</span>`:""}</button>`).join("")+`</div></div>`;
+  }
+  html+=`<button class="reset" id="reset">Reset answers</button>`;
+  host.innerHTML=html;
+  host.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{answers[b.dataset.k]=b.dataset.v;buildQuestions();render();});
+  document.getElementById("reset").onclick=()=>{QUESTIONS.forEach(q=>answers[q.key]="any");buildQuestions();render();};
+}
+
+function counts(){const tot={},rem={};for(const it of ITEMS){tot[it.category]=(tot[it.category]||0)+1;if(passes(it))rem[it.category]=(rem[it.category]||0)+1;}return{tot,rem};}
+
+function row(cat,label,rem,tot,comp){
+  const pct=tot?Math.round(100*rem/tot):0;
+  const badge=comp?"":(rem<10?`<div class="badge ok">&lt; 10 ✓</div>`:`<div class="badge bad">${rem}</div>`);
+  return `<div class="row ${comp?'comp':''}">
+    <div class="name">${label}</div>
+    <div class="track"><div class="fill" style="width:${comp?100:pct}%"></div></div>
+    <div class="count"><b>${comp?tot:rem}</b> / ${tot}</div>${badge}</div>`;
+}
+
+function render(){
+  if(!ITEMS.length)return;
+  const {tot,rem}=counts();
+  const remT=TARGETS.reduce((s,c)=>s+(rem[c]||0),0), totT=TARGETS.reduce((s,c)=>s+(tot[c]||0),0);
+  const allUnder=TARGETS.every(c=>!tot[c]||(rem[c]||0)<10);
+  document.getElementById("total").innerHTML=`Recommendable objects left: <b>${remT}</b> / ${totT} ${allUnder?'<span class="badge ok" style="display:inline-block;padding:2px 8px">every category &lt; 10 ✓</span>':''}`;
+  let h=`<div class="gtitle">Recommendation targets</div>`;
+  h+=row("Kitchens","Kitchens (cabinets)",rem["Kitchens"]||0,tot["Kitchens"]||0,false);
+  for(const c of APPL) if(tot[c]) h+=row(c,c,rem[c]||0,tot[c]||0,false);
+  h+=`<div class="gtitle">Components — auto-matched to your kitchen (not interviewed)</div>`;
+  for(const c of COMPONENTS) if(tot[c]) h+=row(c,c,rem[c]||0,tot[c]||0,true);
+  document.getElementById("results").innerHTML=h;
+  const kits=ITEMS.filter(it=>it.category==="Kitchens"&&passes(it)).map(it=>P(it).name||it.name);
+  document.getElementById("kits").innerHTML=`<b>Matching kitchens (${kits.length}):</b><br>`+
+    (kits.length?kits.map(n=>`<span>${n}</span>`).join(""):"<i>none — loosen a filter</i>");
+}
+
+document.getElementById("rules").innerHTML=`
+ <p><b>Style</b> from the kitchen's <code>productPageUrl</code> (modern / design / cottage / scandi).</p>
+ <p><b>Palette</b> from <code>color</code>+<code>front</code> → wood / colour / dark / light.</p>
+ <p><b>Lines</b> from the kitchen <code>handle</code> field (handleless/recessed = seamless).</p>
+ <p><b>Household (who lives here)</b> drives two things: <i>amount</i> → fridge <code>fridgeCapacity</code> / dishwasher <code>placeSettings</code> (1–2 / 2–4 / 4+); <i>kids</i> → drops fingerprint-prone <code>high-gloss</code> &amp; <code>steel look</code> finishes across cabinets + appliances, keeping easy-clean matt / honed / CleanSteel. "A family with kids" = 2–4 + kid-proof, "A big, busy family" = 4+ + kid-proof, "love to host" = 4+ capacity.</p>
+ <p><b>Investment</b> from real tier tokens — hoods/cooktops <code>SILVER/GOLD/PLATINUM/DIAMOND</code>, fridges <code>PerfectFresh</code> vs <code>DailyFresh</code>, kitchens lacquer/gloss/honed vs reproduction/laminate.</p>
+ <p><b>Extractor</b> from hood <code>subtitle</code> (wall/island = statement; pull-out/ceiling/downdraft/canopy = hidden).</p>
+ <p><b>Refiners:</b> Quiet = fridge <code>noise</code> ≤34 dB · Ice/water = dispenser feature · Coffee = milk system.</p>
+ <p style="color:#a33">Unclassifiable items pass (we don't drop what we can't judge). Components have no attributes — they're matched to the chosen kitchen, never narrowed by questions.</p>`;
+
+(async()=>{
+  for(const u of ["/api/catalog","catalog.json","../catalog.json"]){
+    try{const r=await fetch(u);if(r.ok){const d=await r.json();if(d&&d.items){ITEMS=d.items;break;}}}catch(e){}
+  }
+  if(!ITEMS.length){document.getElementById("total").innerHTML='<span class="err">Could not load catalog — open via the admin server (http://localhost:4173/funnel.html).</span>';return;}
+  buildQuestions();render();
+})();
+</script>
+</body>
+</html>

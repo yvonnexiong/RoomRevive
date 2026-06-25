@@ -143,6 +143,20 @@ summary.dsum:hover{color:var(--text)}
       <button id="tab-cab" class="tab active">Cabinets</button>
       <button id="tab-wt" class="tab">Worktops</button>
       <button id="tab-combined" class="tab">Combined</button>
+      <button id="tab-cap" class="tab">📷 360</button>
+    </div>
+    <div class="sec" data-vis="cap" style="display:none">
+      <h2><span class="ic">📷</span>360 Capture</h2>
+      <button id="btn-ply" style="width:100%">Upload original .ply splat…</button>
+      <input type="file" id="plyinput" accept=".ply" style="display:none">
+      <div class="status" id="cap-status" style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px">no .ply loaded</div>
+      <div class="row" style="margin-top:12px"><label style="flex:none;color:var(--muted)">Camera position</label><span class="val" id="cap-eye" style="flex:1;text-align:right;font-family:var(--mono)">–</span></div>
+      <div class="row"><label>X</label><input type="number" id="cap-x" step="0.05" value="0" style="flex:1;min-width:0"></div>
+      <div class="row"><label>Y</label><input type="number" id="cap-y" step="0.05" value="1" style="flex:1;min-width:0"></div>
+      <div class="row"><label>Z</label><input type="number" id="cap-z" step="0.05" value="0" style="flex:1;min-width:0"></div>
+      <button id="btn-cap-fromview" style="width:100%;margin-top:6px">Use current view position</button>
+      <p class="note" style="margin-top:6px">Orbit the splat to roughly where you want to stand, then “Use current view position” (or type X/Y/Z). The 360° render from this point comes next.</p>
+      <button id="btn-cap-render" class="primary" style="width:100%;margin-top:8px" disabled>Render 360° → equirect PNG (next step)</button>
     </div>
     <div class="sec" style="padding-bottom:10px" data-vis="cw">
       <h2 id="chan-head">Cabinets</h2>
@@ -230,6 +244,8 @@ summary.dsum:hover{color:var(--text)}
         <input type="range" id="mosaic" min="0" max="150" value="0"><span class="val" id="mosaic-v">off</span></div>
       <div class="row"><label>Contrast</label>
         <input type="range" id="contrast" min="50" max="250" value="68"><span class="val" id="contrast-v">0.68×</span></div>
+      <div class="row"><label>Relief (grain)</label>
+        <input type="range" id="relief" min="0" max="150" value="0"><span class="val" id="relief-v">off</span></div>
       <div class="row"><label>Shading (scene)</label>
         <input type="range" id="shading" min="0" max="200" value="18"><span class="val" id="shading-v">18%</span></div>
       <div class="row"><label>Source colour</label>
@@ -480,6 +496,7 @@ let scene=null, originalColors=null, selected=null, selCount=0;
 let texRows=0, texData=null, selDirty=false, colorDirty=false;
 let sortIdx=null, drawCount=0, sceneName='scene', baseName='scene';
 const cam={target:[0,1,0],theta:0.5,phi:1.15,radius:4,fov:60*Math.PI/180};
+let captureMode=false, capScene=null;   // 360-capture tab: viewing an uploaded .ply instead of a kitchen channel
 /* ---- camera persistence: restored on open, saved as you move + when you leave ---- */
 let camSaveEnabled=false, _camSaveTimer=null;
 function saveCam(){ try{ localStorage.setItem('pm_cam', JSON.stringify({t:cam.target,th:cam.theta,ph:cam.phi,r:cam.radius})); }catch(e){} }
@@ -815,6 +832,16 @@ function sampleBilinear(D,W,H,u,v){
   const b=((D[o00+2]*(1-tx)+D[o10+2]*tx)*(1-ty)+(D[o01+2]*(1-tx)+D[o11+2]*tx)*ty)/255;
   return [r,g,b];
 }
+// Relief: per-splat emboss from the material's grain (luminance high-pass — centre vs 4-neighbour mean).
+// Darkens grooves, lightens ridges → reads as carved depth even on unlit splats. Returns a colour multiplier.
+function reliefFactor(D,W,H,u,v,amt){
+  if(!(amt>0)) return 1;
+  const dx=2/W, dy=2/H, lum=c=>0.2126*c[0]+0.7152*c[1]+0.0722*c[2];
+  const Lc=lum(sampleBilinear(D,W,H,u,v));
+  const La=(lum(sampleBilinear(D,W,H,u+dx,v))+lum(sampleBilinear(D,W,H,u-dx,v))
+          + lum(sampleBilinear(D,W,H,u,v+dy))+lum(sampleBilinear(D,W,H,u,v-dy)))*0.25;
+  return clamp(1+amt*(Lc-La)*2.6, 0.35, 1.9);
+}
 /* surface normal of a splat = world direction of its flattest (smallest-scale) gaussian axis */
 function splatNormal(i,out){
   const q=scene.quats,s=scene.scalesLog;
@@ -947,6 +974,7 @@ function applyMaterial(reuse,skipGPU){
   const grain=parseInt($('grainvar').value)/100;
   const mcell=parseInt($('mosaic').value)/100;          // 0 = continuous slab
   const contrast=parseInt($('contrast').value)/100;
+  const relief=parseInt($('relief').value)/100;
   const shadeS=parseInt($('shading').value)/100;
   const keep=parseInt($('keeplight').value)/100;
   const panoColorAmt=parseInt($('panocolor').value)/100;
@@ -1014,10 +1042,11 @@ function applyMaterial(reuse,skipGPU){
     }
     const m=tR*bS[c]*light*pcr, mg=tG*bS[c]*light*pcg, mb=tB*bS[c]*light*pcb;
     _lf[k*3]=m;_lf[k*3+1]=mg;_lf[k*3+2]=mb;
-    scene.colors[i*3]=clamp(r*m,0,1); scene.colors[i*3+1]=clamp(g*mg,0,1); scene.colors[i*3+2]=clamp(bl*mb,0,1);
+    const rfac=relief>0?reliefFactor(D,W,H,ru/tile,rv/tile,relief):1;   // emboss grain into the baked colour
+    scene.colors[i*3]=clamp(r*m*rfac,0,1); scene.colors[i*3+1]=clamp(g*mg*rfac,0,1); scene.colors[i*3+2]=clamp(bl*mb*rfac,0,1);
     if(!skipGPU){ const row=i>>10,col2=(i&1023)<<1; texData[(row*2048+col2)*4+3]=colorWord(i); }
   }
-  segData._lf=_lf; segData._ca=ca; segData._sa=sa; segData._tile=tile; segData._contrast=contrast; segData._mcell=mcell; segData._matD=D; segData._matW=W; segData._matH=H;   // for Detail subdivision in buildCombined
+  segData._lf=_lf; segData._ca=ca; segData._sa=sa; segData._tile=tile; segData._contrast=contrast; segData._relief=relief; segData._mcell=mcell; segData._matD=D; segData._matW=W; segData._matH=H;   // for Detail subdivision in buildCombined
   lastApply=segData; if(!skipGPU) colorDirty=true; try{ updateCombineBtns(); }catch(e){}
 }
 $('btn-apply').onclick=()=>{ if(viewingCombined){ recombineLook(); toast('Re-applied '+(editTarget==='cab'?'cabinet':'worktop')+' look'); return; }
@@ -1139,8 +1168,9 @@ $('btn-preset-del').onclick=()=>{ const key=presetTarget(), name=$('preset-selec
 $('btn-revert').onclick=()=>{ resetColors(); lastApply=null; $('hl').checked=true; gl.uniform1f(uSelMix,0.6); toast('Reverted to original colours'); };
 
 let sliderTimer=null;
-for(const id of ['tilesize','texrot','grainvar','mosaic','contrast','shading','panocolor','keeplight','panoyaw','matchlight']){
+for(const id of ['tilesize','texrot','grainvar','mosaic','contrast','relief','shading','panocolor','keeplight','panoyaw','matchlight']){
   $(id).addEventListener('input',()=>{
+    $('relief-v').textContent=+$('relief').value===0?'off':$('relief').value+'%';
     $('tilesize-v').textContent=(parseInt($('tilesize').value)/100).toFixed(2)+' m';
     $('texrot-v').textContent=$('texrot').value+'°';
     $('grainvar-v').textContent=$('grainvar').value+'%';
@@ -1266,7 +1296,7 @@ $('btn-spz-orig').onclick=async()=>{
 };
 
 /* ===================== two-channel (Cabinets / Worktops) editor ===================== */
-const SETTING_IDS=['hueLo','hueHi','sat','val','tilesize','texrot','grainvar','facetsplit','mosaic','contrast','shading','panocolor','keeplight','matchlight'];
+const SETTING_IDS=['hueLo','hueHi','sat','val','tilesize','texrot','grainvar','facetsplit','mosaic','contrast','relief','shading','panocolor','keeplight','matchlight'];
 function readSettings(){ const o={}; for(const id of SETTING_IDS){ const e=$(id); o[id]=e.type==='checkbox'?e.checked:e.value; } return o; }
 function lblFor(id,v){ switch(id){
   case 'tilesize': return (v/100).toFixed(2)+' m';
@@ -1287,7 +1317,7 @@ function clearChanMaterial(key){ const c=chan[key]; if(c.scene&&c.originalColors
   c.material=Object.assign({},NO_MAT); c.matSel='none'; c.lastApply=null; c.segData=null; }
 /* "None" swatch in the Combined tab — drop a region's material, show it as the bare mask, re-merge */
 function combinedClearMat(key){ setEditTarget(key); if(!chan[key].scene) return; clearChanMaterial(key); try{renderGallery();}catch(e){} showCombined(); scheduleCopySave(); }
-const LOOK_KEYS=['tilesize','texrot','grainvar','facetsplit','mosaic','contrast','shading','panocolor','keeplight','panoyaw','matchlight'];
+const LOOK_KEYS=['tilesize','texrot','grainvar','facetsplit','mosaic','contrast','relief','shading','panocolor','keeplight','panoyaw','matchlight'];
 function setEditTarget(k){ editTarget=k; const e=$('edittarget'); if(e) e.textContent=(k==='cab'?'Cabinets':'Worktops'); try{ syncDetailSlider(); }catch(e){} try{ refreshPresetSelect(); }catch(e){} }
 /* run fn() with globals pointing at chan[key] (out of combined view), then rebuild the combined kitchen */
 function withChannel(key,fn){ setEditTarget(key); viewingCombined=false; active=key; loadChanInto(chan[key]); try{ fn&&fn(); }catch(e){ console.error(e); } showCombined(); scheduleCopySave(); }
@@ -1322,7 +1352,7 @@ function chanLoaded(key){ if(key===active&&!viewingCombined) return !!scene; ret
 function updateCombineBtns(){ const cab=chanLoaded('cab'), wt=chanLoaded('wt');   // mask loaded → can combine/export (materials optional)
   $('btn-combined').disabled=!(cab&&wt); $('btn-exp-cab').disabled=!cab; $('btn-exp-wt').disabled=!wt;
   const cs=$('chan-status'); if(cs) cs.textContent = (!viewingCombined&&scene)?(sceneName+' · '+scene.n.toLocaleString()+' splats'):(viewingCombined?cs.textContent:'mask not loaded'); }
-function saveActive(){ if(viewingCombined||chPreview) return;   /* merged scene (combined) or densified preview (channel) — never write the display-only globals back into a channel */
+function saveActive(){ if(viewingCombined||chPreview||captureMode) return;   /* merged scene (combined), densified preview (channel), or 360-capture .ply — never write the display-only globals back into a channel */
   const c=chan[active];
   c.scene=scene;c.originalColors=originalColors;c.selected=selected;c.selCount=selCount;c.segData=segData;c.lastApply=lastApply;
   c.material=material;c.orig=orig;c.sceneName=sceneName;c.baseName=baseName;c.settings=readSettings(); }
@@ -1335,17 +1365,17 @@ function loadChanInto(c){
   drawMatChip(); $('matname').textContent=material.name; $('matname3').textContent=orig.name||'none';
   updateSelLabel();
 }
-function setTab(t){ for(const k of ['cab','wt','combined']) $('tab-'+k).classList.toggle('active',k===t);
-  const cw=(t!=='combined');
-  document.querySelectorAll('[data-vis="cw"]').forEach(e=>e.style.display=cw?'':'none');
-  document.querySelectorAll('[data-vis="comb"]').forEach(e=>e.style.display=cw?'none':'');
+function setTab(t){ for(const k of ['cab','wt','combined','cap']){ const b=$('tab-'+k); if(b) b.classList.toggle('active',k===t); }
+  document.querySelectorAll('[data-vis="cw"]').forEach(e=>e.style.display=(t==='cab'||t==='wt')?'':'none');
+  document.querySelectorAll('[data-vis="comb"]').forEach(e=>e.style.display=(t==='combined')?'':'none');
+  document.querySelectorAll('[data-vis="cap"]').forEach(e=>e.style.display=(t==='cap')?'':'none');
   document.querySelectorAll('[data-vis="setup"]').forEach(e=>e.style.display=(t==='cab')?'':'none');
   try{ refreshPresetSelect(); }catch(e){}   // show the presets for whichever channel this tab adjusts
 }
 function switchTab(to){
-  if(!viewingCombined && to===active) return;
+  if(!captureMode && !viewingCombined && to===active) return;   // in capture mode always reload the real channel
   exitChannelPreview();
-  if(!viewingCombined) saveActive(); viewingCombined=false;
+  if(!viewingCombined) saveActive(); viewingCombined=false; captureMode=false;   // saveActive no-ops while captureMode is still true
   active=to; const c=chan[to]; $('chan-head').textContent=c.name;
   loadChanInto(c); setTab(to);
   try{ renderGallery(); }catch(e){}
@@ -1354,6 +1384,68 @@ function switchTab(to){
 }
 $('tab-cab').onclick=()=>switchTab('cab');
 $('tab-wt').onclick=()=>switchTab('wt');
+
+/* ===== 360 Capture: load a 3DGS .ply, position a camera, (next) render an equirect panorama ===== */
+// Parse a binary_little_endian 3DGS .ply into the renderer's scene structure (DC colour only; SH f_rest ignored).
+function parsePLY(buf){
+  const bytes=new Uint8Array(buf);
+  const head=new TextDecoder('ascii').decode(bytes.subarray(0, Math.min(bytes.length, 65536)));
+  const mk='end_header\n', hi=head.indexOf(mk); if(hi<0) throw new Error('not a PLY (no end_header)');
+  const hdr=head.slice(0,hi), dataOff=hi+mk.length;
+  if(!/format\s+binary_little_endian/.test(hdr)) throw new Error('PLY must be binary_little_endian (3DGS export)');
+  const nm=hdr.match(/element\s+vertex\s+(\d+)/); if(!nm) throw new Error('PLY: no vertex count');
+  const n=+nm[1];
+  const props=[...hdr.matchAll(/property\s+float\s+(\w+)/g)].map(m=>m[1]);
+  const stride=props.length*4, P=name=>props.indexOf(name);
+  const ix=P('x'),iy=P('y'),iz=P('z'),id0=P('f_dc_0'),id1=P('f_dc_1'),id2=P('f_dc_2'),
+        io=P('opacity'),is0=P('scale_0'),is1=P('scale_1'),is2=P('scale_2'),
+        ir0=P('rot_0'),ir1=P('rot_1'),ir2=P('rot_2'),ir3=P('rot_3');
+  if([ix,iy,iz,id0,id1,id2,io,is0,is1,is2,ir0,ir1,ir2,ir3].some(v=>v<0)) throw new Error('PLY missing 3DGS properties (need x,y,z,f_dc_*,opacity,scale_*,rot_*)');
+  const dv=new DataView(buf, dataOff);
+  const positions=new Float32Array(n*3), colors=new Float32Array(n*3), scalesLog=new Float32Array(n*3), quats=new Float32Array(n*4), alphasU8=new Uint8Array(n);
+  for(let i=0;i<n;i++){ const o=i*stride;
+    positions[i*3]=dv.getFloat32(o+ix*4,true); positions[i*3+1]=dv.getFloat32(o+iy*4,true); positions[i*3+2]=dv.getFloat32(o+iz*4,true);
+    colors[i*3]  =clamp(0.5+SH_C0*dv.getFloat32(o+id0*4,true),0,1);
+    colors[i*3+1]=clamp(0.5+SH_C0*dv.getFloat32(o+id1*4,true),0,1);
+    colors[i*3+2]=clamp(0.5+SH_C0*dv.getFloat32(o+id2*4,true),0,1);
+    const op=dv.getFloat32(o+io*4,true); alphasU8[i]=clamp(Math.round((1/(1+Math.exp(-op)))*255),0,255);  // logit → sigmoid
+    scalesLog[i*3]=dv.getFloat32(o+is0*4,true); scalesLog[i*3+1]=dv.getFloat32(o+is1*4,true); scalesLog[i*3+2]=dv.getFloat32(o+is2*4,true);  // already log
+    let w=dv.getFloat32(o+ir0*4,true),x=dv.getFloat32(o+ir1*4,true),y=dv.getFloat32(o+ir2*4,true),z=dv.getFloat32(o+ir3*4,true);
+    const L=Math.hypot(w,x,y,z)||1; quats[i*4]=w/L;quats[i*4+1]=x/L;quats[i*4+2]=y/L;quats[i*4+3]=z/L;  // normalize (PLY quats are unnormalized)
+  }
+  return {n,shDegree:0,flags:0,positions,colors,scalesLog,quats,alphasU8,shBytes:null};
+}
+async function loadPLYFile(file){
+  if(!/\.ply$/i.test(file.name)){ toast('Choose a .ply file',true); return; }
+  try{
+    $('cap-status').textContent='Reading '+file.name+' ('+(file.size/1048576).toFixed(0)+' MB)…';
+    let buf=await file.arrayBuffer();
+    const s=parsePLY(buf); buf=null;
+    capScene=s; captureMode=true; viewingCombined=false;
+    scene=s; originalColors=s.colors.slice(); selected=new Uint8Array(s.n); selCount=0; segData=null; lastApply=null; material=Object.assign({},NO_MAT);
+    buildGPUData();
+    let cx=0,cy=0,cz=0,m=0; for(let i=0;i<s.n;i+=7){ cx+=s.positions[i*3];cy+=s.positions[i*3+1];cz+=s.positions[i*3+2];m++; } cx/=m;cy/=m;cz/=m;
+    const d=[]; for(let i=0;i<s.n;i+=23) d.push(Math.hypot(s.positions[i*3]-cx,s.positions[i*3+1]-cy,s.positions[i*3+2]-cz));
+    d.sort((a,b)=>a-b); const ext=d[Math.floor(d.length*0.7)]||3;
+    cam.target=[cx,cy,cz]; cam.radius=clamp(ext*0.9,0.8,30); cam.theta=0.6; cam.phi=1.05; pickKey='';
+    $('cap-status').textContent=file.name+' · '+s.n.toLocaleString()+' splats';
+    $('stat-pts').textContent=s.n.toLocaleString(); $('dropzone').classList.add('hidden');
+    $('cap-x').value=cx.toFixed(2); $('cap-y').value=cy.toFixed(2); $('cap-z').value=cz.toFixed(2);
+    toast('Loaded '+s.n.toLocaleString()+' splats from '+file.name);
+  }catch(e){ console.error(e); $('cap-status').textContent='Load failed: '+e.message; toast('PLY load failed: '+e.message,true); }
+}
+function enterCapture(){
+  exitChannelPreview();
+  if(!captureMode && !viewingCombined) saveActive();   // persist the channel we're leaving
+  viewingCombined=false; captureMode=true;
+  if(capScene){ scene=capScene; originalColors=capScene.colors.slice(); selected=new Uint8Array(capScene.n); selCount=0; segData=null; lastApply=null; buildGPUData(); $('stat-pts').textContent=capScene.n.toLocaleString(); }
+  setTab('cap');
+}
+$('tab-cap').onclick=enterCapture;
+$('btn-ply').onclick=()=>$('plyinput').click();
+$('plyinput').addEventListener('change',e=>{ const f=e.target.files&&e.target.files[0]; if(f) loadPLYFile(f); e.target.value=''; });
+$('btn-cap-fromview').onclick=()=>{ const e=eyePos(); $('cap-x').value=e[0].toFixed(3); $('cap-y').value=e[1].toFixed(3); $('cap-z').value=e[2].toFixed(3); toast('Capture position set to current view'); };
+setInterval(()=>{ const b=$('tab-cap'); if(b&&b.classList.contains('active')){ const el=$('cap-eye'); if(el) el.textContent=eyePos().map(v=>v.toFixed(2)).join(', '); } },300);
 
 /* merge both channels into one de-duplicated kitchen */
 function buildCombinedCore(){
@@ -1435,7 +1527,7 @@ function buildCombinedDetailed(A,B,kc,kw){
     const ki=inv[i]; if(ki<0){ copyParent(c.scene,i,c.scene.colors); return; }
     const sd=c.segData, f=sd.fits[sd.comp[ki]], ca=sd._ca[sd.comp[ki]], sa=sd._sa[sd.comp[ki]];
     const lfm=sd._lf[ki*3], lfg=sd._lf[ki*3+1], lfb=sd._lf[ki*3+2];
-    const tile=sd._tile, contrast=sd._contrast, D=sd._matD, W=sd._matW, H=sd._matH;
+    const tile=sd._tile, contrast=sd._contrast, relief=sd._relief||0, D=sd._matD, W=sd._matW, H=sd._matH;
     const p=c.scene.positions, sl=c.scene.scalesLog, q=c.scene.quats, al=c.scene.alphasU8;
     const px=p[i*3],py=p[i*3+1],pz=p[i*3+2], a=px-f.c[0],b=py-f.c[1],cc=pz-f.c[2];
     const su=a*f.U[0]+b*f.U[1]+cc*f.U[2], sv=a*f.V[0]+b*f.V[1]+cc*f.V[2];
@@ -1448,9 +1540,10 @@ function buildCombinedDetailed(A,B,kc,kw){
       const offU=((gi-(side-1)*0.5)/side)*(2*sigU*spreadF), offV=((gj-(side-1)*0.5)/side)*(2*sigV*spreadF);
       const csu=su+offU, csv=sv+offV, cru=csu*ca-csv*sa, crv=csu*sa+csv*ca;
       const col=sampleBilinear(D,W,H,cru/tile,crv/tile), cw=w*3;
-      out.colors[cw]=clamp(((col[0]-0.5)*contrast+0.5)*lfm,0,1);
-      out.colors[cw+1]=clamp(((col[1]-0.5)*contrast+0.5)*lfg,0,1);
-      out.colors[cw+2]=clamp(((col[2]-0.5)*contrast+0.5)*lfb,0,1);
+      const rfac=relief>0?reliefFactor(D,W,H,cru/tile,crv/tile,relief):1;
+      out.colors[cw]=clamp(((col[0]-0.5)*contrast+0.5)*lfm*rfac,0,1);
+      out.colors[cw+1]=clamp(((col[1]-0.5)*contrast+0.5)*lfg*rfac,0,1);
+      out.colors[cw+2]=clamp(((col[2]-0.5)*contrast+0.5)*lfb*rfac,0,1);
       let ox=f.U[0]*offU+f.V[0]*offV, oy=f.U[1]*offU+f.V[1]*offV, oz=f.U[2]*offU+f.V[2]*offV;
       if(autoplane && Math.abs(f.N[1])>0.5) oy=0;   // horizontal facet (surface) → keep the subdivision flat; vertical facets spread on their face
       out.positions[cw]=px+ox; out.positions[cw+1]=py+oy; out.positions[cw+2]=pz+oz;
@@ -1475,7 +1568,7 @@ function buildChannelDetailed(key){
   const out={n:N,shDegree:0,flags:scn.flags|0,positions:new Float32Array(N*3),colors:new Float32Array(N*3),scalesLog:new Float32Array(N*3),quats:new Float32Array(N*4),alphasU8:new Uint8Array(N),shBytes:null};
   const inv=new Int32Array(n).fill(-1), ix=sd.idxs; for(let k=0;k<ix.length;k++) inv[ix[k]]=k;
   const p=scn.positions, sl=scn.scalesLog, q=scn.quats, al=scn.alphasU8, sc=scn.colors;
-  const D=sd._matD,W=sd._matW,H=sd._matH,tile=sd._tile,contrast=sd._contrast;
+  const D=sd._matD,W=sd._matW,H=sd._matH,tile=sd._tile,contrast=sd._contrast,relief=sd._relief||0;
   let w=0;
   const copy=i=>{ const cw=w*3; out.positions[cw]=p[i*3];out.positions[cw+1]=p[i*3+1];out.positions[cw+2]=p[i*3+2];
     out.colors[cw]=sc[i*3];out.colors[cw+1]=sc[i*3+1];out.colors[cw+2]=sc[i*3+2];
@@ -1495,8 +1588,8 @@ function buildChannelDetailed(key){
     for(let idx=0;idx<nc;idx++){ const gi=idx%side, gj=(idx/side)|0;
       const offU=((gi-(side-1)*0.5)/side)*(2*sigU*spreadF), offV=((gj-(side-1)*0.5)/side)*(2*sigV*spreadF);
       const csu=su+offU, csv=sv+offV, cru=csu*ca-csv*sa, crv=csu*sa+csv*ca;
-      const col=sampleBilinear(D,W,H,cru/tile,crv/tile), cw=w*3;
-      out.colors[cw]=clamp(((col[0]-0.5)*contrast+0.5)*lfm,0,1); out.colors[cw+1]=clamp(((col[1]-0.5)*contrast+0.5)*lfg,0,1); out.colors[cw+2]=clamp(((col[2]-0.5)*contrast+0.5)*lfb,0,1);
+      const col=sampleBilinear(D,W,H,cru/tile,crv/tile), cw=w*3, rfac=relief>0?reliefFactor(D,W,H,cru/tile,crv/tile,relief):1;
+      out.colors[cw]=clamp(((col[0]-0.5)*contrast+0.5)*lfm*rfac,0,1); out.colors[cw+1]=clamp(((col[1]-0.5)*contrast+0.5)*lfg*rfac,0,1); out.colors[cw+2]=clamp(((col[2]-0.5)*contrast+0.5)*lfb*rfac,0,1);
       let ox=f.U[0]*offU+f.V[0]*offV, oy=f.U[1]*offU+f.V[1]*offV, oz=f.U[2]*offU+f.V[2]*offV; if(autoplane && Math.abs(f.N[1])>0.5) oy=0;
       out.positions[cw]=px+ox; out.positions[cw+1]=py+oy; out.positions[cw+2]=pz+oz;
       out.scalesLog[cw]=nsl0;out.scalesLog[cw+1]=nsl1;out.scalesLog[cw+2]=nsl2;
@@ -1571,7 +1664,7 @@ function ensureBaseDisplay(){   // before a base edit (detect) that needs the ba
 }
 function showCombined(){
   exitChannelPreview();
-  if(!viewingCombined) saveActive();
+  if(!viewingCombined) saveActive(); captureMode=false;   // leaving 360 capture; saveActive no-ops while captureMode true
   const out=buildCombined(); if(!out){ setTab(active); return; }
   viewingCombined=true; scene=out; originalColors=out.colors.slice(); selected=new Uint8Array(out.n); selCount=0; segData=null; lastApply=null;
   buildGPUData(); $('dropzone').classList.add('hidden'); $('stat-pts').textContent=out.n.toLocaleString(); $('stat-sel').textContent='—';
@@ -1827,6 +1920,32 @@ let floaterTimer=null;
 function floaterRebuild(){ if(viewingCombined){ try{ showCombined(); }catch(e){ console.error(e); } } scheduleCopySave(); }
 $('floater-on').addEventListener('change',floaterRebuild);
 $('floater-dens').addEventListener('input',()=>{ $('floater-dens-v').textContent=$('floater-dens').value; clearTimeout(floaterTimer); floaterTimer=setTimeout(floaterRebuild,220); });
+
+/* ---- remote control API: an external app (e.g. Unity) POSTs /api/swap {cab,wt}; we poll and apply ----
+   Full loop: Unity POST → this applies both materials → re-saves the linked .spz → LiveSplatLoader reloads. */
+let lastSwapId=-1;
+async function applyRemoteSwap(cab,wt){
+  if(comboBusy) return false;
+  if((cab&&!chan.cab.scene)||(wt&&!chan.wt.scene)) return false;   // splat not loaded yet → retry quietly next poll
+  comboBusy=true;
+  try{ toast('Remote swap → '+(cab?cab.replace(/\.[^.]+$/,''):'—')+' / '+(wt?wt.replace(/\.[^.]+$/,''):'—'));
+    if(cab) await combinedApplyMat('cab',cab);
+    if(wt)  await combinedApplyMat('wt',wt);
+    return true;
+  }catch(e){ console.error(e); toast('Remote swap failed: '+e.message,true); return false; }
+  finally{ comboBusy=false; }
+}
+async function pollSwap(){
+  try{ const r=await fetch('./api/command',{cache:'no-store'}); if(!r.ok) return; const c=await r.json();
+    if(!c || typeof c.id!=='number') return;
+    if(lastSwapId<0){ lastSwapId=c.id; return; }                  // first poll: sync to current id, don't fire a stale command
+    if(c.id>lastSwapId){
+      if(c.cab||c.wt){ if(await applyRemoteSwap(c.cab,c.wt)) lastSwapId=c.id; }   // advance only once applied
+      else lastSwapId=c.id;
+    }
+  }catch(e){ /* server without the API, or offline — ignore */ }
+}
+setInterval(pollSwap, 1000);
 
 async function fetchFile(url){ let last='?';
   for(let a=0;a<7;a++){ try{ const r=await fetch(url,{cache:'no-store'}); if(r.ok){ const b=await r.blob(); return new File([b], decodeURIComponent(url.split('/').pop())); } last='HTTP '+r.status; }catch(e){ last=e.message; }

@@ -54,6 +54,8 @@ const PRODUCT_FIELDS = {
   productSheetUrl: { type: 'url' },
   productPageUrl:  { type: 'url' },                     // link back to the source
   modelKey:        { type: 'string' },                 // ties web GLB ↔ Unity splat
+  antiFingerprint: { type: 'boolean' },                // Nobilia anti-fingerprint front coating
+  localImage:      { type: 'string' },                 // /models-resolvable path to the rendered local image
   // dishwasher / cross-category
   placeSettings:   { type: 'number' },
   energyPer100Cycles: { type: 'number' },

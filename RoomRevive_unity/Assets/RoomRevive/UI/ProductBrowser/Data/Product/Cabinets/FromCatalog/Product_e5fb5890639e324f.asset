@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_e5fb5890639e324f
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: e5fb5890639e324f
+  catalogKey: e5fb5890639e324f
+  brandName: Nobilia
+  productName: SENSO 495
+  subtitle: Modern kitchen
+  emotionalLine: Green oasis
+  shortDescription: "With its wide range of materials and colours, nature is the
+    perfect source of inspiration for our kitchen design. In combination with the
+    robust Milano walnut worktop, the tone-on-tone concept in olive creates a perfect
+    balance between modernity and a connection to nature. The Stripewood dark niche
+    cladding reinforces the cosy charm with astonishingly authentic wood d\xE9cor,
+    making this a natural space in which to spend your valuable time with loved ones."
+  productImage: {fileID: 0}
+  specs:
+  - Premium honed olive
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 495_Premium_honed_olive.jpg
+  splatWtMaterial: 399_Milano_walnut_reproduction.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

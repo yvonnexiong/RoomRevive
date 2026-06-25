@@ -85,7 +85,7 @@ namespace RoomRevive
         public void OnGazeExit()
         {
             _isGazed = false;
-            displayTarget?.SetActive(false);
+            if (displayTarget != null) displayTarget.SetActive(false);   // Unity-null check: '?.' doesn't catch an unassigned (fake-null) field
             StartRingAlpha(0f, 0.35f);
             // Cancel dot coroutine — proximity takes over from current position
             if (_glowDotScaleCoroutine != null) { StopCoroutine(_glowDotScaleCoroutine); _glowDotScaleCoroutine = null; }
@@ -110,7 +110,7 @@ namespace RoomRevive
                 _smoothedProximityT = _glowDot.transform.localScale.x / _glowDotBaseScale.x;
 
             StartRingAlpha(0f, 0.15f);
-            displayTarget?.SetActive(true);
+            if (displayTarget != null) displayTarget.SetActive(true);   // Unity-null check (see OnGazeExit)
         }
 
         // Called every frame by GazeHotspotDetector for all hotspots

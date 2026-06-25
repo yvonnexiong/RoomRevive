@@ -27,6 +27,8 @@ MonoBehaviour:
   - Class C
   fromPrice: From EUR 1,446
   splatAsset: {fileID: 0}
+  splatCabMaterial: 
+  splatWtMaterial: 
   variants: []
   startsSelectedByDefault: 0
   onSelectedAssetEvent:

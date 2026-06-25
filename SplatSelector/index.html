@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SPZ Pink-Region Splat Selector</title>
+<style>
+  :root{
+    --bg:#0e1116; --panel:#161b22; --panel2:#1c232d; --line:#2b3340;
+    --txt:#e6edf3; --muted:#9aa7b4; --accent:#ffd23f; --pink:#ff1493;
+    --good:#3fb950; --bad:#f85149; --blue:#388bfd;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.5 system-ui,Segoe UI,Roboto,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+  header{padding:14px 24px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#141a22,#0e1116);flex:none}
+  header h1{margin:0;font-size:19px}
+  header p{margin:4px 0 0;color:var(--muted);font-size:13px}
+  main{display:grid;grid-template-columns:380px 1fr;gap:0;flex:1;min-height:0}
+  .left{padding:18px;border-right:1px solid var(--line);overflow:auto;min-height:0}
+  .right{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+  .card h2{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  label{display:block;font-size:12px;color:var(--muted);margin:8px 0 3px}
+  input[type=file]{width:100%;font-size:12px}
+  input[type=range]{width:100%}
+  input[type=number],input[type=text],select{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:6px 8px;font-size:13px}
+  .row{display:flex;gap:8px}
+  .row>*{flex:1}
+  .chk{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .chk input{width:auto}
+  .chk label{margin:0}
+  button{cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--txt);border-radius:8px;padding:9px 12px;font-size:13px;font-weight:600}
+  button:hover{border-color:#3d4a5c}
+  button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+  button.go{background:var(--accent);border-color:var(--accent);color:#1a1a1a}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .status{font-size:12px;display:flex;align-items:center;gap:7px;margin-top:6px}
+  .dot{width:9px;height:9px;border-radius:50%;background:#5a6675;flex:none}
+  .dot.good{background:var(--good)} .dot.bad{background:var(--bad)} .dot.busy{background:var(--accent)}
+  .stat{font-size:24px;font-weight:700}
+  .stat small{font-size:13px;font-weight:400;color:var(--muted)}
+  .hint{color:var(--muted);font-size:11.5px;margin:6px 0 0}
+  #viewer{flex:1 1 auto;position:relative;background:#0a0d12;min-height:200px}
+  #viewer canvas{display:block;width:100%;height:100%}
+  #viewerMsg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);text-align:center;padding:20px;pointer-events:none}
+  .overlayWrap{border-top:1px solid var(--line);padding:12px;background:var(--panel);flex:none}
+  .overlayWrap h3{margin:0 0 8px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  #overlay{background:#000;border-radius:6px;display:block;margin:0 auto;max-width:100%;max-height:40vh;width:auto;height:auto;image-rendering:auto}
+  .log{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:#9fb0c0;background:#0a0d12;border:1px solid var(--line);border-radius:6px;padding:8px;height:96px;overflow:auto;white-space:pre-wrap;margin-top:8px}
+  .bar{height:5px;background:var(--panel2);border-radius:3px;overflow:hidden;margin-top:8px}
+  .bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .12s}
+  .pillrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .pill{font-size:11px;padding:3px 8px;border-radius:20px;background:var(--panel2);border:1px solid var(--line);color:var(--muted)}
+  .swatch{display:inline-block;width:13px;height:13px;border-radius:3px;vertical-align:-2px;margin-right:4px}
+  .viewtabs{display:flex;flex-wrap:wrap;gap:8px 12px;padding:8px 12px;background:var(--panel);border-top:1px solid var(--line);align-items:center}
+  .viewtabs .grow{flex:1}
+</style>
+</head>
+<body>
+<header>
+  <h1>SPZ Pink-Region Splat Selector</h1>
+  <p>Select the Gaussian splats that fall inside a painted pink panorama region and recolor them. Tuned for World Labs panorama SPZ exports.</p>
+</header>
+
+<main>
+  <!-- ================= LEFT: CONTROLS ================= -->
+  <section class="left">
+    <div class="card">
+      <h2>1 · Files</h2>
+      <label>Gaussian splat file (.spz)</label>
+      <input id="spzFile" type="file" accept=".spz" />
+      <div class="status" id="spzStatus"><span class="dot"></span><span>No SPZ loaded</span></div>
+
+      <label style="margin-top:12px">Pink mask panorama (.png/.jpg) — required</label>
+      <input id="maskFile" type="file" accept="image/*" />
+      <div class="status" id="maskStatus"><span class="dot"></span><span>No mask loaded</span></div>
+
+      <label style="margin-top:12px">Original clean panorama — optional (enables auto-align)</label>
+      <input id="origFile" type="file" accept="image/*" />
+      <div class="status" id="origStatus"><span class="dot"></span><span>None</span></div>
+    </div>
+
+    <div class="card">
+      <h2>2 · Projection</h2>
+      <label>Axis convention</label>
+      <select id="preset">
+        <option value="wl" selected>World Labs panorama — +X right, +Y up, −Z forward</option>
+        <option value="ydown">+X right, +Y down, +Z forward</option>
+        <option value="zfwd">+X right, +Y up, +Z forward</option>
+        <option value="xleft">+X left, +Y up, −Z forward</option>
+        <option value="custom">Custom (use flips below)</option>
+      </select>
+      <div class="row" style="margin-top:8px">
+        <div class="chk"><input id="flipX" type="checkbox"><label for="flipX">Flip X</label></div>
+        <div class="chk"><input id="flipY" type="checkbox"><label for="flipY">Flip Y</label></div>
+        <div class="chk"><input id="flipZ" type="checkbox"><label for="flipZ">Flip Z</label></div>
+      </div>
+      <label style="margin-top:10px">Yaw offset: <b id="yawLbl">0°</b></label>
+      <input id="yaw" type="range" min="-180" max="180" step="0.5" value="0" />
+      <div class="row" style="margin-top:6px">
+        <button id="autoYaw" disabled>Auto-align yaw (needs original)</button>
+      </div>
+      <p class="hint">Default already matches your World Labs file. Reconstruction-verified at yaw 0.</p>
+    </div>
+
+    <div class="card">
+      <h2>3 · Pink detection</h2>
+      <label>Min saturation: <b id="satLbl">0.45</b></label>
+      <input id="sat" type="range" min="0" max="1" step="0.01" value="0.45" />
+      <label>Min brightness: <b id="valLbl">0.40</b></label>
+      <input id="val" type="range" min="0" max="1" step="0.01" value="0.40" />
+      <label>Hue window (deg): <b id="hueLbl">300–350</b></label>
+      <div class="row">
+        <input id="hueLo" type="number" value="295" min="0" max="360" />
+        <input id="hueHi" type="number" value="355" min="0" max="360" />
+      </div>
+      <label style="margin-top:8px">Dilate mask (px): <b id="dilLbl">4</b></label>
+      <input id="dil" type="range" min="0" max="40" step="1" value="4" />
+      <p class="hint">Dilation grows the region slightly to catch splats whose footprint straddles the edge.</p>
+    </div>
+
+    <div class="card">
+      <h2>3b · Floor reach (grow toward horizon)</h2>
+      <p class="hint" style="margin-top:0">The painted floor often sits on the camera's nadir hole (no splats). This extends the mask upward into the band where the real floor splats project. Drag and watch the 3D viewer.</p>
+      <label style="margin-top:8px">Grow toward horizon: <b id="growUpLbl">120 px</b></label>
+      <input id="growUp" type="range" min="0" max="260" step="2" value="120" />
+      <label style="margin-top:8px">Stop at height (v): <b id="growTopLbl">0.50</b></label>
+      <input id="growTop" type="range" min="0.30" max="0.62" step="0.01" value="0.50" />
+      <p class="hint">Higher “grow” catches more floor but also lower walls; “stop at height” keeps it from climbing past the horizon.</p>
+    </div>
+
+    <div class="card">
+      <h2>4 · Output</h2>
+      <label>Selected splat color</label>
+      <div class="row">
+        <input id="selColor" type="color" value="#ffff00" style="height:36px;padding:2px" />
+        <input id="selHex" type="text" value="#ffff00" />
+      </div>
+      <label style="margin-top:10px">Ignore splats closer than (origin radius)</label>
+      <input id="minR" type="number" value="0.05" step="0.01" min="0" />
+      <p class="hint">Filters out degenerate splats sitting on the camera origin.</p>
+    </div>
+
+    <div class="card">
+      <button id="process" class="go" style="width:100%" disabled>▶ Select pink-region splats</button>
+      <div class="bar"><i id="bar"></i></div>
+      <div style="margin-top:12px" class="stat"><span id="selCount">—</span> <small id="selPct"></small></div>
+      <div class="pillrow" id="pills"></div>
+      <button id="export" class="primary" style="width:100%;margin-top:12px" disabled>⬇ Export recolored .spz</button>
+      <div class="log" id="log"></div>
+    </div>
+  </section>
+
+  <!-- ================= RIGHT: VIEWERS ================= -->
+  <section class="right">
+    <div id="viewer">
+      <div id="viewerMsg">Load an SPZ to see the splat cloud here.<br>Selected splats appear in <span style="color:#ffd23f">yellow</span>.</div>
+    </div>
+    <div class="viewtabs">
+      <div class="chk"><input id="showSel" type="checkbox" checked><label for="showSel">Highlight selection (yellow)</label></div>
+      <div class="chk"><input id="dimUnsel" type="checkbox"><label for="dimUnsel">Dim unselected</label></div>
+      <span class="grow"></span>
+      <label style="margin:0">Point size</label>
+      <input id="ptSize" type="range" min="0.4" max="6" step="0.1" value="1.6" style="width:120px" />
+      <button id="resetCam">Reset camera</button>
+    </div>
+    <div class="overlayWrap">
+      <h3>Panorama check — <span class="swatch" style="background:var(--pink)"></span>pink mask &nbsp; <span class="swatch" style="background:var(--accent)"></span>selected splats projected back</h3>
+      <canvas id="overlay" width="1024" height="512"></canvas>
+    </div>
+  </section>
+</main>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+const $ = id => document.getElementById(id);
+const TAU = Math.PI*2, SH_C0 = 0.28209479177387814, COLOR_SCALE = 0.15;
+const log = m => { const l=$('log'); l.textContent += m+'\n'; l.scrollTop=l.scrollHeight; };
+const setBar = p => $('bar').style.width = Math.max(0,Math.min(100,p))+'%';
+const tick = () => new Promise(r=>setTimeout(r,0));
+function setStatus(id,kind,txt){ const e=$(id); e.querySelector('.dot').className='dot '+(kind||''); e.querySelector('span:last-child').textContent=txt; }
+
+// ---- shared state ----
+const S = {
+  header:null, bytes:null,        // decompressed SPZ payload (working copy)
+  N:0, pos:null,                  // Float32Array N*3 (decoded positions)
+  baseColor:null,                 // Uint8Array N*3 decoded display RGB (for viewer)
+  mask:null, maskW:0, maskH:0,    // dilated pink mask
+  origImg:null,                   // {data,w,h} optional original panorama
+  sel:null,                       // Uint8Array N selection
+};
+
+// ---------- SPZ parsing ----------
+const shDim = d => d===0?0:d===1?3:d===2?8:d===3?15:-1;
+function int24(b,o){ let v=b[o]|(b[o+1]<<8)|(b[o+2]<<16); if(v&0x800000)v|=0xff000000; return v; }
+function u32(b,o){ return (b[o]|(b[o+1]<<8)|(b[o+2]<<16)|(b[o+3]<<24))>>>0; }
+
+async function gunzip(buf){
+  if(!('DecompressionStream' in window)) throw new Error('Browser lacks DecompressionStream — use current Chrome/Edge.');
+  const s=new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return new Uint8Array(await new Response(s).arrayBuffer());
+}
+async function gzip(buf){
+  const s=new Blob([buf]).stream().pipeThrough(new CompressionStream('gzip'));
+  return new Uint8Array(await new Response(s).arrayBuffer());
+}
+
+function parseHeader(b){
+  if(!(b[0]===0x4e&&b[1]===0x47&&b[2]===0x53&&b[3]===0x50)) throw new Error('Decompressed data is not NGSP (SPZ).');
+  const version=u32(b,4), N=u32(b,8), shDeg=b[12], frac=b[13], flags=b[14];
+  if(version<2||version>3) throw new Error('Supports SPZ v2/v3 (gzip). Got v'+version+'.');
+  const sd=shDim(shDeg); if(sd<0) throw new Error('Unsupported SH degree '+shDeg);
+  const rotBytes = version>=3?4:3;
+  const posOff=16;
+  const alphaOff=posOff+N*9;
+  const colOff=alphaOff+N;
+  const scaleOff=colOff+N*3;
+  const rotOff=scaleOff+N*3;
+  const shOff=rotOff+N*rotBytes;
+  const end=shOff+N*sd*3;
+  if(b.length<end) throw new Error('SPZ truncated: expected '+end+' bytes, got '+b.length+'.');
+  return {version,N,shDeg,frac,flags,posOff,alphaOff,colOff,scaleOff,rotOff,shOff,end};
+}
+
+async function loadSPZ(file){
+  setStatus('spzStatus','busy','Reading…'); setBar(4);
+  const raw=new Uint8Array(await file.arrayBuffer());
+  if(!(raw[0]===0x1f&&raw[1]===0x8b)) throw new Error('Not a gzip SPZ file.');
+  const b=await gunzip(raw); setBar(40);
+  const h=parseHeader(b);
+  S.header=h; S.bytes=b; S.N=h.N;
+  // decode positions + display colors once
+  const N=h.N, scale=1/(1<<h.frac);
+  const pos=new Float32Array(N*3), col=new Uint8Array(N*3);
+  for(let i=0;i<N;i++){
+    const po=h.posOff+i*9;
+    pos[i*3]  =int24(b,po)*scale;
+    pos[i*3+1]=int24(b,po+3)*scale;
+    pos[i*3+2]=int24(b,po+6)*scale;
+    const co=h.colOff+i*3;
+    for(let k=0;k<3;k++){
+      const sh0=(b[co+k]/255-0.5)/COLOR_SCALE;
+      col[i*3+k]=Math.max(0,Math.min(255,Math.round((0.5+SH_C0*sh0)*255)));
+    }
+  }
+  S.pos=pos; S.baseColor=col; S.sel=new Uint8Array(N);
+  // robust framing: centroid + 95th-percentile radius (ignores stray far splats)
+  { let cx=0,cy=0,cz=0,m=0; const step=Math.max(1,(N/40000)|0);
+    for(let i=0;i<N;i+=step){ cx+=pos[i*3];cy+=pos[i*3+1];cz+=pos[i*3+2];m++; }
+    cx/=m;cy/=m;cz/=m; const ds=[];
+    for(let i=0;i<N;i+=step){ const dx=pos[i*3]-cx,dy=pos[i*3+1]-cy,dz=pos[i*3+2]-cz; ds.push(Math.sqrt(dx*dx+dy*dy+dz*dz)); }
+    ds.sort((a,b)=>a-b); S.center=[cx,cy,cz]; S.frameR=ds[(ds.length*0.95)|0]||3; }
+  setBar(100); setTimeout(()=>setBar(0),400);
+  setStatus('spzStatus','good',`SPZ v${h.version} · ${N.toLocaleString()} splats · SH${h.shDeg}`);
+  log(`Loaded ${N.toLocaleString()} splats (fracBits=${h.frac}, v${h.version}).`);
+  buildPointCloud();
+  refreshReady();
+}
+
+// ---------- image / mask ----------
+async function loadImage(file){
+  const bmp=await createImageBitmap(file);
+  const c=document.createElement('canvas'); c.width=bmp.width; c.height=bmp.height;
+  const ctx=c.getContext('2d',{willReadFrequently:true}); ctx.drawImage(bmp,0,0);
+  return {data:ctx.getImageData(0,0,bmp.width,bmp.height),w:bmp.width,h:bmp.height,canvas:c};
+}
+function isPink(r,g,b){
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;
+  const sat=mx===0?0:d/mx, val=mx/255;
+  let hue=0; if(d){ if(mx===r)hue=((g-b)/d)%6; else if(mx===g)hue=(b-r)/d+2; else hue=(r-g)/d+4; hue*=60; if(hue<0)hue+=360; }
+  const hLo=+$('hueLo').value, hHi=+$('hueHi').value;
+  return hue>=hLo && hue<=hHi && sat>=+$('sat').value && val>=+$('val').value;
+}
+function buildMask(img){
+  const {data,w,h}=img, px=data.data; let m=new Uint8Array(w*h); let n=0;
+  for(let i=0,p=0;p<w*h;i+=4,p++){ if(px[i+3]>10 && isPink(px[i],px[i+1],px[i+2])){ m[p]=1; n++; } }
+  const rad=+$('dil').value;
+  if(rad>0 && n>0){
+    const I=new Uint32Array((w+1)*(h+1));
+    for(let y=1;y<=h;y++){ let row=0; const ro=(y-1)*w, ir=y*(w+1), ip=(y-1)*(w+1); for(let x=1;x<=w;x++){ row+=m[ro+x-1]; I[ir+x]=I[ip+x]+row; } }
+    const d=new Uint8Array(w*h);
+    for(let y=0;y<h;y++){ const y0=Math.max(0,y-rad),y1=Math.min(h-1,y+rad);
+      for(let x=0;x<w;x++){ const x0=Math.max(0,x-rad),x1=Math.min(w-1,x+rad);
+        const A=y0*(w+1)+x0,B=y0*(w+1)+x1+1,C=(y1+1)*(w+1)+x0,D=(y1+1)*(w+1)+x1+1;
+        if(I[D]-I[B]-I[C]+I[A]>0) d[y*w+x]=1; } }
+    m=d;
+  }
+  // Grow the mask toward the horizon (upward) to reach the floor splats that
+  // project into the band just above the painted nadir region. Stops at vTop
+  // so it can't climb past the horizon into the ceiling.
+  const up=+$('growUp').value|0;
+  if(up>0 && n>0){
+    const vTop=+$('growTop').value;            // don't grow above this v (0..1)
+    const yMin=Math.max(0,Math.floor(vTop*h));
+    const g=m.slice();
+    for(let x=0;x<w;x++){ let since=1e9;
+      for(let y=h-1;y>=yMin;y--){ const idx=y*w+x;
+        if(m[idx]) since=0; else { since++; if(since<=up) g[idx]=1; } } }
+    m=g;
+  }
+  let total=0; for(let i=0;i<m.length;i++) total+=m[i];
+  S.mask=m; S.maskW=w; S.maskH=h; S.pinkRaw=n;
+  log(`Pink ${n.toLocaleString()} px → mask ${total.toLocaleString()} (${(100*total/(w*h)).toFixed(1)}%) · dilate ${rad} · grow↑ ${up}`);
+}
+
+// ---------- projection ----------
+const PRESETS = {
+  wl:    {r:[1,0,0],  u:[0,1,0],  f:[0,0,-1]},
+  ydown: {r:[1,0,0],  u:[0,-1,0], f:[0,0,1]},
+  zfwd:  {r:[1,0,0],  u:[0,1,0],  f:[0,0,1]},
+  xleft: {r:[-1,0,0], u:[0,1,0],  f:[0,0,-1]},
+};
+function axes(){
+  let a = PRESETS[$('preset').value] || PRESETS.wl;
+  a = {r:a.r.slice(),u:a.u.slice(),f:a.f.slice()};
+  if($('flipX').checked){ a.r[0]*=-1; }
+  if($('flipY').checked){ a.u[1]*=-1; }
+  if($('flipZ').checked){ a.f[2]*=-1; }
+  return a;
+}
+function projectAll(yawTurns, a, cb){
+  const N=S.N, pos=S.pos, minR=+$('minR').value;
+  const rx=a.r[0],ux=a.u[1],fz=a.f[2]; // diagonal-only fast path
+  const diag = a.r[1]===0&&a.r[2]===0&&a.u[0]===0&&a.u[2]===0&&a.f[0]===0&&a.f[1]===0;
+  for(let i=0;i<N;i++){
+    const x=pos[i*3],y=pos[i*3+1],z=pos[i*3+2];
+    let R,U,F;
+    if(diag){ R=x*rx; U=y*ux; F=z*fz; }
+    else { R=x*a.r[0]+y*a.r[1]+z*a.r[2]; U=x*a.u[0]+y*a.u[1]+z*a.u[2]; F=x*a.f[0]+y*a.f[1]+z*a.f[2]; }
+    const r=Math.sqrt(R*R+U*U+F*F);
+    if(r<minR){ cb(i,-1,-1,r); continue; }
+    let u=0.5+Math.atan2(R,F)/TAU+yawTurns; u-=Math.floor(u);
+    const v=0.5-Math.asin(Math.max(-1,Math.min(1,U/r)))/Math.PI;
+    cb(i,u,v,r);
+  }
+}
+
+// ---------- selection ----------
+async function process(){
+  if(!S.bytes){ alert('Load an SPZ first.'); return; }
+  if(!$('maskFile').files[0] && !S.mask){ alert('Load a pink mask image first.'); return; }
+  $('process').disabled=true;
+  const t0=performance.now();
+  buildMask(S._maskImg);
+  const yaw=+$('yaw').value/360, a=axes(), W=S.maskW, H=S.maskH, m=S.mask, sel=S.sel;
+  let cnt=0; sel.fill(0);
+  setBar(10); await tick();
+  projectAll(yaw,a,(i,u,v)=>{
+    if(u<0) return;
+    const mx=Math.min(W-1,(u*W)|0), my=Math.min(H-1,(v*H)|0);
+    if(m[my*W+mx]){ sel[i]=1; cnt++; }
+  });
+  setBar(70);
+  $('selCount').textContent=cnt.toLocaleString();
+  $('selPct').textContent=`/ ${S.N.toLocaleString()} (${(100*cnt/S.N).toFixed(2)}%)`;
+  $('pills').innerHTML=`<span class="pill">yaw ${(+$('yaw').value).toFixed(1)}°</span><span class="pill">dilate ${$('dil').value}px</span><span class="pill">grow↑ ${$('growUp').value}px</span><span class="pill">${(performance.now()-t0|0)} ms</span>`;
+  log(`Selected ${cnt.toLocaleString()} splats.`);
+  updateViewerColors(); drawOverlay();
+  setBar(100); setTimeout(()=>setBar(0),400);
+  $('process').disabled=false; $('export').disabled=cnt===0;
+}
+
+// ---------- export ----------
+function targetBytes(){
+  // write the chosen display color back through the SPZ SH-DC encoding
+  const hex=$('selHex').value.replace('#',''); const n=parseInt(hex.length===3?hex.split('').map(c=>c+c).join(''):hex,16);
+  const rgb=[(n>>16)&255,(n>>8)&255,n&255];
+  return rgb.map(v=>{ const sh0=(v/255-0.5)/SH_C0; return Math.max(0,Math.min(255,Math.round((sh0*COLOR_SCALE+0.5)*255))); });
+}
+async function exportSPZ(){
+  $('export').disabled=true; log('Encoding…'); setBar(20); await tick();
+  const out=S.bytes.slice();           // fresh copy
+  const tb=targetBytes(), h=S.header;
+  let n=0;
+  for(let i=0;i<S.N;i++){ if(S.sel[i]){ const o=h.colOff+i*3; out[o]=tb[0]; out[o+1]=tb[1]; out[o+2]=tb[2]; n++; } }
+  setBar(55); await tick();
+  const gz=await gzip(out); setBar(90);
+  const name=(S._spzName||'splats').replace(/\.spz$/i,'')+'_selected.spz';
+  const url=URL.createObjectURL(new Blob([gz],{type:'application/octet-stream'}));
+  const a=document.createElement('a'); a.href=url; a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  log(`Exported ${name} — recolored ${n.toLocaleString()} splats (${(gz.length/1e6).toFixed(1)} MB).`);
+  setBar(100); setTimeout(()=>setBar(0),400); $('export').disabled=false;
+}
+
+// ---------- 2D panorama overlay ----------
+function drawOverlay(){
+  const c=$('overlay'),ctx=c.getContext('2d'); const W=c.width,H=c.height;
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+  const bg=S.origImg||S._maskImg;
+  if(bg) ctx.drawImage(bg.canvas,0,0,W,H);
+  // tint the mask
+  if(S.mask){
+    const img=ctx.getImageData(0,0,W,H), d=img.data, mw=S.maskW, mh=S.maskH;
+    for(let y=0;y<H;y++){ const my=(y/H*mh)|0; for(let x=0;x<W;x++){ const mx=(x/W*mw)|0;
+      if(S.mask[my*mw+mx]){ const p=(y*W+x)*4; d[p]=Math.min(255,d[p]*.4+255*.6); d[p+1]=d[p+1]*.4+20*.6; d[p+2]=d[p+2]*.4+147*.6; } } }
+    ctx.putImageData(img,0,0);
+  }
+  // project every selected splat (no subsampling — honest coverage)
+  if(S.sel){
+    const yaw=+$('yaw').value/360, a=axes();
+    ctx.fillStyle=$('selHex').value;
+    projectAll(yaw,a,(i,u,v)=>{ if(u<0||!S.sel[i]) return; ctx.fillRect((u*W)|0,(v*H)|0,2,2); });
+  }
+}
+
+// ---------- auto-align yaw (uses original panorama) ----------
+async function autoYaw(){
+  if(!S.origImg){ alert('Load the original clean panorama to auto-align.'); return; }
+  log('Auto-aligning yaw…'); $('autoYaw').disabled=true; await tick();
+  const a=axes(), o=S.origImg, W=o.w,H=o.h, px=o.data.data, N=S.N;
+  const M=20000, step=Math.max(1,(N/M)|0);
+  const samp=[]; // {R,U,F,r, cr,cg,cb}
+  for(let i=0;i<N;i+=step){
+    const x=S.pos[i*3],y=S.pos[i*3+1],z=S.pos[i*3+2];
+    const R=x*a.r[0]+y*a.r[1]+z*a.r[2],U=x*a.u[0]+y*a.u[1]+z*a.u[2],F=x*a.f[0]+y*a.f[1]+z*a.f[2];
+    const r=Math.sqrt(R*R+U*U+F*F); if(r<0.1) continue;
+    samp.push([R,U,F,r,S.baseColor[i*3],S.baseColor[i*3+1],S.baseColor[i*3+2]]);
+  }
+  function score(yt){
+    let sx=0,sy=0,sxx=0,syy=0,sxy=0,nn=0;
+    for(const s of samp){ let u=0.5+Math.atan2(s[0],s[2])/TAU+yt; u-=Math.floor(u);
+      const v=0.5-Math.asin(Math.max(-1,Math.min(1,s[1]/s[3])))/Math.PI;
+      const mx=Math.min(W-1,(u*W)|0),my=Math.min(H-1,(v*H)|0),p=(my*W+mx)*4;
+      const cv=(s[4]+s[5]+s[6]), pv=(px[p]+px[p+1]+px[p+2]);
+      sx+=cv; sy+=pv; sxx+=cv*cv; syy+=pv*pv; sxy+=cv*pv; nn++; }
+    const cov=sxy/nn-(sx/nn)*(sy/nn), vx=sxx/nn-(sx/nn)**2, vy=syy/nn-(sy/nn)**2;
+    return cov/Math.sqrt(vx*vy+1e-9);
+  }
+  let best=-2,bestY=0;
+  for(let d=0;d<360;d+=3){ const sc=score(d/360); if(sc>best){best=sc;bestY=d;} }
+  for(let d=bestY-3;d<=bestY+3;d+=0.5){ const sc=score(((d+360)%360)/360); if(sc>best){best=sc;bestY=((d+360)%360);} }
+  if(bestY>180) bestY-=360;
+  $('yaw').value=bestY; $('yawLbl').textContent=bestY.toFixed(1)+'°';
+  log(`Best yaw ${bestY.toFixed(1)}° (corr ${best.toFixed(3)}).`);
+  $('autoYaw').disabled=false; drawOverlay();
+}
+
+// ---------- Three.js viewer ----------
+let THREE, OrbitControls, renderer, scene, camera, controls, points, geom, colorAttr, ready3d=false, renderPending=false;
+function requestRender(){ if(!ready3d||renderPending) return; renderPending=true; requestAnimationFrame(()=>{ renderPending=false; renderer.render(scene,camera); }); }
+async function init3D(){
+  try{
+    THREE=await import('three');
+    ({OrbitControls}=await import('three/addons/controls/OrbitControls.js'));
+    const el=$('viewer');
+    renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setPixelRatio(Math.min(2,devicePixelRatio));
+    renderer.setSize(el.clientWidth,el.clientHeight); el.appendChild(renderer.domElement);
+    scene=new THREE.Scene(); scene.background=new THREE.Color(0x0a0d12);
+    camera=new THREE.PerspectiveCamera(60,el.clientWidth/el.clientHeight,0.01,500);
+    camera.position.set(0,0.5,6); camera.up.set(0,1,0);
+    controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=false;
+    ready3d=true;
+    controls.addEventListener('change',requestRender);
+    new ResizeObserver(()=>{ if(!renderer)return; renderer.setSize(el.clientWidth,el.clientHeight); camera.aspect=el.clientWidth/el.clientHeight; camera.updateProjectionMatrix(); requestRender(); }).observe(el);
+    requestRender();
+  }catch(e){
+    $('viewerMsg').innerHTML='3D viewer unavailable (no internet for three.js).<br>The 2D panorama check below still works fully.';
+    log('3D viewer disabled: '+e.message);
+  }
+}
+function buildPointCloud(){
+  if(!ready3d) return;
+  if(points){ scene.remove(points); geom.dispose(); points.material.dispose(); }
+  const N=S.N; geom=new THREE.BufferGeometry();
+  geom.setAttribute('position',new THREE.BufferAttribute(S.pos,3));
+  const col=new Float32Array(N*3); for(let i=0;i<N*3;i++) col[i]=S.baseColor[i]/255;
+  colorAttr=new THREE.BufferAttribute(col,3); geom.setAttribute('color',colorAttr);
+  const mat=new THREE.PointsMaterial({size:+$('ptSize').value,vertexColors:true,sizeAttenuation:false});
+  points=new THREE.Points(geom,mat); scene.add(points);
+  $('viewerMsg').style.display='none';
+  geom.computeBoundingSphere(); resetCam();
+}
+function updateViewerColors(){
+  if(!ready3d||!colorAttr) return;
+  const arr=colorAttr.array, hl=$('showSel').checked, dim=$('dimUnsel').checked;
+  const tb=$('selHex').value.replace('#',''); const n=parseInt(tb.length===3?tb.split('').map(c=>c+c).join(''):tb,16);
+  const yr=((n>>16)&255)/255,yg=((n>>8)&255)/255,yb=(n&255)/255;
+  for(let i=0;i<S.N;i++){
+    if(hl&&S.sel[i]){ arr[i*3]=yr; arr[i*3+1]=yg; arr[i*3+2]=yb; }
+    else { const f=dim?0.28:1; arr[i*3]=S.baseColor[i*3]/255*f; arr[i*3+1]=S.baseColor[i*3+1]/255*f; arr[i*3+2]=S.baseColor[i*3+2]/255*f; }
+  }
+  colorAttr.needsUpdate=true; requestRender();
+}
+function resetCam(){
+  if(!ready3d||!S.center) return;
+  const c=S.center, r=S.frameR||3;
+  controls.target.set(c[0],c[1],c[2]);
+  camera.position.set(c[0], c[1]+r*0.35, c[2]+r*1.5);
+  camera.near=Math.max(0.01,r/500); camera.far=r*60; camera.updateProjectionMatrix();
+  controls.update(); requestRender();
+}
+
+// ---------- wiring ----------
+function refreshReady(){ $('process').disabled=!(S.bytes && S._maskImg); }
+$('spzFile').onchange=e=>{ const f=e.target.files[0]; if(!f)return; S._spzName=f.name; loadSPZ(f).catch(err=>{setStatus('spzStatus','bad',err.message);log('ERROR '+err.message);}); };
+$('maskFile').onchange=async e=>{ const f=e.target.files[0]; if(!f)return; S._maskImg=await loadImage(f); buildMask(S._maskImg); setStatus('maskStatus','good',`${S.maskW}×${S.maskH}`); drawOverlay(); refreshReady(); };
+$('origFile').onchange=async e=>{ const f=e.target.files[0]; if(!f)return; const im=await loadImage(f); S.origImg={data:im.data,w:im.w,h:im.h,canvas:im.canvas}; setStatus('origStatus','good',`${im.w}×${im.h}`); $('autoYaw').disabled=false; drawOverlay(); };
+$('process').onclick=()=>process().catch(err=>{log('ERROR '+err.message);$('process').disabled=false;});
+$('export').onclick=()=>exportSPZ().catch(err=>{log('ERROR '+err.message);$('export').disabled=false;});
+$('autoYaw').onclick=()=>autoYaw().catch(err=>log('ERROR '+err.message));
+$('resetCam').onclick=resetCam;
+$('showSel').onchange=updateViewerColors; $('dimUnsel').onchange=updateViewerColors;
+$('ptSize').oninput=()=>{ if(points){ points.material.size=+$('ptSize').value; requestRender(); } };
+$('selColor').oninput=e=>{ $('selHex').value=e.target.value; updateViewerColors(); drawOverlay(); };
+$('selHex').onchange=e=>{ try{$('selColor').value=e.target.value;}catch{} updateViewerColors(); drawOverlay(); };
+const sync=(id,lbl,fmt)=>{ $(id).oninput=()=>{ $(lbl).textContent=fmt($(id).value); }; };
+sync('yaw','yawLbl',v=>(+v).toFixed(1)+'°');
+sync('sat','satLbl',v=>(+v).toFixed(2));
+sync('val','valLbl',v=>(+v).toFixed(2));
+sync('dil','dilLbl',v=>v+' px');
+sync('growUp','growUpLbl',v=>v+' px');
+sync('growTop','growTopLbl',v=>(+v).toFixed(2));
+const hueUpd=()=>$('hueLbl').textContent=`${$('hueLo').value}–${$('hueHi').value}`;
+$('hueLo').oninput=hueUpd; $('hueHi').oninput=hueUpd;
+// live re-selection (mask + projection + viewer) when detection / reach params change
+let reselTimer=null;
+function reselect(){ if(!(S.bytes&&S._maskImg)) { if(S._maskImg){buildMask(S._maskImg);drawOverlay();} return; } clearTimeout(reselTimer); reselTimer=setTimeout(()=>process().catch(e=>log('ERROR '+e.message)),120); }
+['sat','val','hueLo','hueHi','dil','growUp','growTop'].forEach(id=>$(id).addEventListener('input',reselect));
+
+init3D();
+</script>
+</body>
+</html>

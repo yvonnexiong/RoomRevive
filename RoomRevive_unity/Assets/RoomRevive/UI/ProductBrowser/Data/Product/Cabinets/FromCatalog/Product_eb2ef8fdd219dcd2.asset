@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_eb2ef8fdd219dcd2
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: eb2ef8fdd219dcd2
+  catalogKey: eb2ef8fdd219dcd2
+  brandName: Nobilia
+  productName: EASYTOUCH 966
+  subtitle: Designer kitchen
+  emotionalLine: Elegant Blue
+  shortDescription: Discovering new freedoms is pure luxury. Such as enjoying that
+    lovely moment of relaxation with a cup of tea in your dream kitchen after a long
+    walk along the beach. The simplicity of the design means that the exclusive details
+    have an even greater impact. With this design, an interplay of matt blue fronts,
+    a recess made from quartz and gold-coloured design elements gives the everyday
+    a special touch.
+  productImage: {fileID: 0}
+  specs:
+  - Fjord blue ultra matt
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 966_Fjord_blue_ultra_matt.jpg
+  splatWtMaterial: 807_Epic_Easy_Clay_Quartz_stone.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

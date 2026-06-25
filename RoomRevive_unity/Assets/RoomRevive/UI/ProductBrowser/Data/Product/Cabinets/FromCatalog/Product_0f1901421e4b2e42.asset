@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_0f1901421e4b2e42
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 0f1901421e4b2e42
+  catalogKey: 0f1901421e4b2e42
+  brandName: Nobilia
+  productName: NOVALUX 512
+  subtitle: Modern kitchen
+  emotionalLine: Naturally modern in just a few square metres
+  shortDescription: Glossy white kitchen modules harmonise perfectly with the warm
+    Nevada oak reproduction wood decor and create cosy contrasts in the smallest
+    of spaces. The worktop has been creatively extended as a counter. Perfect for
+    starting the day with a cup of coffee.
+  productImage: {fileID: 0}
+  specs:
+  - White high gloss
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 512_White_high_gloss.jpg
+  splatWtMaterial: 392_Nevada_oak_reproduction.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []
