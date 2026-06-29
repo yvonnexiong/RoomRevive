@@ -13,6 +13,9 @@ namespace RoomRevive.Onboarding
             { "natural & scandinavian", new[] { "dark", "bold" } }
         };
 
+        // ReadyUI is a separate World Space canvas — drag its scene instance here.
+        [SerializeField] GameObject _readyUI;
+
         GameObject _q1Panel, _q2Panel, _q3Panel, _q4Panel, _reviewPanel;
         OnboardingQ1Controller        _q1Ctrl;
         OnboardingImagePageController _q2Ctrl;
@@ -44,7 +47,8 @@ namespace RoomRevive.Onboarding
                 $"Q2:{(_q2Panel != null ? "ok" : "MISSING — run Phase 4")} " +
                 $"Q3:{(_q3Panel != null ? "ok" : "MISSING — run Phase 5")} " +
                 $"Q4:{(_q4Panel != null ? "ok" : "MISSING — run Phase 6")} " +
-                $"Review:{(_reviewPanel != null ? "ok" : "MISSING — run Phase 8")}");
+                $"Review:{(_reviewPanel != null ? "ok" : "MISSING — run Phase 8a")} " +
+                $"ReadyUI:{(_readyUI != null ? "ok" : "MISSING — assign in Inspector")}");
 
             SetActivePage(0);
 
@@ -52,6 +56,7 @@ namespace RoomRevive.Onboarding
             AddNextListener(_q2Panel, () => GoToPage(2));
             AddNextListener(_q3Panel, () => GoToPage(3));
             AddNextListener(_q4Panel, () => GoToPage(4));
+            // ReviewPanel has no buttons — navigation is driven by onComplete at end of animation.
 
             AddBackListener(_q2Panel, () => GoToPage(0));
             AddBackListener(_q3Panel, () => GoToPage(1));
@@ -60,6 +65,18 @@ namespace RoomRevive.Onboarding
 
         void GoToPage(int index)
         {
+            // Page 5 = ReadyUI — a separate canvas, not a child panel
+            if (index == 5)
+            {
+                SetActivePage(-1); // hide all flow panels
+                if (_readyUI != null)
+                    _readyUI.SetActive(true);
+                else
+                    Debug.LogWarning("[OnboardingFlow] ReadyUI not assigned — drag ReadyUI scene instance into the Inspector.");
+                Debug.Log("[OnboardingFlow] → ReadyUI");
+                return;
+            }
+
             var dest = GetPanel(index);
             if (dest == null)
             {
@@ -100,13 +117,15 @@ namespace RoomRevive.Onboarding
 
         void OnBuildBReady()
         {
-            Debug.Log("[OnboardingFlow] Build B — transition placeholder (Phase 10)");
+            Debug.Log("[OnboardingFlow] Review complete — showing Ready page");
+            GoToPage(5);
         }
 
         GameObject GetPanel(int index) => index switch
         {
             0 => _q1Panel, 1 => _q2Panel, 2 => _q3Panel,
-            3 => _q4Panel, 4 => _reviewPanel, _ => null
+            3 => _q4Panel, 4 => _reviewPanel,
+            _ => null
         };
 
         GameObject FindPanel(string name) => transform.Find(name)?.gameObject;

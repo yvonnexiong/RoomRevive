@@ -17,9 +17,11 @@ namespace RoomRevive.Onboarding.Editor
     /// </summary>
     public static class OnboardingPrefabCreator
     {
-        const string SpritePath        = "Assets/Onboarding/Sprites/RoundedRect.png";
-        const string ProgBarSpritePath = "Assets/Onboarding/Sprites/ProgBar.png";
-        const string BgGradientPath    = "Assets/Onboarding/Sprites/BgGradient.png";
+        const string SpritePath          = "Assets/Onboarding/Sprites/RoundedRect.png";
+        const string ProgBarSpritePath   = "Assets/Onboarding/Sprites/ProgBar.png";
+        const string BgGradientPath      = "Assets/Onboarding/Sprites/BgGradient.png";
+        const string CheckmarkSpritePath = "Assets/Onboarding/Sprites/Checkmark.png";
+        const string ReadyPrefabPath     = "Assets/Onboarding/Prefabs/ReadyUI.prefab";
         const string ThemePath         = "Assets/Onboarding/Data/OnboardingTheme.asset";
         const string PrefabPath        = "Assets/Onboarding/Prefabs/OnboardingFlowUI.prefab";
         const string ImagesRoot        = "Assets/Onboarding/Images";
@@ -45,6 +47,7 @@ namespace RoomRevive.Onboarding.Editor
             GenerateRoundedRectSprite();
             GenerateProgBarSprite();
             GenerateBgGradientSprite();
+            GenerateCheckmarkSprite();
             CreateThemeAsset();
             AssetDatabase.SaveAssets();
             Debug.Log("[Onboarding] Phase 0 done — sprites and theme asset ready.");
@@ -52,7 +55,7 @@ namespace RoomRevive.Onboarding.Editor
 
         static void GenerateRoundedRectSprite()
         {
-            const int size = 64, radius = 8;
+            const int size = 64, radius = 16;
             var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
             var px  = new Color32[size * size];
             for (int y = 0; y < size; y++)
@@ -159,6 +162,58 @@ namespace RoomRevive.Onboarding.Editor
             imp.spriteBorder     = Vector4.zero;
             imp.filterMode       = FilterMode.Bilinear;
             imp.SaveAndReimport();
+        }
+
+        // White checkmark on transparent background, 32×32 px.
+        // Two anti-aliased line segments meeting at the bottom of the tick.
+        static void GenerateCheckmarkSprite()
+        {
+            const int   size = 32;
+            const float hw   = 2.0f; // half stroke width in pixels
+            const float aa   = 0.9f; // anti-alias falloff
+
+            // Checkmark points in pixel coords (Y = 0 at bottom of texture)
+            // Short left arm: upper-left → bottom corner
+            // Long right arm: bottom corner → upper-right
+            float ax = 6f,  ay = 19f; // left tip
+            float bx = 13f, by = 8f;  // bottom corner (the "V" dip)
+            float cx = 27f, cy = 24f; // right tip
+
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            var pixels = new Color32[size * size];
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                float px = x + 0.5f, py = y + 0.5f;
+                float d  = Mathf.Min(DistToSeg(px, py, ax, ay, bx, by),
+                                     DistToSeg(px, py, bx, by, cx, cy));
+                float a  = Mathf.Clamp01((hw + aa - d) / aa);
+                pixels[y * size + x] = new Color32(255, 255, 255, (byte)(a * 255 + 0.5f));
+            }
+            tex.SetPixels32(pixels);
+            tex.Apply();
+            File.WriteAllBytes(Path.GetFullPath(CheckmarkSpritePath), tex.EncodeToPNG());
+            Object.DestroyImmediate(tex);
+
+            AssetDatabase.Refresh();
+            var imp = (TextureImporter)AssetImporter.GetAtPath(CheckmarkSpritePath);
+            imp.textureType         = TextureImporterType.Sprite;
+            imp.spriteImportMode    = SpriteImportMode.Single;
+            imp.spriteBorder        = Vector4.zero; // no 9-slice — fixed icon
+            imp.filterMode          = FilterMode.Bilinear;
+            imp.alphaIsTransparency = true;
+            imp.textureCompression  = TextureImporterCompression.Uncompressed;
+            imp.SaveAndReimport();
+        }
+
+        // Signed distance from point (px,py) to the nearest point on segment (ax,ay)→(bx,by)
+        static float DistToSeg(float px, float py, float ax, float ay, float bx, float by)
+        {
+            float dx = bx - ax, dy = by - ay;
+            float lenSq = dx * dx + dy * dy;
+            float t  = lenSq > 0f ? Mathf.Clamp01(((px - ax) * dx + (py - ay) * dy) / lenSq) : 0f;
+            float qx = ax + t * dx - px, qy = ay + t * dy - py;
+            return Mathf.Sqrt(qx * qx + qy * qy);
         }
 
         static void CreateThemeAsset()
@@ -423,14 +478,16 @@ namespace RoomRevive.Onboarding.Editor
             Debug.Log("[Onboarding] Phase 7 done — OnboardingFlowController added to root. Press Play to test full flow.");
         }
 
-        // ── Phase 8 ──────────────────────────────────────────────────────────
+        // ── Phase 8a — Review page ("Personalizing your dream kitchen") ─────────
 
-        [MenuItem("Tools/RoomRevive/Onboarding/Phase 8 — Build Review Page")]
-        static void Phase8()
+        [MenuItem("Tools/RoomRevive/Onboarding/Phase 8a — Build Review Page (static)")]
+        static void Phase8a()
         {
             var roundRect  = AssetDatabase.LoadAssetAtPath<Sprite>(SpritePath);
             var bgGradient = AssetDatabase.LoadAssetAtPath<Sprite>(BgGradientPath);
+            var checkmark  = AssetDatabase.LoadAssetAtPath<Sprite>(CheckmarkSpritePath);
             if (roundRect == null) { Debug.LogError("[Onboarding] Run Phase 0 first."); return; }
+            if (checkmark == null) Debug.LogWarning("[Onboarding] Checkmark sprite missing — re-run Phase 0.");
             s_font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontPath);
 
             var root = PrefabUtility.LoadPrefabContents(PrefabPath);
@@ -438,20 +495,225 @@ namespace RoomRevive.Onboarding.Editor
 
             var existing = root.transform.Find("ReviewPanel");
             if (existing != null) Object.DestroyImmediate(existing.gameObject);
-
-            BuildReviewPage(root.transform, roundRect, bgGradient ?? roundRect);
+            BuildReviewPage(root.transform, roundRect, bgGradient ?? roundRect, checkmark);
 
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             PrefabUtility.UnloadPrefabContents(root);
             AssetDatabase.Refresh();
             Selection.activeObject = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
-            Debug.Log("[Onboarding] Phase 8 done — ReviewPanel added. Complete Q4 to test the review animation.");
+            Debug.Log("[Onboarding] Phase 8a — ReviewPanel built. Enable it in the Hierarchy to inspect.");
         }
 
-        static void BuildReviewPage(Transform root, Sprite roundRect, Sprite bgGradient)
+        // ── Phase 8b — Standalone ReadyUI canvas ─────────────────────────────
+
+        [MenuItem("Tools/RoomRevive/Onboarding/Phase 8b — Build Ready Page (static)")]
+        static void Phase8b()
+        {
+            var roundRect  = AssetDatabase.LoadAssetAtPath<Sprite>(SpritePath);
+            var bgGradient = AssetDatabase.LoadAssetAtPath<Sprite>(BgGradientPath);
+            if (roundRect == null) { Debug.LogError("[Onboarding] Run Phase 0 first."); return; }
+            s_font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontPath);
+
+            // ── Build a standalone World Space canvas (same dims as OnboardingFlowUI) ──
+            EnsureFolder("Assets/Onboarding/Prefabs");
+            var root   = new GameObject("ReadyUI");
+            var canvas = root.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.WorldSpace;
+            root.AddComponent<GraphicRaycaster>();
+            var rootRT = root.GetComponent<RectTransform>();
+            rootRT.sizeDelta = new Vector2(480f, 780f);
+            root.transform.localScale = Vector3.one * 0.001f;
+
+            BuildReadyPage(root.transform, roundRect, bgGradient ?? roundRect);
+
+            PrefabUtility.SaveAsPrefabAsset(root, ReadyPrefabPath);
+            Object.DestroyImmediate(root);
+
+            // ── Strip any leftover ReadyPanel from OnboardingFlowUI ───────────
+            var flowRoot = PrefabUtility.LoadPrefabContents(PrefabPath);
+            if (flowRoot != null)
+            {
+                var stale = flowRoot.transform.Find("ReadyPanel");
+                if (stale != null)
+                {
+                    Object.DestroyImmediate(stale.gameObject);
+                    PrefabUtility.SaveAsPrefabAsset(flowRoot, PrefabPath);
+                }
+                PrefabUtility.UnloadPrefabContents(flowRoot);
+            }
+
+            AssetDatabase.Refresh();
+            Selection.activeObject = AssetDatabase.LoadAssetAtPath<GameObject>(ReadyPrefabPath);
+            Debug.Log("[Onboarding] Phase 8b — ReadyUI.prefab built as standalone canvas. " +
+                      "Add it to the scene at the same position as OnboardingFlowUI, " +
+                      "then drag it into the FlowController's 'Ready UI' field.");
+        }
+
+        // ── Review page builder ───────────────────────────────────────────────
+
+        static void BuildReviewPage(Transform root, Sprite roundRect, Sprite bgGradient, Sprite checkmark)
         {
             var panel = MakeRT("ReviewPanel", root);
+            panel.anchorMin = Vector2.zero;
+            panel.anchorMax = Vector2.one;
+            panel.offsetMin = panel.offsetMax = Vector2.zero;
             panel.gameObject.SetActive(false);
+
+            // childControlHeight = true so the VLG sizes children in one coherent pass.
+            // ContentSizeFitter inside a non-controlling VLG runs AFTER positioning,
+            // causing children to be placed at wrong Y before their heights are known.
+            var vlg = panel.gameObject.AddComponent<VerticalLayoutGroup>();
+            vlg.childAlignment       = TextAnchor.UpperCenter;
+            vlg.childControlWidth    = true;
+            vlg.childControlHeight   = true;
+            vlg.childForceExpandWidth  = true;
+            vlg.childForceExpandHeight = false;
+            vlg.spacing = 12f;
+            vlg.padding = new RectOffset(20, 20, 16, 16);
+
+            // Banner: fixed height via LE so the outer VLG can position it correctly.
+            // ContentSizeFitter removed — it runs after VLG positioning and causes overlap.
+            // Height = top pad(14) + title ~2 lines(62) + spacing(4) + subtitle(15) + bot pad(10) ≈ 105; +11 buffer.
+            var banner = MakeImage("Banner", panel, roundRect,
+                new Color(SurfaceLight.r, SurfaceLight.g, SurfaceLight.b, 0.80f));
+            LE(banner.rectTransform, preferredHeight: 116f);
+            var bannerVlg = banner.gameObject.AddComponent<VerticalLayoutGroup>();
+            bannerVlg.childAlignment       = TextAnchor.UpperCenter;
+            bannerVlg.childControlWidth    = true;
+            bannerVlg.childControlHeight   = true;
+            bannerVlg.childForceExpandWidth  = true;
+            bannerVlg.childForceExpandHeight = false;
+            bannerVlg.spacing = 4f;
+            bannerVlg.padding = new RectOffset(16, 16, 14, 10);
+
+            var titleTmp = MakeTMP("Title", banner.rectTransform,
+                "Personalizing your dream kitchen",
+                26f, FontStyles.Bold, InkPrimary, TextAlignmentOptions.Center);
+            titleTmp.enableWordWrapping = true;
+
+            var subtitleTmp = MakeTMP("Subtitle", banner.rectTransform,
+                "Matching your choices to the perfect pieces",
+                12f, FontStyles.Normal, InkSecondary, TextAlignmentOptions.Center);
+
+            // Rows container: fixed height = 4 rows×56 + progbar×5 + 4 gaps×10 = 269px.
+            // No NavBar below — ReviewPanel is animation-only, no user action.
+            // ContentSizeFitter removed for same reason as Banner above.
+            var rowsRT = MakeRT("RowsArea", panel);
+            LE(rowsRT, preferredHeight: 269f);
+            var rowsVlg = rowsRT.gameObject.AddComponent<VerticalLayoutGroup>();
+            rowsVlg.childAlignment       = TextAnchor.UpperLeft;
+            rowsVlg.childControlWidth    = true;
+            rowsVlg.childControlHeight   = true;
+            rowsVlg.childForceExpandWidth  = true;
+            rowsVlg.childForceExpandHeight = false;
+            rowsVlg.spacing = 10f;
+
+            // Category labels (matching HTML `order` array)
+            string[] cats = { "STYLE", "PALETTE", "COOKING FOR", "INVESTMENT" };
+            var rowValueTmps    = new TextMeshProUGUI[4];
+            var rowGroups       = new CanvasGroup[4];
+            var rowRTs          = new RectTransform[4];
+            var checkGroups     = new CanvasGroup[4];
+            var checkTransforms = new Transform[4];
+
+            for (int i = 0; i < 4; i++)
+            {
+                // Row card: CardInner background, horizontal layout
+                var row = MakeImage($"Row{i + 1}", rowsRT, roundRect, CardInner);
+                LE(row.rectTransform, preferredHeight: 56f);
+
+                var rowCG = row.gameObject.AddComponent<CanvasGroup>();
+                rowCG.alpha = 0f;
+                rowGroups[i] = rowCG;
+                rowRTs[i]    = row.rectTransform;
+
+                var rowHlg = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+                rowHlg.childAlignment        = TextAnchor.MiddleLeft;
+                rowHlg.childControlWidth     = true;
+                rowHlg.childControlHeight    = true;
+                rowHlg.childForceExpandWidth  = false;
+                rowHlg.childForceExpandHeight = false;
+                rowHlg.spacing  = 12f;
+                rowHlg.padding  = new RectOffset(16, 16, 13, 13);
+
+                // Category label — fixed 96 px, small caps feel via all-caps text
+                var catTmp = MakeTMP("Category", row.rectTransform,
+                    cats[i], 11f, FontStyles.Bold, InkSecondary, TextAlignmentOptions.Left);
+                catTmp.enableWordWrapping = false;
+                var catLE = catTmp.gameObject.AddComponent<LayoutElement>();
+                catLE.minWidth = 96f; catLE.preferredWidth = 96f;
+
+                // Value — fills remaining width
+                var valTmp = MakeTMP("Value", row.rectTransform,
+                    "—", 15f, FontStyles.Bold, InkPrimary, TextAlignmentOptions.Left);
+                valTmp.enableWordWrapping = false;
+                valTmp.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
+                rowValueTmps[i] = valTmp;
+
+                // Checkmark circle (InkPrimary pill, 9-sliced for roundness at 22 px)
+                var ck = MakeImage("Check", row.rectTransform, roundRect, InkPrimary);
+                var ckLE = ck.gameObject.AddComponent<LayoutElement>();
+                ckLE.minWidth = 22f; ckLE.minHeight = 22f;
+                ckLE.preferredWidth = 22f; ckLE.preferredHeight = 22f;
+
+                var ckCG = ck.gameObject.AddComponent<CanvasGroup>();
+                ckCG.alpha = 0f;
+                ck.transform.localScale = Vector3.one * 0.4f;
+                checkGroups[i]     = ckCG;
+                checkTransforms[i] = ck.transform;
+
+                // Checkmark sprite — white icon inset 4 px inside the circle
+                if (checkmark != null)
+                {
+                    var ckMark = MakeImage("CheckMark", ck.rectTransform, checkmark, Color.white);
+                    ckMark.type = Image.Type.Simple;
+                    ckMark.preserveAspect = false;
+                    var ckMarkRT = ckMark.rectTransform;
+                    ckMarkRT.anchorMin = Vector2.zero;
+                    ckMarkRT.anchorMax = Vector2.one;
+                    ckMarkRT.offsetMin = new Vector2(4f, 4f);
+                    ckMarkRT.offsetMax = new Vector2(-4f, -4f);
+                }
+            }
+
+            // Progress fill bar — 2px rounded corners using the dedicated ProgBar sprite.
+            // Fill uses Sliced type + anchorMax.x animation so corners stay round at all fill levels.
+            var progBar = AssetDatabase.LoadAssetAtPath<Sprite>(ProgBarSpritePath);
+
+            var progWrapper = MakeRT("ProgressBar", rowsRT);
+            progWrapper.gameObject.AddComponent<LayoutElement>().preferredHeight = 5f;
+
+            var progBg = MakeImage("ProgressBg", progWrapper, progBar,
+                new Color(SurfaceDeep.r, SurfaceDeep.g, SurfaceDeep.b, 0.30f));
+            StretchFill(progBg);
+            progBg.type = Image.Type.Sliced;
+
+            var progFill = MakeImage("ProgressFill", progWrapper, progBar, InkPrimary);
+            progFill.type = Image.Type.Sliced;
+            // Left-anchored: animate anchorMax.x 0→1 to reveal fill while keeping sliced corners
+            var pfRT = progFill.rectTransform;
+            pfRT.anchorMin = Vector2.zero;
+            pfRT.anchorMax = new Vector2(0f, 1f);
+            pfRT.offsetMin = Vector2.zero;
+            pfRT.offsetMax = Vector2.zero;
+
+            // No NavBar — user takes no action during the review animation.
+
+            // Wire controller
+            var ctrl = panel.gameObject.AddComponent<OnboardingReviewController>();
+            ctrl.Setup(pfRT, titleTmp, subtitleTmp,
+                rowGroups, checkGroups, checkTransforms, rowValueTmps);
+        }
+
+        // ── Ready page builder ────────────────────────────────────────────────
+
+        static void BuildReadyPage(Transform root, Sprite roundRect, Sprite bgGradient)
+        {
+            var panel = MakeRT("ReadyPanel", root);
+            panel.anchorMin = Vector2.zero;
+            panel.anchorMax = Vector2.one;
+            panel.offsetMin = panel.offsetMax = Vector2.zero;
+            // Active by default — this is the only panel in its own canvas.
 
             var vlg = panel.gameObject.AddComponent<VerticalLayoutGroup>();
             vlg.childAlignment       = TextAnchor.UpperCenter;
@@ -462,25 +724,6 @@ namespace RoomRevive.Onboarding.Editor
             vlg.spacing = 12f;
             vlg.padding = new RectOffset(20, 20, 16, 16);
 
-            // Background (ignoreLayout, stretch-fill)
-            var bg = MakeImage("Background", panel, bgGradient, Color.white);
-            StretchFill(bg);
-            bg.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
-
-            // Progress fill bar (single fill image, not segmented)
-            var progWrapper = MakeRT("ProgressWrapper", panel);
-            progWrapper.gameObject.AddComponent<LayoutElement>().preferredHeight = 6f;
-
-            var progBg = MakeImage("ProgressBg", progWrapper, roundRect,
-                new Color(InkPrimary.r, InkPrimary.g, InkPrimary.b, 0.25f));
-            StretchFill(progBg);
-
-            var progFill = MakeImage("ProgressFill", progWrapper, roundRect, InkPrimary);
-            StretchFill(progFill);
-            progFill.type       = Image.Type.Filled;
-            progFill.fillMethod = Image.FillMethod.Horizontal;
-            progFill.fillAmount = 0f;
-
             // Banner
             var banner = MakeImage("Banner", panel, roundRect,
                 new Color(SurfaceLight.r, SurfaceLight.g, SurfaceLight.b, 0.80f));
@@ -490,65 +733,87 @@ namespace RoomRevive.Onboarding.Editor
             bannerVlg.childControlHeight   = true;
             bannerVlg.childForceExpandWidth  = true;
             bannerVlg.childForceExpandHeight = false;
-            bannerVlg.spacing = 6f;
-            bannerVlg.padding = new RectOffset(16, 16, 14, 10);
-            banner.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            bannerVlg.spacing = 4f;
+            bannerVlg.padding = new RectOffset(16, 16, 14, 14);
+            banner.gameObject.AddComponent<ContentSizeFitter>().verticalFit =
+                ContentSizeFitter.FitMode.PreferredSize;
 
-            var titleTmp = MakeTMP("Title", banner.rectTransform,
-                "Personalizing your dream kitchen",
+            MakeTMP("Title", banner.rectTransform,
+                "Your kitchen is ready",
                 26f, FontStyles.Bold, InkPrimary, TextAlignmentOptions.Center);
 
-            var dotsTmp = MakeTMP("Dots", banner.rectTransform, "",
-                18f, FontStyles.Normal, InkSecondary, TextAlignmentOptions.Center);
-
-            var subtitleTmp = MakeTMP("Subtitle", banner.rectTransform,
-                "Got it — finding your kitchen",
+            MakeTMP("Subtitle", banner.rectTransform,
+                "Here’s what we’ll bring into your room",
                 12f, FontStyles.Normal, InkSecondary, TextAlignmentOptions.Center);
-            subtitleTmp.gameObject.SetActive(false);
 
-            // Summary card — rows reveal staggered on entry
-            var card = MakeImage("SummaryCard", panel, roundRect, CardInner);
+            // Changes card
+            var card = MakeImage("ChangesCard", panel, roundRect, CardInner);
             var cardVlg = card.gameObject.AddComponent<VerticalLayoutGroup>();
             cardVlg.childAlignment       = TextAnchor.UpperLeft;
             cardVlg.childControlWidth    = true;
-            cardVlg.childControlHeight   = false;
+            cardVlg.childControlHeight   = true;
             cardVlg.childForceExpandWidth  = true;
             cardVlg.childForceExpandHeight = false;
-            cardVlg.spacing = 10f;
-            cardVlg.padding = new RectOffset(20, 20, 16, 16);
-            card.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            cardVlg.spacing = 0f;
+            cardVlg.padding = new RectOffset(18, 18, 18, 16);
+            card.gameObject.AddComponent<ContentSizeFitter>().verticalFit =
+                ContentSizeFitter.FitMode.PreferredSize;
 
-            string[] categories = { "Style", "Colour", "Household", "Investment" };
-            var rowGroups    = new CanvasGroup[4];
-            var rowValueTmps = new TextMeshProUGUI[4];
+            // Eyebrow
+            var eyebrow = MakeTMP("Eyebrow", card.rectTransform,
+                "IN THIS ROOM", 11f, FontStyles.Bold, InkSecondary, TextAlignmentOptions.Left);
+            eyebrow.characterSpacing = 60f; // approximates CSS letter-spacing:.06em at 11px
+            LE(eyebrow.rectTransform, preferredHeight: 28f);
 
-            for (int i = 0; i < 4; i++)
+            // 7 product rows — category (left) + product name (right)
+            (string cat, string product)[] items =
             {
-                var row = MakeRT($"Row{i + 1}", card.rectTransform);
-                LE(row, preferredHeight: 44f);
-                var cg = row.gameObject.AddComponent<CanvasGroup>();
-                cg.alpha = 0f;
-                rowGroups[i] = cg;
+                ("Kitchen",        "TOUCH 337"),
+                ("Fridge",         "KDN 4174 E Active"),
+                ("Cooktop",        "CS 7612 FL"),
+                ("Hood",           "DA 1260"),
+                ("Microwave",      "M 2224 SC"),
+                ("Dishwasher",     "G 5540 SCU SL Active"),
+                ("Coffee machine", "CM 5310 Silence"),
+            };
 
-                var rowVlg = row.gameObject.AddComponent<VerticalLayoutGroup>();
-                rowVlg.childAlignment       = TextAnchor.MiddleLeft;
-                rowVlg.childControlWidth    = true;
-                rowVlg.childControlHeight   = true;
-                rowVlg.childForceExpandWidth  = true;
-                rowVlg.childForceExpandHeight = false;
-                rowVlg.spacing = 2f;
-                rowVlg.padding = new RectOffset(4, 0, 0, 0);
+            for (int i = 0; i < items.Length; i++)
+            {
+                // 1px separator above every row except the first (matches CSS border-top)
+                if (i > 0)
+                {
+                    var sep = MakeRT($"Sep{i}", card.rectTransform);
+                    sep.gameObject.AddComponent<LayoutElement>().preferredHeight = 1f;
+                    var sepImg = sep.gameObject.AddComponent<Image>();
+                    sepImg.color = new Color(InkPrimary.r, InkPrimary.g, InkPrimary.b, 0.10f);
+                }
 
-                MakeTMP("Category", row, categories[i],
-                    11f, FontStyles.Normal, InkSecondary, TextAlignmentOptions.Left);
+                var row = MakeRT($"ProductRow{i + 1}", card.rectTransform);
+                LE(row, preferredHeight: 40f);
+                var rowHlg = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+                rowHlg.childAlignment        = TextAnchor.MiddleLeft;
+                rowHlg.childControlWidth     = true;
+                rowHlg.childControlHeight    = true;
+                rowHlg.childForceExpandWidth  = false;
+                rowHlg.childForceExpandHeight = true;
+                rowHlg.spacing  = 12f;
+                rowHlg.padding  = new RectOffset(0, 0, 10, 10);
 
-                var val = MakeTMP("Value", row, "—",
-                    15f, FontStyles.Bold, InkPrimary, TextAlignmentOptions.Left);
-                rowValueTmps[i] = val;
+                var catTmp = MakeTMP("Category", row,
+                    items[i].cat, 13f, FontStyles.Normal, InkSecondary, TextAlignmentOptions.Left);
+                catTmp.enableWordWrapping = false;
+
+                var valTmp = MakeTMP("Product", row,
+                    items[i].product, 13f, FontStyles.Bold, InkPrimary, TextAlignmentOptions.Right);
+                valTmp.enableWordWrapping = false;
+                valTmp.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
             }
 
-            var ctrl = panel.gameObject.AddComponent<OnboardingReviewController>();
-            ctrl.Setup(progFill, titleTmp, dotsTmp, subtitleTmp, rowGroups, rowValueTmps);
+            // "Transforming your kitchen …" note
+            var note = MakeTMP("Note", panel,
+                "Transforming your kitchen ...",
+                16f, FontStyles.Bold, InkPrimary, TextAlignmentOptions.Center);
+            note.rectTransform.sizeDelta = new Vector2(0f, 50f);
         }
 
         // ── Phase 6 ──────────────────────────────────────────────────────────
