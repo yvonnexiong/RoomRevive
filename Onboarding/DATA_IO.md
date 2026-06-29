@@ -20,8 +20,19 @@ Questionnaire (Q1–Q4) + Review screen.
 
 ---
 
+## Processing step (between the two UIs)
+`Onboarding/track2_selection_core/cli.js`
+
+Reads `onboarding_answers.json` + `shared/catalog.json` → runs selection logic → writes `onboarding_selection.json`.
+Unity spawns this automatically after the questionnaire completes. Node.js must be installed.
+
+---
+
 ## UI 2 — ReadyUI
 "Your kitchen is ready" screen showing selected products.
+
+**Processed by:** `RoomRevive_unity/Assets/Onboarding/Scripts/Runtime/OnboardingReadyController.cs`
+Watches `onboarding_selection.json` via `FileSystemWatcher`. Parses the JSON and binds product names into the UI as soon as the file is written.
 
 **Input:** reads from disk automatically the moment the file appears/changes
 `Onboarding/onboarding_selection.json`
