@@ -344,11 +344,16 @@ namespace RoomRevive.Onboarding.Editor
                 12f, FontStyles.Normal, InkSecondary, TextAlignmentOptions.Center);
             LE(subTMP.rectTransform, preferredHeight: 18f);
 
-            // Card grid (2×2 — cell size same as Q1; captionH auto-adjusts per card)
+            // Card grid (2×2)
+            // Cell height keeps photo square (211×211): 211 photo + captionH + 4 inset
+            bool anySubtitle  = data.options.Exists(o => o.HasSubtitle);
+            float pgCaptionH  = anySubtitle ? 56f : 44f;
+            float pgCellH     = 211f + pgCaptionH + 4f; // = 271 with subtitle, 259 without
+            float pgGridH     = pgCellH * 2f + 12f;     // two rows + gap
             var gridRT = MakeRT("CardGrid", panel);
-            LE(gridRT, preferredHeight: 554f);
+            LE(gridRT, preferredHeight: pgGridH);
             var grid             = gridRT.gameObject.AddComponent<GridLayoutGroup>();
-            grid.cellSize        = new Vector2(215f, 271f);
+            grid.cellSize        = new Vector2(215f, pgCellH);
             grid.spacing         = new Vector2(12f, 12f);
             grid.constraint      = GridLayoutGroup.Constraint.FixedColumnCount;
             grid.constraintCount = 2;
