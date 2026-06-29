@@ -100,7 +100,7 @@ The panel background is an `Image` child with `ignoreLayout = true` so the
 
 - Sprite: `RoundedRect.png` (8 px radius, 9-sliced)
 - Color: `SurfaceLight` @ **80% opacity** (gradient shows faintly through)
-- Height: **84 px**
+- Height: **flexible** — no fixed LE; VLG sizes banner to title + subtitle content (≈77 px one-line, ≈108 px two-line)
 - Padding: 16 left/right, 14 top, 10 bottom
 - Internal spacing: **4 px** between title and subtitle
 - Alignment: center

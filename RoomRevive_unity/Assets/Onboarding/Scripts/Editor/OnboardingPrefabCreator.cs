@@ -328,7 +328,7 @@ namespace RoomRevive.Onboarding.Editor
             var banner = MakeImage("Banner", panel, roundRect,
                 new Color(SurfaceLight.r, SurfaceLight.g, SurfaceLight.b, 0.80f));
             banner.type = Image.Type.Sliced;
-            LE(banner.rectTransform, preferredHeight: 84f);
+            // No fixed banner height — flexes so 2-line prompts wrap without clipping
             var bannerVL = banner.gameObject.AddComponent<VerticalLayoutGroup>();
             bannerVL.padding              = new RectOffset(16, 16, 14, 10);
             bannerVL.spacing              = 4f;
@@ -337,9 +337,9 @@ namespace RoomRevive.Onboarding.Editor
             bannerVL.childForceExpandHeight = false;
             bannerVL.childControlWidth      = true;
             bannerVL.childControlHeight     = true;
+            // No fixed title height — TMP reports its wrapped preferred height to the VLG
             var titleTMP = MakeTMP("Title", banner.transform, data.prompt,
                 26f, FontStyles.Bold, InkPrimary, TextAlignmentOptions.Center);
-            LE(titleTMP.rectTransform, preferredHeight: 34f);
             var subTMP = MakeTMP("Subtitle", banner.transform, data.stepLabel,
                 12f, FontStyles.Normal, InkSecondary, TextAlignmentOptions.Center);
             LE(subTMP.rectTransform, preferredHeight: 18f);
@@ -474,7 +474,8 @@ namespace RoomRevive.Onboarding.Editor
             // ── Banner ────────────────────────────────────────────────────────
             var banner = MakeImage("Banner", panel, roundRect,
                 new Color(SurfaceLight.r, SurfaceLight.g, SurfaceLight.b, 0.80f));
-            LE(banner.rectTransform, preferredHeight: 84f);
+            banner.type = Image.Type.Sliced;
+            // No fixed banner height — flexes with prompt length
             var bannerVL = banner.gameObject.AddComponent<VerticalLayoutGroup>();
             bannerVL.padding              = new RectOffset(16, 16, 14, 10);
             bannerVL.spacing              = 4f;
@@ -484,9 +485,9 @@ namespace RoomRevive.Onboarding.Editor
             bannerVL.childControlWidth      = true;
             bannerVL.childControlHeight     = true;
 
-            var titleTMP = MakeTMP("Title", banner.transform,
+            // No fixed title height — wraps to 2 lines if prompt is long
+            MakeTMP("Title", banner.transform,
                 "Which style do you prefer?", 26f, FontStyles.Bold, InkPrimary, TextAlignmentOptions.Center);
-            LE(titleTMP.rectTransform, preferredHeight: 34f);
 
             var subTMP = MakeTMP("Subtitle", banner.transform,
                 "1 of 4", 12f, FontStyles.Normal, InkSecondary, TextAlignmentOptions.Center);
