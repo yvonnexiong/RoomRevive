@@ -777,6 +777,8 @@ namespace RoomRevive.Onboarding.Editor
                 ("Coffee machine", "CM 5310 Silence"),
             };
 
+            var rowGroups = new CanvasGroup[items.Length];
+
             for (int i = 0; i < items.Length; i++)
             {
                 // 1px separator above every row except the first (matches CSS border-top)
@@ -790,6 +792,11 @@ namespace RoomRevive.Onboarding.Editor
 
                 var row = MakeRT($"ProductRow{i + 1}", card.rectTransform);
                 LE(row, preferredHeight: 40f);
+
+                var rowCG = row.gameObject.AddComponent<CanvasGroup>();
+                rowCG.alpha = 0f;
+                rowGroups[i] = rowCG;
+
                 var rowHlg = row.gameObject.AddComponent<HorizontalLayoutGroup>();
                 rowHlg.childAlignment        = TextAnchor.MiddleLeft;
                 rowHlg.childControlWidth     = true;
@@ -809,11 +816,14 @@ namespace RoomRevive.Onboarding.Editor
                 valTmp.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
             }
 
-            // "Transforming your kitchen …" note
+            // "Transforming your kitchen ..." note — dots animated by controller
             var note = MakeTMP("Note", panel,
-                "Transforming your kitchen ...",
+                "Transforming your kitchen .",
                 16f, FontStyles.Bold, InkPrimary, TextAlignmentOptions.Center);
             note.rectTransform.sizeDelta = new Vector2(0f, 50f);
+
+            var ctrl = panel.gameObject.AddComponent<OnboardingReadyController>();
+            ctrl.Setup(rowGroups, note);
         }
 
         // ── Phase 6 ──────────────────────────────────────────────────────────
