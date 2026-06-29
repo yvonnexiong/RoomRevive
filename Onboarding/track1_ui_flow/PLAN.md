@@ -15,12 +15,15 @@ clear "done when" checkpoint before moving on.
 | 0 | Foundation — theme asset | ✅ done |
 | 1 | Q1 visual shell (one page, no logic) | ✅ done |
 | 2 | Q1 interactive (single-select states) | ✅ done |
-| 3 | Extend to Q2 – Q4 (data-driven) | ⬜ not started |
-| 4 | Navigation + progress bar | ⬜ not started |
-| 5 | Preferences Review screen | ⬜ not started |
-| 6 | Payload assembly + Bridge call | ⬜ not started |
-| 7 | Build B — Result page (stubbed) | ⬜ not started |
-| 8 | End-to-end wire (live data) | ⬜ not started |
+| 3 | Data model (ScriptableObjects for all pages) | ⬜ not started |
+| 4 | Q2 — Palette (image cards + combo greying) | ⬜ not started |
+| 5 | Q3 — Household (text rows) | ⬜ not started |
+| 6 | Q4 — Investment (text rows + CTA label) | ⬜ not started |
+| 7 | Navigation + progress bar (connect all pages) | ⬜ not started |
+| 8 | Preferences Review screen | ⬜ not started |
+| 9 | Payload assembly + Bridge call | ⬜ not started |
+| 10 | Build B — Result page (stubbed) | ⬜ not started |
+| 11 | End-to-end wire (live data) | ⬜ not started |
 
 ---
 
@@ -95,58 +98,97 @@ the ring, Next enables. Matches the selected/unselected states in the prototype.
 
 ---
 
-## Phase 3 — Extend to Q2 – Q4 (data-driven)
+## Phase 3 — Data model (shared foundation)
 
-*Parameterize what Phase 2 hardcoded, then add the remaining pages.*
+*ScriptableObjects that drive all four question pages. Do this once so Phases 4–6
+just populate assets, not code.*
 
-### 3a — Data model
-- [ ] `OnboardingOptionData.cs` (serializable struct): `label`, `subtitle`, `value`, `image`
-- [ ] `OnboardingQuestionData.cs` (ScriptableObject): `prompt`, `List<OnboardingOptionData>`, `useImageCards` bool
-- [ ] Populate `Q1_Style.asset` – `Q4_Investment.asset` with values from `UI_SPEC.md §3`
-  (Q1/Q2 use image cards; Q3/Q4 use text rows)
+- [ ] `OnboardingOptionData.cs` — serializable struct: `label`, `subtitle`, `value`, `image`
+- [ ] `OnboardingQuestionData.cs` — ScriptableObject: `prompt`, `List<OnboardingOptionData>`,
+  `useImageCards` bool
+- [ ] Populate `Q1_Style.asset` from `UI_SPEC.md §3` (image cards)
+- [ ] Populate `Q2_Palette.asset` from `UI_SPEC.md §3` (image cards)
+- [ ] Populate `Q3_Household.asset` from `UI_SPEC.md §3` (text rows)
+- [ ] Populate `Q4_Investment.asset` from `UI_SPEC.md §3` (text rows)
 
-### 3b — Text row variant
-- [ ] `OnboardingTextRowView.cs` (reuses `SetSelected` / `SetDisabled` interface)
-  - [ ] Label TMP (ink, 600) + optional subtitle TMP (ink-2, 400)
-  - [ ] Selected state: teal fill, white text
-
-### 3c — Page factory
-- [ ] `OnboardingFlowController.cs`: given a `OnboardingQuestionData`, build the correct
-  card grid (image 2×2) or text row list, bind data, wire click callbacks
-- [ ] Pages 2–4 render correctly from their ScriptableObject assets
-
-**Done when:** all four question pages render from data assets and the card/row
-variant switches automatically (Q1/Q2 = cards, Q3/Q4 = rows).
+**Done when:** all four assets exist and compile; values match `UI_SPEC.md §3` exactly
+(case/space-sensitive).
 
 ---
 
-## Phase 4 — Navigation + progress bar
+## Phase 4 — Q2: Palette (image cards + combo greying)
 
-- [ ] Back / Next page transitions (instant or short fade — match prototype)
-- [ ] Progress bar: segment N lit for page N (drive from `currentPage` index)
-- [ ] Back on Q1: hide Back button (or disable it)
-- [ ] Next carries the current answer forward; navigating back preserves it
-- [ ] Q4 Next button label reads "See my kitchen" instead of "Next"
-- [ ] **Impossible-combo rule:** driven by a `style → allowedTones[]` lookup table
-  (not hardcoded per option) in `OnboardingFlowController`
-  - [ ] On entering Q2: disable options whose value is not in `allowedTones[selectedStyle]`
-  - [ ] On back-nav from Q2: if stored tone is now disabled, clear it
+*Same 2×2 image card layout as Q1. Adds the impossible-combo disabled state.*
 
-**Done when:** full Q1 → Q2 → Q3 → Q4 flow works, back-nav preserves answers,
-Scandinavian correctly greys Dark + Colourful on Q2.
+- [ ] `OnboardingFlowController.cs`: given a `OnboardingQuestionData`, instantiate the
+  correct page (image cards or text rows), bind data, wire click callbacks, manage answers[]
+- [ ] Q2 page renders from `Q2_Palette.asset` using `swatches_stack_1–4.png`
+- [ ] Single-select works identically to Q1
+- [ ] **Impossible-combo rule** — driven by a `style → allowedTones[]` table (not
+  hardcoded per option):
+  - [ ] On entering Q2: call `SetDisabled(true)` on options not in `allowedTones[style]`
+  - [ ] Only Scandinavian disables anything: disables `dark` + `bold`
+
+**Done when:** Q2 renders correctly from its asset; Scandinavian input disables
+Dark + Colourful cards; all other styles leave all four options active.
 
 ---
 
-## Phase 5 — Preferences Review screen
+## Phase 5 — Q3: Household (text rows)
+
+*First text-row page. Establishes the row variant used by Q3 and Q4.*
+
+- [ ] `OnboardingTextRowView.cs`: full-width row — Label TMP (15 px Bold) + optional
+  subtitle TMP (12 px Normal); `SetSelected(bool)` / `SetDisabled(bool)` matching
+  `OnboardingOptionCardView` interface
+- [ ] Selected state: `InkPrimary` fill, white label + subtitle (matches card selected style)
+- [ ] Row height: 56 px; padding 20 left/right, 16 top/bottom; gap between rows: 10 px
+- [ ] Q3 page renders 3 rows from `Q3_Household.asset` (no images)
+- [ ] Hover: scale punch on row (same coroutine as card, or Button ColorBlock instant)
+
+**Done when:** Q3 shows 3 tappable text rows with correct selected state and copy.
+
+---
+
+## Phase 6 — Q4: Investment (text rows + CTA label)
+
+*Same text-row layout as Q3. One special rule: the Next button label changes.*
+
+- [ ] Q4 page renders 4 rows from `Q4_Investment.asset` (label + subtitle on each)
+- [ ] Next button label reads **"See my kitchen"** instead of "Next" on Q4
+- [ ] "Show All" option emits `budget = "any"` — treated as a valid selection
+  (Next button enables normally)
+
+**Done when:** Q4 shows 4 rows; Next reads "See my kitchen"; selecting "Show All"
+enables Next correctly.
+
+---
+
+## Phase 7 — Navigation + progress bar (connect all pages)
+
+- [ ] Back / Next transitions between Q1 → Q2 → Q3 → Q4 (instant or short fade)
+- [ ] Progress bar: segment N lit for page N (driven by `currentPage` index)
+- [ ] Back on Q1: hide Back, Next spans full width (already done in Q1 — preserve)
+- [ ] Back on Q2–Q4: show Back, Next returns to normal width
+- [ ] Next carries the current answer forward; back-nav restores it
+- [ ] **Combo-clear rule:** if user goes back from Q2 to Q1 and changes style such
+  that the stored tone is now disabled → clear the Q2 answer
+
+**Done when:** full Q1 → Q2 → Q3 → Q4 forward and back flow works; progress bar
+updates each step; Scandinavian → back → different style clears Q2 if needed.
+
+---
+
+## Phase 8 — Preferences Review screen
 
 *No progress bar on this screen.*
 
-### 5a — Layout
+### 8a — Layout
 - [ ] Banner: "Personalizing your dream kitchen" + animated dots TMP
 - [ ] 4 summary rows (hidden at start): icon/badge + answer label
 - [ ] Progress bar (separate from the Q1–Q4 one): fills left-to-right
 
-### 5b — Animations (all C# coroutines, no Animator)
+### 8b — Animations (all C# coroutines, no Animator)
 - [ ] **Animated dots:** coroutine cycling `""` → `"."` → `".."` → `"..."` every 0.4s
 - [ ] **Staggered row reveal:** loop over 4 rows, each fades up (alpha 0→1, small Y offset)
   with `WaitForSeconds(0.5f)` between each
@@ -154,7 +196,7 @@ Scandinavian correctly greys Dark + Colourful on Q2.
 - [ ] **Banner swap:** after all rows revealed → title = "Your preferences",
   subtitle = "Got it — finding your kitchen", dots stop
 
-### 5c — Auto-advance gate
+### 8c — Auto-advance gate
 - [ ] `_animDone` flag: set when banner swap completes
 - [ ] `_coreDone` flag: set when `OnboardingBridge.onSelectionReceived` fires
 - [ ] `WaitUntil(() => _animDone && _coreDone)` → transition to Build B
@@ -164,7 +206,7 @@ auto-advance (Build B doesn't exist yet — log a message as placeholder).
 
 ---
 
-## Phase 6 — Payload assembly + Bridge call
+## Phase 9 — Payload assembly + Bridge call
 
 - [ ] On entering the Review screen, assemble:
   ```json
@@ -181,15 +223,15 @@ auto-advance (Build B doesn't exist yet — log a message as placeholder).
 
 ---
 
-## Phase 7 — Build B: Result page (stubbed, then live)
+## Phase 10 — Build B: Result page (stubbed, then live)
 
-*Start against `../track3_visualizer/sample_output.json`; replace with live data in Phase 8.*
+*Start against `../track3_visualizer/sample_output.json`; replace with live data in Phase 11.*
 
-### 7a — Catalog loader
+### 10a — Catalog loader
 - [ ] `CatalogLookup.cs`: loads `shared/catalog.json`, indexes items by `id`
 - [ ] `GetDisplayName(id)` returns `item.name` (or `item.product.name`)
 
-### 7b — Layout
+### 10b — Layout
 - [ ] Banner: "Your kitchen is ready" / "Here's what we'll bring into your room"
 - [ ] Changes card (card-inner): eyebrow "In this room"
 - [ ] One row per category, in order:
@@ -198,14 +240,14 @@ auto-advance (Build B doesn't exist yet — log a message as placeholder).
 - [ ] Rows start hidden; staggered fade-in (same coroutine pattern as Review)
 - [ ] "Transforming your kitchen …" with pulsing dots below card (ink primary, no button)
 
-### 7c — Data binding
+### 10c — Data binding
 - [ ] `SelectionOutput.cs`: deserializes the output payload JSON
   (`answers`, `profile`, `kitchens`, `appliances[]`)
 - [ ] For each appliance category: take `topPick.id`, resolve name via `CatalogLookup`
 - [ ] For kitchen row: take `kitchens.shortlist[0].id`, resolve name
 - [ ] Omit any row whose id fails to resolve
 
-### 7d — Scene transition trigger
+### 10d — Scene transition trigger
 - [ ] On entering Build B, fire the passthrough/splat scene transition
   (wire to existing `IntentManager` / scene-swap mechanism)
 
@@ -214,9 +256,9 @@ and the scene transition fires on entry.
 
 ---
 
-## Phase 8 — End-to-end wire (live data)
+## Phase 11 — End-to-end wire (live data)
 
-- [ ] Replace `sample_output.json` stub with live `onselectionReceived` JSON from Bridge
+- [ ] Replace `sample_output.json` stub with live `onSelectionReceived` JSON from Bridge
 - [ ] Confirm round-trip: answer Q1–Q4 → Review plays → Bridge writes answers →
   `node cli.js` runs (manually or triggered) → Bridge fires received → Build B renders
 - [ ] Test all four golden-test answer combos produce different Build B layouts
@@ -228,8 +270,11 @@ and the scene transition fires on entry.
 
 ## Notes
 
-- Phases 1–2 are the visual tuning gate. Don't move to Phase 3 until Q1 is signed off.
-- Build B (Phases 7–8) can be developed in parallel with Phases 5–6 once the
+- Phase 3 (data model) is a shared foundation — complete it before touching Phases 4–6.
+- Q2 (Phase 4) reuses the exact image card structure from Q1 — no new prefab builder needed.
+- Q3/Q4 (Phases 5–6) introduce the text row variant; Q4 also changes the CTA label.
+- Phase 7 (navigation) connects all pages — build it after all four question pages are signed off.
+- Build B (Phases 10–11) can be developed in parallel with Phases 8–9 once the
   data contract is clear — use `sample_output.json` as the stub.
 - The Review screen's `_coreDone` flag expects Track 2 (`cli.js`) to be run externally
-  for now. Full automation (auto-launch on answers written) is a Phase 8 decision.
+  for now. Full automation (auto-launch on answers written) is a Phase 11 decision.
