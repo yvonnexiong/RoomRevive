@@ -109,4 +109,23 @@ namespace RoomRevive.Onboarding
         public string household;
         public string budget;
     }
+
+    // One row in the ReadyUI "In this room" card.
+    // Track 2 writes this into onboarding_selection.json so Unity never needs catalog.json.
+    [Serializable]
+    public class SelectionRow
+    {
+        public string category; // display label, e.g. "Kitchen", "Fridge"
+        public string name;     // resolved product name from catalog, e.g. "TOUCH 337"
+        public string id;       // catalog id — preserved for Track 3 / visualizer
+    }
+
+    // Root object Unity parses from onboarding_selection.json.
+    [Serializable]
+    public class SelectionResult
+    {
+        public string         intent;  // e.g. "Fast & Focused"
+        public string         tagline; // e.g. "bright, efficient — in, fed, and out"
+        public SelectionRow[] rows;    // 7 rows in display order
+    }
 }

@@ -17776,7 +17776,8 @@ GameObject:
   - component: {fileID: 4409139905024252950}
   - component: {fileID: 2793553014744824190}
   - component: {fileID: 4599067232545462343}
-  - component: {fileID: 7267223714004470848}
+  - component: {fileID: 3995229743172916157}
+  - component: {fileID: 8974051442777739581}
   m_Layer: 0
   m_Name: OnboardingFlowUI
   m_TagString: Untagged
@@ -17848,7 +17849,7 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
---- !u!114 &7267223714004470848
+--- !u!114 &3995229743172916157
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -17861,6 +17862,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.Onboarding.OnboardingFlowController
   _readyUI: {fileID: 0}
+--- !u!114 &8974051442777739581
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7888069309257896437}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb17a055427e3374980f7f31fc6be1fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.Onboarding.OnboardingBridge
+  answersRelativePath: Onboarding/onboarding_answers.json
+  selectionRelativePath: Onboarding/onboarding_selection.json
+  onSelectionReceived:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &7909841741483595977
 GameObject:
   m_ObjectHideFlags: 0

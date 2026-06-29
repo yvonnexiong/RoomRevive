@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
 
 namespace RoomRevive.Onboarding
@@ -9,26 +8,45 @@ namespace RoomRevive.Onboarding
     // Triggered by OnEnable so it fires each time FlowController does SetActive(true).
     //
     // Sequence:
-    //   t=0   all rows invisible
-    //   t=0+  rows stagger in 0.07s apart, each fading over 0.4s
-    //   ∞     "Transforming your kitchen" note cycles "." / ".." / "..." every 0.5s
+    //   t=0     all rows invisible, dots start cycling
+    //   waiting BindData() called by FlowController when selection JSON arrives
+    //           (or _dataTimeoutSeconds elapses — falls back to placeholder names)
+    //   then    rows stagger in 0.07s apart, each fading over 0.4s
     public class OnboardingReadyController : MonoBehaviour
     {
-        [SerializeField] CanvasGroup[]   _rowGroups; // one per product row
-        [SerializeField] TextMeshProUGUI _noteTmp;
+        [SerializeField] CanvasGroup[]     _rowGroups;   // one per product row
+        [SerializeField] TextMeshProUGUI[] _productTmps; // right-side name TMP per row
+        [SerializeField] TextMeshProUGUI   _noteTmp;
+
+        [Tooltip("Seconds to wait for selection data before showing placeholder names.")]
+        [SerializeField] float _dataTimeoutSeconds = 4f;
+
+        bool _dataReady;
 
         void OnEnable()
         {
+            _dataReady = false;
             StopAllCoroutines();
             StartCoroutine(RunSequence());
         }
 
         void OnDisable() => StopAllCoroutines();
 
-        public void Setup(CanvasGroup[] rowGroups, TextMeshProUGUI noteTmp)
+        public void Setup(CanvasGroup[] rowGroups, TextMeshProUGUI[] productTmps, TextMeshProUGUI noteTmp)
         {
-            _rowGroups = rowGroups;
-            _noteTmp   = noteTmp;
+            _rowGroups   = rowGroups;
+            _productTmps = productTmps;
+            _noteTmp     = noteTmp;
+        }
+
+        // Called by OnboardingFlowController when the bridge receives onboarding_selection.json.
+        public void BindData(SelectionRow[] rows)
+        {
+            if (_productTmps != null)
+                for (int i = 0; i < rows.Length && i < _productTmps.Length; i++)
+                    if (_productTmps[i] && !string.IsNullOrEmpty(rows[i].name))
+                        _productTmps[i].text = rows[i].name;
+            _dataReady = true;
         }
 
         IEnumerator RunSequence()
@@ -38,14 +56,22 @@ namespace RoomRevive.Onboarding
 
             yield return null; // let layout settle
 
+            if (_noteTmp) StartCoroutine(AnimateDots());
+
+            // Wait for real data or timeout — whichever comes first
+            float elapsed = 0f;
+            while (!_dataReady && elapsed < _dataTimeoutSeconds)
+            {
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
             for (int i = 0; i < _rowGroups.Length; i++)
             {
                 StartCoroutine(FadeRow(i));
                 if (i < _rowGroups.Length - 1)
                     yield return new WaitForSeconds(0.07f);
             }
-
-            if (_noteTmp) StartCoroutine(AnimateDots());
         }
 
         IEnumerator FadeRow(int i)
@@ -69,7 +95,7 @@ namespace RoomRevive.Onboarding
             int idx = 0;
             while (true)
             {
-                _noteTmp.text = states[idx % 3];
+                if (_noteTmp) _noteTmp.text = states[idx % 3];
                 idx++;
                 yield return new WaitForSeconds(0.5f);
             }

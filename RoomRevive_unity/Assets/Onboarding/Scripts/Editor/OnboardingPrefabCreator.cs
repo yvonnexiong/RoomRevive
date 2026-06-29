@@ -473,11 +473,16 @@ namespace RoomRevive.Onboarding.Editor
             if (existing != null) Object.DestroyImmediate(existing);
             root.AddComponent<OnboardingFlowController>();
 
+            // Drop OnboardingBridge alongside — recreate if already present
+            var existingBridge = root.GetComponent<OnboardingBridge>();
+            if (existingBridge != null) Object.DestroyImmediate(existingBridge);
+            root.AddComponent<OnboardingBridge>();
+
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             PrefabUtility.UnloadPrefabContents(root);
             AssetDatabase.Refresh();
             Selection.activeObject = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
-            Debug.Log("[Onboarding] Phase 7 done — OnboardingFlowController added to root. Press Play to test full flow.");
+            Debug.Log("[Onboarding] Phase 7 done — OnboardingFlowController + OnboardingBridge added to root.");
         }
 
         // ── Phase 8a — Review page ("Personalizing your dream kitchen") ─────────
@@ -779,7 +784,8 @@ namespace RoomRevive.Onboarding.Editor
                 ("Coffee machine", "CM 5310 Silence"),
             };
 
-            var rowGroups = new CanvasGroup[items.Length];
+            var rowGroups   = new CanvasGroup[items.Length];
+            var productTmps = new TextMeshProUGUI[items.Length];
 
             for (int i = 0; i < items.Length; i++)
             {
@@ -816,6 +822,7 @@ namespace RoomRevive.Onboarding.Editor
                     items[i].product, 13f, FontStyles.Bold, InkPrimary, TextAlignmentOptions.Right);
                 valTmp.enableWordWrapping = false;
                 valTmp.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
+                productTmps[i] = valTmp;
             }
 
             // "Transforming your kitchen ..." note — dots animated by controller
@@ -825,7 +832,7 @@ namespace RoomRevive.Onboarding.Editor
             note.rectTransform.sizeDelta = new Vector2(0f, 50f);
 
             var ctrl = panel.gameObject.AddComponent<OnboardingReadyController>();
-            ctrl.Setup(rowGroups, note);
+            ctrl.Setup(rowGroups, productTmps, note);
         }
 
         // ── Phase 6 ──────────────────────────────────────────────────────────
