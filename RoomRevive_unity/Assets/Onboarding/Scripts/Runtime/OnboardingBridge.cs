@@ -37,7 +37,7 @@ namespace RoomRevive.Onboarding
 
         /// <summary>
         /// Call this after the user completes the questionnaire.
-        /// Writes answers.json and starts watching for the selection result.
+        /// Writes answers.json, spawns the selection core, then watches for the result.
         /// </summary>
         public void SubmitAnswers(string style, string tone, string household, string budget)
         {
@@ -52,6 +52,38 @@ namespace RoomRevive.Onboarding
             WriteJson(AnswersPath, JsonUtility.ToJson(answers, prettyPrint: true));
             Debug.Log($"[OnboardingBridge] Answers written → {AnswersPath}");
             StartWatching();
+            RunSelectionCore();
+        }
+
+        void RunSelectionCore()
+        {
+            try
+            {
+                string cliPath = Path.GetFullPath(
+                    Path.Combine(ProjectRoot, "Onboarding/track2_selection_core/cli.js"));
+
+                var psi = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName               = "node",
+                    Arguments              = $"\"{cliPath}\"",
+                    UseShellExecute        = false,
+                    CreateNoWindow         = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError  = true,
+                };
+                var proc = new System.Diagnostics.Process { StartInfo = psi };
+                proc.OutputDataReceived += (_, e) => { if (e.Data != null) Debug.Log($"[SelectionCore] {e.Data}"); };
+                proc.ErrorDataReceived  += (_, e) => { if (e.Data != null) Debug.LogWarning($"[SelectionCore] {e.Data}"); };
+                proc.Start();
+                proc.BeginOutputReadLine();
+                proc.BeginErrorReadLine();
+                Debug.Log($"[OnboardingBridge] Selection core launched (node pid {proc.Id})");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[OnboardingBridge] Could not launch node — is Node.js installed? {e.Message}\n" +
+                                 $"Fallback: run 'node Onboarding/track2_selection_core/cli.js' manually.");
+            }
         }
 
         void StartWatching()
