@@ -5,11 +5,10 @@ using UnityEngine.UI;
 namespace RoomRevive.Onboarding
 {
     // Sits on the root OnboardingFlowUI Canvas object.
-    // Finds Q1-Q4 panels by name at Start, wires Next/Back clicks, and manages page transitions.
+    // Finds Q1-Q4 panels at Start by name, wires Next/Back clicks, manages page transitions.
     public class OnboardingFlowController : MonoBehaviour
     {
-        // Style values that restrict palette options on Q2
-        static readonly Dictionary<string, string[]> s_disabledTones = new()
+        static readonly Dictionary<string, string[]> s_disabledTones = new Dictionary<string, string[]>
         {
             { "natural & scandinavian", new[] { "dark", "bold" } }
         };
@@ -24,26 +23,30 @@ namespace RoomRevive.Onboarding
 
         void Start()
         {
-            _q1Panel = transform.Find("Q1Panel")?.gameObject;
-            _q2Panel = transform.Find("Q2Panel")?.gameObject;
-            _q3Panel = transform.Find("Q3Panel")?.gameObject;
-            _q4Panel = transform.Find("Q4Panel")?.gameObject;
+            // "Panel" is the legacy name from early Phase 1 builds — handle both
+            _q1Panel = FindPanel("Q1Panel") ?? FindPanel("Panel");
+            _q2Panel = FindPanel("Q2Panel");
+            _q3Panel = FindPanel("Q3Panel");
+            _q4Panel = FindPanel("Q4Panel");
 
             _q1Ctrl = _q1Panel?.GetComponent<OnboardingQ1Controller>();
             _q2Ctrl = _q2Panel?.GetComponent<OnboardingImagePageController>();
             _q3Ctrl = _q3Panel?.GetComponent<OnboardingTextPageController>();
             _q4Ctrl = _q4Panel?.GetComponent<OnboardingTextPageController>();
 
-            // Show Q1 only — others were built hidden
+            Debug.Log($"[OnboardingFlow] Panels — " +
+                $"Q1:{_q1Panel?.name}({(_q1Ctrl != null ? "ok" : "NO CTRL")}) " +
+                $"Q2:{(_q2Panel != null ? "ok" : "MISSING — run Phase 4")} " +
+                $"Q3:{(_q3Panel != null ? "ok" : "MISSING — run Phase 5")} " +
+                $"Q4:{(_q4Panel != null ? "ok" : "MISSING — run Phase 6")}");
+
             SetActivePage(0);
 
-            // Next buttons advance the flow
             AddNextListener(_q1Panel, () => GoToPage(1));
             AddNextListener(_q2Panel, () => GoToPage(2));
             AddNextListener(_q3Panel, () => GoToPage(3));
             AddNextListener(_q4Panel, OnFlowComplete);
 
-            // Back buttons step back
             AddBackListener(_q2Panel, () => GoToPage(0));
             AddBackListener(_q3Panel, () => GoToPage(1));
             AddBackListener(_q4Panel, () => GoToPage(2));
@@ -51,10 +54,16 @@ namespace RoomRevive.Onboarding
 
         void GoToPage(int index)
         {
-            // Re-evaluate combo filter every time Q2 is entered so back-nav + style
-            // change clears a now-disabled tone selection
+            var dest = GetPanel(index);
+            if (dest == null)
+            {
+                Debug.LogWarning($"[OnboardingFlow] Cannot navigate to page {index} — panel not found. " +
+                    $"Run Phase {index + 3} to build it.");
+                return;
+            }
             if (index == 1) ApplyQ2ComboFilter();
             SetActivePage(index);
+            Debug.Log($"[OnboardingFlow] → page {index}");
         }
 
         void SetActivePage(int index)
@@ -76,7 +85,6 @@ namespace RoomRevive.Onboarding
                 _q2Ctrl.ClearComboFilter();
         }
 
-        // Phase 8 will take over here — for now log the assembled answers
         void OnFlowComplete()
         {
             Debug.Log($"[OnboardingFlow] Complete — " +
@@ -86,10 +94,23 @@ namespace RoomRevive.Onboarding
                 $"budget={_q4Ctrl?.SelectedValue}");
         }
 
+        GameObject GetPanel(int index)
+        {
+            return index switch { 0 => _q1Panel, 1 => _q2Panel, 2 => _q3Panel, 3 => _q4Panel, _ => null };
+        }
+
+        GameObject FindPanel(string name)
+        {
+            return transform.Find(name)?.gameObject;
+        }
+
         static void AddNextListener(GameObject page, System.Action callback)
         {
             var btn = FindButton(page, "NavBar/NextButton");
-            if (btn != null) btn.onClick.AddListener(() => callback());
+            if (btn == null && page != null)
+                Debug.LogWarning($"[OnboardingFlow] NextButton not found on {page.name}");
+            else if (btn != null)
+                btn.onClick.AddListener(() => callback());
         }
 
         static void AddBackListener(GameObject page, System.Action callback)
