@@ -48,15 +48,16 @@ The path logic lives in `OnboardingBridge.cs` (`ProjectRoot` property).
 [ReviewPanel animation plays]
         │
         ▼  OnBuildBReady() in OnboardingFlowController
-[Unity writes onboarding_answers.json]  ←── OnboardingBridge.SubmitAnswers()
+[Unity writes onboarding_answers.json]      ←── OnboardingBridge.SubmitAnswers()
+[Unity spawns: node track2_selection_core/cli.js]  ←── OnboardingBridge.RunSelectionCore()
 [Unity shows ReadyUI — dots animate, rows hidden]
 [Unity starts FileSystemWatcher on onboarding_selection.json]
         │
-        │  (Track 2 CLI runs in parallel)
+        │  (node process runs in background, ~instant)
         ▼
-[Track 2 reads onboarding_answers.json]
-[Track 2 runs selection against catalog.json]
-[Track 2 writes onboarding_selection.json]
+[cli.js reads onboarding_answers.json + catalog.json]
+[cli.js runs selection_core.js]
+[cli.js resolves product names, writes onboarding_selection.json]
         │
         ▼  FileSystemWatcher fires → OnboardingBridge.onSelectionReceived event
 [Unity parses SelectionResult JSON]
@@ -64,8 +65,8 @@ The path logic lives in `OnboardingBridge.cs` (`ProjectRoot` property).
 [ReadyUI product rows update + stagger in]
 ```
 
-If `onboarding_selection.json` is not written within **4 seconds**, the ReadyUI falls
-back and fades in whatever placeholder names are baked into the prefab.
+If `onboarding_selection.json` is not written within **4 seconds** (e.g. Node.js not
+installed), the ReadyUI falls back and fades in the placeholder names baked into the prefab.
 
 ---
 
@@ -133,7 +134,8 @@ MonoBehaviour on the root `OnboardingFlowUI` GameObject (added by **Phase 7** bu
 |---|---|
 | `answersRelativePath` | Configurable path for the answers file (default: `Onboarding/onboarding_answers.json`) |
 | `selectionRelativePath` | Configurable path for the selection file (default: `Onboarding/onboarding_selection.json`) |
-| `SubmitAnswers(style, tone, household, budget)` | Called by FlowController. Writes answers JSON and starts watching. |
+| `SubmitAnswers(style, tone, household, budget)` | Called by FlowController. Writes answers JSON, spawns `node cli.js`, starts watching. |
+| `RunSelectionCore()` | Internal. Spawns `node track2_selection_core/cli.js` as a background process. Logs a warning if Node.js is not found. |
 | `onSelectionReceived` (UnityEvent\<string\>) | Fires on the main thread when the selection file changes. Payload is raw JSON. |
 
 ### `OnboardingFlowController.cs`
@@ -155,14 +157,25 @@ stagger-in animation.
 
 ---
 
-## Track 2 integration checklist
+## Track 2 integration
 
-- [ ] Read `Onboarding/onboarding_answers.json` on file change (or poll)
-- [ ] Run `selection_core.js` with those answers + `shared/catalog.json`
-- [ ] For each `topPick.id`, resolve `name` from catalog (`item.name` or `item.product.name`)
-- [ ] Write `Onboarding/onboarding_selection.json` in the schema above
-- [ ] Rows must be in this order: Kitchen, Fridge, Cooktop, Hood, Microwave, Dishwasher, Coffee machine
-- [ ] Write atomically (write to `.tmp`, then rename) to avoid partial reads
+`track2_selection_core/cli.js` is already implemented and handles the full pipeline.
+Unity spawns it automatically — no manual step required.
+
+**What `cli.js` does:**
+1. Reads `Onboarding/onboarding_answers.json`
+2. Reads `shared/catalog.json`
+3. Runs `selection_core.js` against both
+4. Resolves each `topPick.id` → display name via `item.product.name`
+5. Writes `Onboarding/onboarding_selection.json` in the schema above
+
+**If you need to re-run selection manually** (e.g. to test with different answers):
+```
+node Onboarding/track2_selection_core/cli.js
+```
+
+**Requirements:** Node.js must be installed and on PATH. If Unity logs
+`Could not launch node`, install Node from https://nodejs.org.
 
 ---
 
