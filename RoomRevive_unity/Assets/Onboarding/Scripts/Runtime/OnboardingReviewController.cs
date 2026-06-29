@@ -32,7 +32,7 @@ namespace RoomRevive.Onboarding
             string[] values = { style, tone, household, budget };
             for (int i = 0; i < _rowValueTmps.Length && i < values.Length; i++)
                 if (_rowValueTmps[i] != null)
-                    _rowValueTmps[i].text = Prettify(values[i]);
+                    _rowValueTmps[i].text = values[i];
 
             StopAllCoroutines();
             StartCoroutine(RunSequence());
@@ -68,6 +68,9 @@ namespace RoomRevive.Onboarding
 
             yield return null; // one frame for CanvasGroup resets to propagate
 
+            // Subtitle dots cycle while rows animate ("Matching your choices… • • •")
+            var dotsRoutine = StartCoroutine(CycleSubtitleDots());
+
             // Progress bar fills immediately, parallel to everything else
             StartCoroutine(FillProgressBar(2.9f));
 
@@ -84,12 +87,26 @@ namespace RoomRevive.Onboarding
 
             // Row 4 started at t=2.0s; wait to reach t=2.7s
             yield return new WaitForSeconds(0.7f);
+            StopCoroutine(dotsRoutine);
             if (_titleTmp)    _titleTmp.text    = "Your preferences";
             if (_subtitleTmp) _subtitleTmp.text = "Got it — finding your kitchen";
 
             // Wait to reach t=3.8s then advance
             yield return new WaitForSeconds(1.1f);
             onComplete?.Invoke();
+        }
+
+        IEnumerator CycleSubtitleDots()
+        {
+            const string base_ = "Matching your choices to the perfect pieces";
+            string[] states = { base_ + "  •", base_ + "  • •", base_ + "  • • •" };
+            int idx = 0;
+            while (true)
+            {
+                if (_subtitleTmp) _subtitleTmp.text = states[idx % 3];
+                idx++;
+                yield return new WaitForSeconds(0.4f);
+            }
         }
 
         IEnumerator FillProgressBar(float duration)

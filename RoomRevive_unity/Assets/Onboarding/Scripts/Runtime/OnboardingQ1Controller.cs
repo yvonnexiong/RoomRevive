@@ -12,6 +12,7 @@ namespace RoomRevive.Onboarding
         [SerializeField] CanvasGroup                _backGroup;
 
         [SerializeField] string[] _values;
+        [SerializeField] string[] _labels;
         OnboardingOptionCardView  _selected;
 
         public string SelectedValue
@@ -21,6 +22,16 @@ namespace RoomRevive.Onboarding
                 if (_selected == null || _values == null) return null;
                 int i = System.Array.IndexOf(_cards, _selected);
                 return i >= 0 ? _values[i] : null;
+            }
+        }
+
+        public string SelectedLabel
+        {
+            get
+            {
+                if (_selected == null || _labels == null || _labels.Length == 0) return SelectedValue;
+                int i = System.Array.IndexOf(_cards, _selected);
+                return (i >= 0 && i < _labels.Length) ? _labels[i] : SelectedValue;
             }
         }
 
@@ -59,7 +70,7 @@ namespace RoomRevive.Onboarding
         // Called by the editor build script to wire serialized references
         public void Setup(OnboardingOptionCardView[] cards,
             Button nextButton, RectTransform nextRT, CanvasGroup nextGroup, CanvasGroup backGroup,
-            string[] values = null)
+            string[] values = null, string[] labels = null)
         {
             _cards      = cards;
             _nextButton = nextButton;
@@ -67,6 +78,7 @@ namespace RoomRevive.Onboarding
             _nextGroup  = nextGroup;
             _backGroup  = backGroup;
             _values     = values;
+            _labels     = labels;
         }
     }
 }

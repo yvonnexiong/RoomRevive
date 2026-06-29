@@ -27,11 +27,14 @@ namespace RoomRevive.Onboarding
 
         void Awake()
         {
-            _ringDefault    = _ring.color;
-            _captionDefault = _caption.color;
+            if (_ring)    _ringDefault    = _ring.color;
+            if (_caption) _captionDefault = _caption.color;
 
-            var btn = _cardBody.GetComponent<Button>();
-            if (btn) btn.onClick.AddListener(() => onClicked.Invoke(this));
+            if (_cardBody)
+            {
+                var btn = _cardBody.GetComponent<Button>();
+                if (btn) btn.onClick.AddListener(() => onClicked.Invoke(this));
+            }
         }
 
         public void SetSelected(bool selected)

@@ -10,6 +10,7 @@ namespace RoomRevive.Onboarding
     {
         [SerializeField] OnboardingOptionCardView[] _cards;
         [SerializeField] string[]                   _values;
+        [SerializeField] string[]                   _labels;
         [SerializeField] Button                     _nextButton;
         [SerializeField] RectTransform              _nextRT;
         [SerializeField] CanvasGroup                _nextGroup;
@@ -27,12 +28,23 @@ namespace RoomRevive.Onboarding
             }
         }
 
-        public void Setup(OnboardingOptionCardView[] cards, string[] values,
+        public string SelectedLabel
+        {
+            get
+            {
+                if (_selected == null || _labels == null || _labels.Length == 0) return SelectedValue;
+                int i = System.Array.IndexOf(_cards, _selected);
+                return (i >= 0 && i < _labels.Length) ? _labels[i] : SelectedValue;
+            }
+        }
+
+        public void Setup(OnboardingOptionCardView[] cards, string[] values, string[] labels,
             Button nextButton, RectTransform nextRT,
             CanvasGroup nextGroup, CanvasGroup backGroup, bool isFirstPage)
         {
             _cards       = cards;
             _values      = values;
+            _labels      = labels;
             _nextButton  = nextButton;
             _nextRT      = nextRT;
             _nextGroup   = nextGroup;

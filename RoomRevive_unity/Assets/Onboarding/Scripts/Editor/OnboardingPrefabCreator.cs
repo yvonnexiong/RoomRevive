@@ -345,8 +345,8 @@ namespace RoomRevive.Onboarding.Editor
             vl.childControlWidth      = true;
             vl.childControlHeight     = true;
 
-            // Background (ignoreLayout so VL skips it)
-            if (bgGradient != null)
+            // Background removed — panels are transparent, scene provides background
+            if (false && bgGradient != null)
             {
                 var bg = MakeImage("Background", panel, bgGradient, Color.white);
                 bg.type           = Image.Type.Simple;
@@ -416,11 +416,13 @@ namespace RoomRevive.Onboarding.Editor
 
             var cardViews = new OnboardingOptionCardView[data.options.Count];
             var values    = new string[data.options.Count];
+            var labels    = new string[data.options.Count];
             for (int i = 0; i < data.options.Count; i++)
             {
                 var opt    = data.options[i];
                 cardViews[i] = BuildImageCard(gridRT, roundRect, opt.imageName, opt.label, opt.subtitle);
                 values[i]    = opt.value;
+                labels[i]    = opt.HasSubtitle ? $"{opt.label} — {opt.subtitle}" : opt.label;
             }
 
             // Nav bar
@@ -448,7 +450,7 @@ namespace RoomRevive.Onboarding.Editor
 
             // Controller
             var controller = panel.gameObject.AddComponent<OnboardingImagePageController>();
-            controller.Setup(cardViews, values,
+            controller.Setup(cardViews, values, labels,
                 nextBtn.GetComponent<Button>(), nextBtn, nextCG, backCG, isFirstPage);
 
             if (hidden) panel.gameObject.SetActive(false);
@@ -909,8 +911,8 @@ namespace RoomRevive.Onboarding.Editor
             vl.childControlWidth      = true;
             vl.childControlHeight     = true;
 
-            // Background
-            if (bgGradient != null)
+            // Background removed — panels are transparent, scene provides background
+            if (false && bgGradient != null)
             {
                 var bg = MakeImage("Background", panel, bgGradient, Color.white);
                 bg.type           = Image.Type.Simple;
@@ -978,11 +980,13 @@ namespace RoomRevive.Onboarding.Editor
 
             var rowViews = new OnboardingTextRowView[data.options.Count];
             var values   = new string[data.options.Count];
+            var labels   = new string[data.options.Count];
             for (int i = 0; i < data.options.Count; i++)
             {
                 var opt    = data.options[i];
                 rowViews[i] = BuildTextRow(rowListRT, roundRect, opt.label, opt.subtitle);
                 values[i]   = opt.value;
+                labels[i]   = opt.HasSubtitle ? $"{opt.label} — {opt.subtitle}" : opt.label;
             }
 
             // Nav bar
@@ -1010,7 +1014,7 @@ namespace RoomRevive.Onboarding.Editor
 
             // Controller
             var controller = panel.gameObject.AddComponent<OnboardingTextPageController>();
-            controller.Setup(rowViews, values,
+            controller.Setup(rowViews, values, labels,
                 nextBtn.GetComponent<Button>(), nextCG, backCG, isFirstPage, nextLabel);
 
             if (hidden) panel.gameObject.SetActive(false);
@@ -1121,8 +1125,8 @@ namespace RoomRevive.Onboarding.Editor
             vl.childControlWidth      = true;
             vl.childControlHeight     = true;
 
-            // Background gradient (ignoreLayout so VL skips it; renders behind all content)
-            if (bgGradient != null)
+            // Background removed — panels are transparent, scene provides background
+            if (false && bgGradient != null)
             {
                 var bg = MakeImage("Background", panel, bgGradient, Color.white);
                 bg.type             = Image.Type.Simple;
@@ -1231,7 +1235,9 @@ namespace RoomRevive.Onboarding.Editor
             var controller = panel.gameObject.AddComponent<OnboardingQ1Controller>();
             controller.Setup(cardViews,
                 nextBtn.GetComponent<Button>(), nextBtn, nextCG, backCG,
-                values: new[] { "modern", "designer", "cottage style", "natural & scandinavian" });
+                values: new[] { "modern", "designer", "cottage style", "natural & scandinavian" },
+                labels: new[] { "Clean & Uncluttered — Modern", "Bold & Dramatic — Designer",
+                                "Warm & Cozy — Cottage", "Calm & Natural — Scandinavian" });
 
             // ── Save ──────────────────────────────────────────────────────────
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);

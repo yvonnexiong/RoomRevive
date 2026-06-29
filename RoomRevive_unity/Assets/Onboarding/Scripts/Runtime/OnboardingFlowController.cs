@@ -88,10 +88,10 @@ namespace RoomRevive.Onboarding
             SetActivePage(index);
             if (index == 4 && _reviewCtrl != null)
                 _reviewCtrl.Activate(
-                    _q1Ctrl?.SelectedValue ?? "",
-                    _q2Ctrl?.SelectedValue ?? "",
-                    _q3Ctrl?.SelectedValue ?? "",
-                    _q4Ctrl?.SelectedValue ?? "");
+                    _q1Ctrl?.SelectedLabel ?? "",
+                    _q2Ctrl?.SelectedLabel ?? "",
+                    _q3Ctrl?.SelectedLabel ?? "",
+                    _q4Ctrl?.SelectedLabel ?? "");
             Debug.Log($"[OnboardingFlow] → page {index}");
         }
 
