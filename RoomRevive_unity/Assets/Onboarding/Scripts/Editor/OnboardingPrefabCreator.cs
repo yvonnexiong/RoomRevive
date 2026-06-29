@@ -628,19 +628,19 @@ namespace RoomRevive.Onboarding.Editor
             content.offsetMax = new Vector2(-20f, 0f);
             var contentVL = content.gameObject.AddComponent<VerticalLayoutGroup>();
             contentVL.spacing              = 2f;
-            contentVL.childAlignment       = TextAnchor.MiddleLeft;
+            contentVL.childAlignment       = TextAnchor.MiddleCenter;
             contentVL.childForceExpandWidth  = true;
             contentVL.childForceExpandHeight = false;
             contentVL.childControlWidth      = true;
             contentVL.childControlHeight     = true;
 
             var lTMP = MakeTMP("Label", content, label, 15f, FontStyles.Bold,
-                InkPrimary, TextAlignmentOptions.Left);
+                InkPrimary, TextAlignmentOptions.Center);
             LE(lTMP.rectTransform, preferredHeight: 22f);
 
             bool hasSubtitle = !string.IsNullOrEmpty(subtitle);
             var sTMP = MakeTMP("Sub", content, subtitle, 12f, FontStyles.Normal,
-                InkSecondary, TextAlignmentOptions.Left);
+                InkSecondary, TextAlignmentOptions.Center);
             LE(sTMP.rectTransform, preferredHeight: 17f);
             sTMP.gameObject.SetActive(hasSubtitle);
 
