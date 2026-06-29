@@ -1,36 +1,66 @@
+using System;
 using System.Collections;
+using System.IO;
+using System.Threading;
 using UnityEngine;
 using TMPro;
 
 namespace RoomRevive.Onboarding
 {
-    // Drives ReadyUI animations.
-    // Triggered by OnEnable so it fires each time FlowController does SetActive(true).
-    //
-    // Sequence:
-    //   t=0     all rows invisible, dots start cycling
-    //   waiting BindData() called by FlowController when selection JSON arrives
-    //           (or _dataTimeoutSeconds elapses — falls back to placeholder names)
-    //   then    rows stagger in 0.07s apart, each fading over 0.4s
+    // Self-contained ReadyUI controller.
+    // On enable: immediately reads onboarding_selection.json if it exists,
+    // then watches for file changes so it stays live without FlowController.
     public class OnboardingReadyController : MonoBehaviour
     {
         [SerializeField] CanvasGroup[]     _rowGroups;   // one per product row
         [SerializeField] TextMeshProUGUI[] _productTmps; // right-side name TMP per row
         [SerializeField] TextMeshProUGUI   _noteTmp;
 
-        [Tooltip("Seconds to wait for selection data before showing placeholder names.")]
+        [Tooltip("Relative to repo root. Must match OnboardingBridge.selectionRelativePath.")]
+        [SerializeField] string _selectionRelativePath = "Onboarding/onboarding_selection.json";
+
+        [Tooltip("Seconds to wait for selection data before falling back to placeholder names.")]
         [SerializeField] float _dataTimeoutSeconds = 4f;
 
-        bool _dataReady;
+        // Application.dataPath = …/RoomRevive_unity/Assets — go up twice to reach repo root
+        string SelectionPath => Path.GetFullPath(
+            Path.Combine(Application.dataPath, "../..", _selectionRelativePath));
+
+        FileSystemWatcher _watcher;
+        readonly object   _lock = new();
+        string            _pendingJson;
+        bool              _hasPending;
+        bool              _dataReady;
 
         void OnEnable()
         {
-            _dataReady = false;
+            _dataReady  = false;
+            _hasPending = false;
             StopAllCoroutines();
             StartCoroutine(RunSequence());
+            StartWatching();
+
+            // If file already exists, bind immediately (e.g. replaying ReadyUI standalone)
+            if (File.Exists(SelectionPath))
+                QueueJson(File.ReadAllText(SelectionPath));
         }
 
-        void OnDisable() => StopAllCoroutines();
+        void OnDisable()
+        {
+            StopAllCoroutines();
+            _watcher?.Dispose();
+            _watcher = null;
+        }
+
+        void Update()
+        {
+            string json = null;
+            lock (_lock)
+            {
+                if (_hasPending) { json = _pendingJson; _hasPending = false; }
+            }
+            if (json != null) ApplyJson(json);
+        }
 
         public void Setup(CanvasGroup[] rowGroups, TextMeshProUGUI[] productTmps, TextMeshProUGUI noteTmp)
         {
@@ -39,7 +69,51 @@ namespace RoomRevive.Onboarding
             _noteTmp     = noteTmp;
         }
 
-        // Called by OnboardingFlowController when the bridge receives onboarding_selection.json.
+        void StartWatching()
+        {
+            _watcher?.Dispose();
+            string dir  = Path.GetDirectoryName(SelectionPath);
+            string file = Path.GetFileName(SelectionPath);
+            if (!Directory.Exists(dir)) return;
+
+            _watcher = new FileSystemWatcher(dir, file)
+            {
+                NotifyFilter        = NotifyFilters.LastWrite | NotifyFilters.FileName,
+                EnableRaisingEvents = true
+            };
+            _watcher.Changed += OnFileEvent;
+            _watcher.Created += OnFileEvent;
+        }
+
+        void OnFileEvent(object sender, FileSystemEventArgs e)
+        {
+            try
+            {
+                Thread.Sleep(50);
+                QueueJson(File.ReadAllText(SelectionPath));
+            }
+            catch { }
+        }
+
+        void QueueJson(string json)
+        {
+            lock (_lock) { _pendingJson = json; _hasPending = true; }
+        }
+
+        void ApplyJson(string json)
+        {
+            try
+            {
+                var result = JsonUtility.FromJson<SelectionResult>(json);
+                if (result?.rows == null) return;
+                BindData(result.rows);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[ReadyUI] Failed to parse selection JSON: {e.Message}");
+            }
+        }
+
         public void BindData(SelectionRow[] rows)
         {
             if (_productTmps != null)
@@ -54,11 +128,10 @@ namespace RoomRevive.Onboarding
             foreach (var cg in _rowGroups)
                 if (cg) cg.alpha = 0f;
 
-            yield return null; // let layout settle
+            yield return null;
 
             if (_noteTmp) StartCoroutine(AnimateDots());
 
-            // Wait for real data or timeout — whichever comes first
             float elapsed = 0f;
             while (!_dataReady && elapsed < _dataTimeoutSeconds)
             {
@@ -93,7 +166,7 @@ namespace RoomRevive.Onboarding
             string base_ = "Transforming your kitchen";
             string[] states = { base_ + " .", base_ + " ..", base_ + " ..." };
             int idx = 0;
-            while (true)
+            while (!_dataReady)
             {
                 if (_noteTmp) _noteTmp.text = states[idx % 3];
                 idx++;

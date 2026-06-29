@@ -22,7 +22,6 @@ namespace RoomRevive.Onboarding
         OnboardingTextPageController  _q3Ctrl;
         OnboardingTextPageController  _q4Ctrl;
         OnboardingReviewController    _reviewCtrl;
-        OnboardingReadyController     _readyCtrl;
         OnboardingBridge              _bridge;
 
         int _currentPage;
@@ -41,15 +40,12 @@ namespace RoomRevive.Onboarding
             _q4Ctrl     = _q4Panel?.GetComponent<OnboardingTextPageController>();
             _reviewCtrl = _reviewPanel?.GetComponent<OnboardingReviewController>();
 
-            _readyCtrl = _readyUI?.GetComponentInChildren<OnboardingReadyController>(true);
-            _bridge    = GetComponent<OnboardingBridge>();
+            _bridge = GetComponent<OnboardingBridge>();
 
             if (_reviewCtrl != null)
                 _reviewCtrl.onComplete = OnBuildBReady;
 
-            if (_bridge != null)
-                _bridge.onSelectionReceived.AddListener(OnSelectionReceived);
-            else
+            if (_bridge == null)
                 Debug.LogWarning("[OnboardingFlow] OnboardingBridge not found — answers JSON will not be written. Add component to OnboardingFlowUI or re-drag the prefab.");
 
             Debug.Log($"[OnboardingFlow] Panels — " +
@@ -134,23 +130,6 @@ namespace RoomRevive.Onboarding
                 _q3Ctrl?.SelectedValue ?? "",
                 _q4Ctrl?.SelectedValue ?? "");
             GoToPage(5);
-        }
-
-        void OnSelectionReceived(string json)
-        {
-            try
-            {
-                var result = JsonUtility.FromJson<SelectionResult>(json);
-                if (result?.rows != null && _readyCtrl != null)
-                {
-                    _readyCtrl.BindData(result.rows);
-                    Debug.Log($"[OnboardingFlow] Selection received — intent: {result.intent}");
-                }
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogWarning($"[OnboardingFlow] Failed to parse selection JSON: {e.Message}");
-            }
         }
 
         GameObject GetPanel(int index) => index switch
