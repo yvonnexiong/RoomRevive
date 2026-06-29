@@ -45,10 +45,18 @@ namespace RoomRevive.Onboarding
 
         public void SetDisabled(bool disabled)
         {
-            var cg = GetComponent<CanvasGroup>() ?? gameObject.AddComponent<CanvasGroup>();
-            cg.alpha          = disabled ? 0.35f : 1f;
-            cg.interactable   = !disabled;
-            cg.blocksRaycasts = !disabled;
+            var cg = GetComponent<CanvasGroup>();
+            if (disabled)
+            {
+                // Unity's == is required here — ?? uses C# ref equality and misses fake-nulls
+                if (cg == null) cg = gameObject.AddComponent<CanvasGroup>();
+                cg.alpha = 0.35f; cg.interactable = false; cg.blocksRaycasts = false;
+            }
+            else if (cg != null)
+            {
+                cg.alpha = 1f; cg.interactable = true; cg.blocksRaycasts = true;
+            }
+            // disabled=false and no CanvasGroup → card is already fully enabled, nothing to do
         }
 
         // ── Hover / press animation (called by OnboardingCardInteractionProxy) ──
