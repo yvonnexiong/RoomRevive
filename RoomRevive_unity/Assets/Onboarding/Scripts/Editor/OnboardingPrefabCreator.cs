@@ -423,6 +423,134 @@ namespace RoomRevive.Onboarding.Editor
             Debug.Log("[Onboarding] Phase 7 done — OnboardingFlowController added to root. Press Play to test full flow.");
         }
 
+        // ── Phase 8 ──────────────────────────────────────────────────────────
+
+        [MenuItem("Tools/RoomRevive/Onboarding/Phase 8 — Build Review Page")]
+        static void Phase8()
+        {
+            var roundRect  = AssetDatabase.LoadAssetAtPath<Sprite>(SpritePath);
+            var bgGradient = AssetDatabase.LoadAssetAtPath<Sprite>(BgGradientPath);
+            if (roundRect == null) { Debug.LogError("[Onboarding] Run Phase 0 first."); return; }
+            s_font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontPath);
+
+            var root = PrefabUtility.LoadPrefabContents(PrefabPath);
+            if (root == null) { Debug.LogError("[Onboarding] Run Phase 1 first."); return; }
+
+            var existing = root.transform.Find("ReviewPanel");
+            if (existing != null) Object.DestroyImmediate(existing.gameObject);
+
+            BuildReviewPage(root.transform, roundRect, bgGradient ?? roundRect);
+
+            PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+            PrefabUtility.UnloadPrefabContents(root);
+            AssetDatabase.Refresh();
+            Selection.activeObject = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+            Debug.Log("[Onboarding] Phase 8 done — ReviewPanel added. Complete Q4 to test the review animation.");
+        }
+
+        static void BuildReviewPage(Transform root, Sprite roundRect, Sprite bgGradient)
+        {
+            var panel = MakeRT("ReviewPanel", root);
+            panel.gameObject.SetActive(false);
+
+            var vlg = panel.gameObject.AddComponent<VerticalLayoutGroup>();
+            vlg.childAlignment       = TextAnchor.UpperCenter;
+            vlg.childControlWidth    = true;
+            vlg.childControlHeight   = false;
+            vlg.childForceExpandWidth  = true;
+            vlg.childForceExpandHeight = false;
+            vlg.spacing = 12f;
+            vlg.padding = new RectOffset(20, 20, 16, 16);
+
+            // Background (ignoreLayout, stretch-fill)
+            var bg = MakeImage("Background", panel, bgGradient, Color.white);
+            StretchFill(bg);
+            bg.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+
+            // Progress fill bar (single fill image, not segmented)
+            var progWrapper = MakeRT("ProgressWrapper", panel);
+            progWrapper.gameObject.AddComponent<LayoutElement>().preferredHeight = 6f;
+
+            var progBg = MakeImage("ProgressBg", progWrapper, roundRect,
+                new Color(InkPrimary.r, InkPrimary.g, InkPrimary.b, 0.25f));
+            StretchFill(progBg);
+
+            var progFill = MakeImage("ProgressFill", progWrapper, roundRect, InkPrimary);
+            StretchFill(progFill);
+            progFill.type       = Image.Type.Filled;
+            progFill.fillMethod = Image.FillMethod.Horizontal;
+            progFill.fillAmount = 0f;
+
+            // Banner
+            var banner = MakeImage("Banner", panel, roundRect,
+                new Color(SurfaceLight.r, SurfaceLight.g, SurfaceLight.b, 0.80f));
+            var bannerVlg = banner.gameObject.AddComponent<VerticalLayoutGroup>();
+            bannerVlg.childAlignment       = TextAnchor.UpperCenter;
+            bannerVlg.childControlWidth    = true;
+            bannerVlg.childControlHeight   = true;
+            bannerVlg.childForceExpandWidth  = true;
+            bannerVlg.childForceExpandHeight = false;
+            bannerVlg.spacing = 6f;
+            bannerVlg.padding = new RectOffset(16, 16, 14, 10);
+            banner.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var titleTmp = MakeTMP("Title", banner.rectTransform,
+                "Personalizing your dream kitchen",
+                26f, FontStyles.Bold, InkPrimary, TextAlignmentOptions.Center);
+
+            var dotsTmp = MakeTMP("Dots", banner.rectTransform, "",
+                18f, FontStyles.Normal, InkSecondary, TextAlignmentOptions.Center);
+
+            var subtitleTmp = MakeTMP("Subtitle", banner.rectTransform,
+                "Got it — finding your kitchen",
+                12f, FontStyles.Normal, InkSecondary, TextAlignmentOptions.Center);
+            subtitleTmp.gameObject.SetActive(false);
+
+            // Summary card — rows reveal staggered on entry
+            var card = MakeImage("SummaryCard", panel, roundRect, CardInner);
+            var cardVlg = card.gameObject.AddComponent<VerticalLayoutGroup>();
+            cardVlg.childAlignment       = TextAnchor.UpperLeft;
+            cardVlg.childControlWidth    = true;
+            cardVlg.childControlHeight   = false;
+            cardVlg.childForceExpandWidth  = true;
+            cardVlg.childForceExpandHeight = false;
+            cardVlg.spacing = 10f;
+            cardVlg.padding = new RectOffset(20, 20, 16, 16);
+            card.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            string[] categories = { "Style", "Colour", "Household", "Investment" };
+            var rowGroups    = new CanvasGroup[4];
+            var rowValueTmps = new TextMeshProUGUI[4];
+
+            for (int i = 0; i < 4; i++)
+            {
+                var row = MakeRT($"Row{i + 1}", card.rectTransform);
+                LE(row, preferredHeight: 44f);
+                var cg = row.gameObject.AddComponent<CanvasGroup>();
+                cg.alpha = 0f;
+                rowGroups[i] = cg;
+
+                var rowVlg = row.gameObject.AddComponent<VerticalLayoutGroup>();
+                rowVlg.childAlignment       = TextAnchor.MiddleLeft;
+                rowVlg.childControlWidth    = true;
+                rowVlg.childControlHeight   = true;
+                rowVlg.childForceExpandWidth  = true;
+                rowVlg.childForceExpandHeight = false;
+                rowVlg.spacing = 2f;
+                rowVlg.padding = new RectOffset(4, 0, 0, 0);
+
+                MakeTMP("Category", row, categories[i],
+                    11f, FontStyles.Normal, InkSecondary, TextAlignmentOptions.Left);
+
+                var val = MakeTMP("Value", row, "—",
+                    15f, FontStyles.Bold, InkPrimary, TextAlignmentOptions.Left);
+                rowValueTmps[i] = val;
+            }
+
+            var ctrl = panel.gameObject.AddComponent<OnboardingReviewController>();
+            ctrl.Setup(progFill, titleTmp, dotsTmp, subtitleTmp, rowGroups, rowValueTmps);
+        }
+
         // ── Phase 6 ──────────────────────────────────────────────────────────
 
         [MenuItem("Tools/RoomRevive/Onboarding/Phase 6 — Build Q4 Page")]
