@@ -399,6 +399,228 @@ namespace RoomRevive.Onboarding.Editor
             if (hidden) panel.gameObject.SetActive(false);
         }
 
+        // ── Phase 5 ──────────────────────────────────────────────────────────
+
+        [MenuItem("Tools/RoomRevive/Onboarding/Phase 5 — Build Q3 Page")]
+        static void Phase5()
+        {
+            var roundRect     = AssetDatabase.LoadAssetAtPath<Sprite>(SpritePath);
+            var progBarSprite = AssetDatabase.LoadAssetAtPath<Sprite>(ProgBarSpritePath) ?? roundRect;
+            var bgGradient    = AssetDatabase.LoadAssetAtPath<Sprite>(BgGradientPath);
+            if (roundRect == null) { Debug.LogError("[Onboarding] Run Phase 0 first."); return; }
+            s_font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontPath);
+
+            var q3Data = AssetDatabase.LoadAssetAtPath<OnboardingQuestionData>("Assets/Onboarding/Data/Q3_Household.asset");
+            if (q3Data == null) { Debug.LogError("[Onboarding] Run Phase 3 first."); return; }
+
+            var root = PrefabUtility.LoadPrefabContents(PrefabPath);
+            if (root == null) { Debug.LogError("[Onboarding] Run Phase 1 first."); return; }
+
+            var old3 = root.transform.Find("Q3Panel");
+            if (old3 != null) Object.DestroyImmediate(old3.gameObject);
+
+            BuildTextRowPage(root.transform, "Q3Panel", q3Data,
+                roundRect, progBarSprite, bgGradient,
+                activeSegments: 3, isFirstPage: false, nextLabel: "Next", hidden: true);
+
+            PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+            PrefabUtility.UnloadPrefabContents(root);
+            AssetDatabase.Refresh();
+            Selection.activeObject = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+            Debug.Log("[Onboarding] Phase 5 done — Q3Panel added (hidden).");
+        }
+
+        // Builds a complete text-row question page (Q3 / Q4).
+        // nextLabel: defaults to "Next"; pass "See my kitchen" for Q4.
+        static void BuildTextRowPage(Transform parent, string panelName,
+            OnboardingQuestionData data, Sprite roundRect, Sprite progBarSprite,
+            Sprite bgGradient, int activeSegments, bool isFirstPage,
+            string nextLabel, bool hidden)
+        {
+            var panel = MakeRT(panelName, parent);
+            panel.anchorMin = Vector2.zero;
+            panel.anchorMax = Vector2.one;
+            panel.offsetMin = panel.offsetMax = Vector2.zero;
+            var vl = panel.gameObject.AddComponent<VerticalLayoutGroup>();
+            vl.padding              = new RectOffset(20, 20, 16, 16);
+            vl.spacing              = 12f;
+            vl.childAlignment       = TextAnchor.UpperCenter;
+            vl.childForceExpandWidth  = true;
+            vl.childForceExpandHeight = false;
+            vl.childControlWidth      = true;
+            vl.childControlHeight     = true;
+
+            // Background
+            if (bgGradient != null)
+            {
+                var bg = MakeImage("Background", panel, bgGradient, Color.white);
+                bg.type           = Image.Type.Simple;
+                bg.preserveAspect = false;
+                bg.raycastTarget  = false;
+                bg.rectTransform.anchorMin = Vector2.zero;
+                bg.rectTransform.anchorMax = Vector2.one;
+                bg.rectTransform.offsetMin = bg.rectTransform.offsetMax = Vector2.zero;
+                bg.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+            }
+
+            // Progress bar
+            var progressWrapper = MakeRT("ProgressBar", panel);
+            LE(progressWrapper, preferredHeight: 4f);
+            var segments = MakeRT("Segments", progressWrapper);
+            segments.anchorMin = Vector2.zero;
+            segments.anchorMax = Vector2.one;
+            segments.offsetMin = segments.offsetMax = Vector2.zero;
+            var pHL = segments.gameObject.AddComponent<HorizontalLayoutGroup>();
+            pHL.spacing              = 6f;
+            pHL.childForceExpandWidth  = true;
+            pHL.childForceExpandHeight = true;
+            pHL.childControlWidth      = true;
+            pHL.childControlHeight     = true;
+            for (int i = 0; i < 4; i++)
+            {
+                bool active = i < activeSegments;
+                var seg = MakeImage($"Seg{i + 1}", segments, progBarSprite,
+                    active ? SurfaceDeep : new Color(SurfaceDeep.r, SurfaceDeep.g, SurfaceDeep.b, 0.35f));
+                seg.type = Image.Type.Sliced;
+            }
+
+            // Banner (flexible height — wraps if prompt is long)
+            var banner = MakeImage("Banner", panel, roundRect,
+                new Color(SurfaceLight.r, SurfaceLight.g, SurfaceLight.b, 0.80f));
+            banner.type = Image.Type.Sliced;
+            var bannerVL = banner.gameObject.AddComponent<VerticalLayoutGroup>();
+            bannerVL.padding              = new RectOffset(16, 16, 14, 10);
+            bannerVL.spacing              = 4f;
+            bannerVL.childAlignment       = TextAnchor.MiddleCenter;
+            bannerVL.childForceExpandWidth  = true;
+            bannerVL.childForceExpandHeight = false;
+            bannerVL.childControlWidth      = true;
+            bannerVL.childControlHeight     = true;
+            MakeTMP("Title", banner.transform, data.prompt,
+                26f, FontStyles.Bold, InkPrimary, TextAlignmentOptions.Center);
+            var subTMP = MakeTMP("Subtitle", banner.transform, data.stepLabel,
+                12f, FontStyles.Normal, InkSecondary, TextAlignmentOptions.Center);
+            LE(subTMP.rectTransform, preferredHeight: 18f);
+
+            // Row list
+            float rowH     = 56f;
+            float rowGap   = 10f;
+            float rowListH = data.options.Count * rowH +
+                             Mathf.Max(0, data.options.Count - 1) * rowGap;
+            var rowListRT = MakeRT("RowList", panel);
+            LE(rowListRT, preferredHeight: rowListH);
+            var rowListVL = rowListRT.gameObject.AddComponent<VerticalLayoutGroup>();
+            rowListVL.spacing              = rowGap;
+            rowListVL.childAlignment       = TextAnchor.UpperCenter;
+            rowListVL.childForceExpandWidth  = true;
+            rowListVL.childForceExpandHeight = false;
+            rowListVL.childControlWidth      = true;
+            rowListVL.childControlHeight     = true;
+
+            var rowViews = new OnboardingTextRowView[data.options.Count];
+            var values   = new string[data.options.Count];
+            for (int i = 0; i < data.options.Count; i++)
+            {
+                var opt    = data.options[i];
+                rowViews[i] = BuildTextRow(rowListRT, roundRect, opt.label, opt.subtitle);
+                values[i]   = opt.value;
+            }
+
+            // Nav bar
+            var navRT = MakeRT("NavBar", panel);
+            LE(navRT, preferredHeight: 44f);
+
+            var backBtn = BuildButton(navRT, roundRect, "BackButton", "Back",
+                SurfaceLight, InkPrimary, alpha: 1f);
+            backBtn.anchorMin        = new Vector2(0f, 0.5f);
+            backBtn.anchorMax        = new Vector2(0f, 0.5f);
+            backBtn.pivot            = new Vector2(0f, 0.5f);
+            backBtn.anchoredPosition = Vector2.zero;
+            backBtn.sizeDelta        = new Vector2(120f, 44f);
+            var backCG = backBtn.gameObject.AddComponent<CanvasGroup>();
+
+            var nextBtn = BuildButton(navRT, roundRect, "NextButton", nextLabel,
+                InkPrimary, BtnText, alpha: 1f);
+            nextBtn.anchorMin = new Vector2(0f, 0.5f);
+            nextBtn.anchorMax = new Vector2(1f, 0.5f);
+            nextBtn.pivot     = new Vector2(1f, 0.5f);
+            nextBtn.offsetMin = new Vector2(132f, -22f);
+            nextBtn.offsetMax = new Vector2(0f,   22f);
+            var nextCG = nextBtn.gameObject.AddComponent<CanvasGroup>();
+            nextCG.alpha = 0.45f;
+
+            // Controller
+            var controller = panel.gameObject.AddComponent<OnboardingTextPageController>();
+            controller.Setup(rowViews, values,
+                nextBtn.GetComponent<Button>(), nextCG, backCG, isFirstPage, nextLabel);
+
+            if (hidden) panel.gameObject.SetActive(false);
+        }
+
+        // ── Text row builder ──────────────────────────────────────────────────
+        // Structure: RowWrapper (56 px LE)
+        //   Ring    — roundRect, CardInner / InkPrimary selected, stretch fill
+        //   RowBody — roundRect, CardInner, inset 2 px, Mask+Button
+        //     Content — stretch fill minus 20 px horizontal padding, VLG centred
+        //       Label TMP (15 px Bold)
+        //       Sub TMP   (12 px Normal, hidden if empty)
+
+        static OnboardingTextRowView BuildTextRow(RectTransform parent, Sprite roundRect,
+            string label, string subtitle)
+        {
+            var row = MakeRT(label.Split(' ')[0].TrimEnd('–', '-') + "Row", parent);
+            LE(row, preferredHeight: 56f);
+
+            var ring = MakeImage("Ring", row, roundRect, CardInner);
+            ring.type = Image.Type.Sliced;
+            ring.rectTransform.anchorMin = Vector2.zero;
+            ring.rectTransform.anchorMax = Vector2.one;
+            ring.rectTransform.offsetMin = Vector2.zero;
+            ring.rectTransform.offsetMax = Vector2.zero;
+
+            var rowBody = MakeImage("RowBody", row, roundRect, CardInner);
+            rowBody.type = Image.Type.Sliced;
+            rowBody.rectTransform.anchorMin = Vector2.zero;
+            rowBody.rectTransform.anchorMax = Vector2.one;
+            rowBody.rectTransform.offsetMin = new Vector2(2f, 2f);
+            rowBody.rectTransform.offsetMax = new Vector2(-2f, -2f);
+            var rowMask = rowBody.gameObject.AddComponent<Mask>();
+            rowMask.showMaskGraphic = true;
+            rowBody.gameObject.AddComponent<Button>();
+
+            // Content area: fills RowBody with 20 px left/right inset; VLG centres vertically
+            var content = MakeRT("Content", rowBody.transform);
+            content.anchorMin = Vector2.zero;
+            content.anchorMax = Vector2.one;
+            content.offsetMin = new Vector2(20f, 0f);
+            content.offsetMax = new Vector2(-20f, 0f);
+            var contentVL = content.gameObject.AddComponent<VerticalLayoutGroup>();
+            contentVL.spacing              = 2f;
+            contentVL.childAlignment       = TextAnchor.MiddleLeft;
+            contentVL.childForceExpandWidth  = true;
+            contentVL.childForceExpandHeight = false;
+            contentVL.childControlWidth      = true;
+            contentVL.childControlHeight     = true;
+
+            var lTMP = MakeTMP("Label", content, label, 15f, FontStyles.Bold,
+                InkPrimary, TextAlignmentOptions.Left);
+            LE(lTMP.rectTransform, preferredHeight: 22f);
+
+            bool hasSubtitle = !string.IsNullOrEmpty(subtitle);
+            var sTMP = MakeTMP("Sub", content, subtitle, 12f, FontStyles.Normal,
+                InkSecondary, TextAlignmentOptions.Left);
+            LE(sTMP.rectTransform, preferredHeight: 17f);
+            sTMP.gameObject.SetActive(hasSubtitle);
+
+            var view = row.gameObject.AddComponent<OnboardingTextRowView>();
+            view.Init(ring, rowBody, lTMP, sTMP);
+
+            var proxy = rowBody.gameObject.AddComponent<OnboardingTextRowInteractionProxy>();
+            proxy.Init(view);
+
+            return view;
+        }
+
         // ── Phase 1 ──────────────────────────────────────────────────────────
 
         [MenuItem("Tools/RoomRevive/Onboarding/Phase 1 — Build Q1 Shell")]
