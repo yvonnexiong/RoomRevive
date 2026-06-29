@@ -1,0 +1,147 @@
+{
+  "answers": {
+    "style": "modern",
+    "tone": "light",
+    "household": "standard",
+    "budget": "Signature"
+  },
+  "profile": {
+    "intent": "Fast & Focused",
+    "tagline": "bright, efficient — in, fed, and out",
+    "cabinetDirection": "Nobilia · Modern / Handleless — handleless slab fronts, light, matte",
+    "applianceFinish": "white, clean steel — bright, neutral",
+    "lighting": "neutral bright · 3500–4000 K",
+    "tags": [
+      "light & airy",
+      "clean lines",
+      "family",
+      "flow",
+      "considered"
+    ]
+  },
+  "kitchens": {
+    "count": 12,
+    "budgetRelaxed": false,
+    "shortlist": [
+      {
+        "id": "837403f80bb847e7"
+      },
+      {
+        "id": "eec47585cd916747"
+      },
+      {
+        "id": "be50197248eac773"
+      },
+      {
+        "id": "34120ce28c9a48a9"
+      },
+      {
+        "id": "698ecf189cbe241c"
+      },
+      {
+        "id": "e92c380f55b079ad"
+      }
+    ]
+  },
+  "appliances": [
+    {
+      "category": "Fridges",
+      "count": 6,
+      "relaxed": false,
+      "topPick": {
+        "id": "531c55b910e270b8"
+      },
+      "matchStrength": 3,
+      "why": "Why: finish matches your palette · sized for the household · within budget.",
+      "options": [
+        "531c55b910e270b8",
+        "a74e3b4450166891",
+        "ec74e0e9e03c013a",
+        "15a4a0c7261e1ef0",
+        "f806984eac8e6b55",
+        "cb61d6d437cdc909"
+      ]
+    },
+    {
+      "category": "Cooktops",
+      "count": 7,
+      "relaxed": true,
+      "topPick": {
+        "id": "7c02bd37257a72b4"
+      },
+      "matchStrength": 2,
+      "why": "Why: a neutral finish · sized for the household · within budget.",
+      "options": [
+        "7c02bd37257a72b4",
+        "795a2b322e6204ed",
+        "7e5e5c62292ba3c6",
+        "da8c00eabc422251",
+        "4ec8424b64c5731d",
+        "dccbc72ce1f05997",
+        "977714109cb2fb00"
+      ]
+    },
+    {
+      "category": "Hoods",
+      "count": 9,
+      "relaxed": false,
+      "topPick": {
+        "id": "7abf1461d85bf65d"
+      },
+      "matchStrength": 3,
+      "why": "Why: finish matches your palette · sized for the household · within budget.",
+      "options": [
+        "7abf1461d85bf65d",
+        "fef298bb849a1ce5",
+        "003561d5e26d7ae3",
+        "3a36f791296a81d1",
+        "6288652987820a14",
+        "3f109df39b8a4b1c",
+        "cf3012c5cb7e1dff",
+        "7294f023d438d160"
+      ]
+    },
+    {
+      "category": "Microwaves",
+      "count": 3,
+      "relaxed": false,
+      "topPick": {
+        "id": "88749889e3e4670b"
+      },
+      "matchStrength": 3,
+      "why": "Why: finish matches your palette · sized for the household · within budget.",
+      "options": [
+        "88749889e3e4670b",
+        "bdd310d6a55a6f35",
+        "ebb9a433af1fb832"
+      ]
+    },
+    {
+      "category": "Dishwashers",
+      "count": 2,
+      "relaxed": false,
+      "topPick": {
+        "id": "97f738ec763b2ac0"
+      },
+      "matchStrength": 3,
+      "why": "Why: finish matches your palette · sized for the household · within budget.",
+      "options": [
+        "97f738ec763b2ac0",
+        "afd90546f5537a91"
+      ]
+    },
+    {
+      "category": "CoffeeMachines",
+      "count": 1,
+      "relaxed": false,
+      "topPick": {
+        "id": "a4c97aaed2c3ab65"
+      },
+      "matchStrength": 3,
+      "why": "Why: finish matches your palette · sized for the household · within budget.",
+      "options": [
+        "a4c97aaed2c3ab65"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a15277f8e1df8c4db4e5ccb495abcf9, type: 3}
+  m_Name: Q3_Household
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.Onboarding.OnboardingQuestionData
+  questionText: How many are you usually cooking for?
+  fieldName: household
+  isImageQuestion: 0
+  options:
+  - label: "1\u20132 people"
+    subtitle: 
+    value: compact
+    image: {fileID: 0}
+  - label: "3\u20134 people"
+    subtitle: 
+    value: standard
+    image: {fileID: 0}
+  - label: 5+ people
+    subtitle: 
+    value: host
+    image: {fileID: 0}
