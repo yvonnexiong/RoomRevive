@@ -320,7 +320,7 @@ namespace RoomRevive.Onboarding.Editor
             {
                 bool active = i < activeSegments;
                 var seg = MakeImage($"Seg{i + 1}", segments, progBarSprite,
-                    active ? SurfaceDeep : new Color(SurfaceDeep.r, SurfaceDeep.g, SurfaceDeep.b, 0.35f));
+                    active ? InkPrimary : new Color(InkPrimary.r, InkPrimary.g, InkPrimary.b, 0.25f));
                 seg.type = Image.Type.Sliced;
             }
 
@@ -536,7 +536,7 @@ namespace RoomRevive.Onboarding.Editor
             {
                 bool active = i < activeSegments;
                 var seg = MakeImage($"Seg{i + 1}", segments, progBarSprite,
-                    active ? SurfaceDeep : new Color(SurfaceDeep.r, SurfaceDeep.g, SurfaceDeep.b, 0.35f));
+                    active ? InkPrimary : new Color(InkPrimary.r, InkPrimary.g, InkPrimary.b, 0.25f));
                 seg.type = Image.Type.Sliced;
             }
 
@@ -750,7 +750,7 @@ namespace RoomRevive.Onboarding.Editor
             for (int i = 0; i < 4; i++)
             {
                 var seg  = MakeImage($"Seg{i + 1}", progressBar, progBarSprite,
-                    i == 0 ? SurfaceDeep : new Color(SurfaceDeep.r, SurfaceDeep.g, SurfaceDeep.b, 0.35f));
+                    i == 0 ? InkPrimary : new Color(InkPrimary.r, InkPrimary.g, InkPrimary.b, 0.25f));
                 seg.type = Image.Type.Sliced;
             }
 
