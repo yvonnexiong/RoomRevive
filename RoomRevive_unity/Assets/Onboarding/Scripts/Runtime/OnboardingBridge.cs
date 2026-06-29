@@ -25,7 +25,8 @@ namespace RoomRevive.Onboarding
         [Tooltip("Fired on the main thread when the HTML editor writes a new selection. Payload is the raw JSON string.")]
         public UnityEvent<string> onSelectionReceived;
 
-        string ProjectRoot => Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+        // Application.dataPath = …/RoomRevive_unity/Assets — go up twice to reach repo root
+        string ProjectRoot => Path.GetFullPath(Path.Combine(Application.dataPath, "../.."));
         string AnswersPath    => Path.GetFullPath(Path.Combine(ProjectRoot, answersRelativePath));
         string SelectionPath  => Path.GetFullPath(Path.Combine(ProjectRoot, selectionRelativePath));
 
@@ -49,6 +50,7 @@ namespace RoomRevive.Onboarding
             };
 
             WriteJson(AnswersPath, JsonUtility.ToJson(answers, prettyPrint: true));
+            Debug.Log($"[OnboardingBridge] Answers written → {AnswersPath}");
             StartWatching();
         }
 

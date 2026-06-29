@@ -49,6 +49,8 @@ namespace RoomRevive.Onboarding
 
             if (_bridge != null)
                 _bridge.onSelectionReceived.AddListener(OnSelectionReceived);
+            else
+                Debug.LogWarning("[OnboardingFlow] OnboardingBridge not found — answers JSON will not be written. Add component to OnboardingFlowUI or re-drag the prefab.");
 
             Debug.Log($"[OnboardingFlow] Panels — " +
                 $"Q1:{_q1Panel?.name}({(_q1Ctrl != null ? "ok" : "NO CTRL")}) " +
