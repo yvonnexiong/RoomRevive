@@ -232,6 +232,168 @@ namespace RoomRevive.Onboarding.Editor
             AssetDatabase.CreateAsset(asset, path);
         }
 
+        // ── Phase 4 ──────────────────────────────────────────────────────────
+
+        [MenuItem("Tools/RoomRevive/Onboarding/Phase 4 — Build Q2 Page")]
+        static void Phase4()
+        {
+            var roundRect    = AssetDatabase.LoadAssetAtPath<Sprite>(SpritePath);
+            var progBarSprite = AssetDatabase.LoadAssetAtPath<Sprite>(ProgBarSpritePath) ?? roundRect;
+            var bgGradient   = AssetDatabase.LoadAssetAtPath<Sprite>(BgGradientPath);
+            if (roundRect == null) { Debug.LogError("[Onboarding] Run Phase 0 first."); return; }
+            s_font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontPath);
+
+            var q2Data = AssetDatabase.LoadAssetAtPath<OnboardingQuestionData>("Assets/Onboarding/Data/Q2_Palette.asset");
+            if (q2Data == null) { Debug.LogError("[Onboarding] Run Phase 3 first to create Q2_Palette.asset."); return; }
+
+            var root = PrefabUtility.LoadPrefabContents(PrefabPath);
+            if (root == null) { Debug.LogError("[Onboarding] Run Phase 1 first to create the prefab."); return; }
+
+            // Rename existing Panel → Q1Panel so sibling naming is unambiguous
+            var q1Panel = root.transform.Find("Panel");
+            if (q1Panel != null) q1Panel.name = "Q1Panel";
+
+            // Remove old Q2Panel if rebuilding
+            var old2 = root.transform.Find("Q2Panel");
+            if (old2 != null) Object.DestroyImmediate(old2.gameObject);
+
+            // Build Q2 page — identical layout to Q1; caption height auto-shrinks to
+            // 44 px because Q2 options have no subtitles (handled in BuildImageCard)
+            BuildImagePage(root.transform, "Q2Panel", q2Data,
+                roundRect, progBarSprite, bgGradient,
+                activeSegments: 2, isFirstPage: false, hidden: true);
+
+            PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+            PrefabUtility.UnloadPrefabContents(root);
+            AssetDatabase.Refresh();
+            Selection.activeObject = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+            Debug.Log("[Onboarding] Phase 4 done — Q2Panel added (hidden). Enable it in the Inspector to test.");
+        }
+
+        // Builds a complete image-card question page as a child of parent.
+        // activeSegments: how many progress segments are lit (1 = Q1, 2 = Q2, …)
+        // hidden: SetActive(false) after building so it waits for Phase 7 navigation
+        static void BuildImagePage(Transform parent, string panelName,
+            OnboardingQuestionData data, Sprite roundRect, Sprite progBarSprite,
+            Sprite bgGradient, int activeSegments, bool isFirstPage, bool hidden)
+        {
+            var panel = MakeRT(panelName, parent);
+            panel.anchorMin = Vector2.zero;
+            panel.anchorMax = Vector2.one;
+            panel.offsetMin = panel.offsetMax = Vector2.zero;
+            var vl = panel.gameObject.AddComponent<VerticalLayoutGroup>();
+            vl.padding              = new RectOffset(20, 20, 16, 16);
+            vl.spacing              = 12f;
+            vl.childAlignment       = TextAnchor.UpperCenter;
+            vl.childForceExpandWidth  = true;
+            vl.childForceExpandHeight = false;
+            vl.childControlWidth      = true;
+            vl.childControlHeight     = true;
+
+            // Background (ignoreLayout so VL skips it)
+            if (bgGradient != null)
+            {
+                var bg = MakeImage("Background", panel, bgGradient, Color.white);
+                bg.type           = Image.Type.Simple;
+                bg.preserveAspect = false;
+                bg.raycastTarget  = false;
+                bg.rectTransform.anchorMin = Vector2.zero;
+                bg.rectTransform.anchorMax = Vector2.one;
+                bg.rectTransform.offsetMin = bg.rectTransform.offsetMax = Vector2.zero;
+                bg.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+            }
+
+            // Progress bar
+            var progressWrapper = MakeRT("ProgressBar", panel);
+            LE(progressWrapper, preferredHeight: 4f);
+            var segments = MakeRT("Segments", progressWrapper);
+            segments.anchorMin = Vector2.zero;
+            segments.anchorMax = Vector2.one;
+            segments.offsetMin = segments.offsetMax = Vector2.zero;
+            var pHL = segments.gameObject.AddComponent<HorizontalLayoutGroup>();
+            pHL.spacing              = 6f;
+            pHL.childForceExpandWidth  = true;
+            pHL.childForceExpandHeight = true;
+            pHL.childControlWidth      = true;
+            pHL.childControlHeight     = true;
+            for (int i = 0; i < 4; i++)
+            {
+                bool active = i < activeSegments;
+                var seg = MakeImage($"Seg{i + 1}", segments, progBarSprite,
+                    active ? SurfaceDeep : new Color(SurfaceDeep.r, SurfaceDeep.g, SurfaceDeep.b, 0.35f));
+                seg.type = Image.Type.Sliced;
+            }
+
+            // Banner
+            var banner = MakeImage("Banner", panel, roundRect,
+                new Color(SurfaceLight.r, SurfaceLight.g, SurfaceLight.b, 0.80f));
+            banner.type = Image.Type.Sliced;
+            LE(banner.rectTransform, preferredHeight: 84f);
+            var bannerVL = banner.gameObject.AddComponent<VerticalLayoutGroup>();
+            bannerVL.padding              = new RectOffset(16, 16, 14, 10);
+            bannerVL.spacing              = 4f;
+            bannerVL.childAlignment       = TextAnchor.MiddleCenter;
+            bannerVL.childForceExpandWidth  = true;
+            bannerVL.childForceExpandHeight = false;
+            bannerVL.childControlWidth      = true;
+            bannerVL.childControlHeight     = true;
+            var titleTMP = MakeTMP("Title", banner.transform, data.prompt,
+                26f, FontStyles.Bold, InkPrimary, TextAlignmentOptions.Center);
+            LE(titleTMP.rectTransform, preferredHeight: 34f);
+            var subTMP = MakeTMP("Subtitle", banner.transform, data.stepLabel,
+                12f, FontStyles.Normal, InkSecondary, TextAlignmentOptions.Center);
+            LE(subTMP.rectTransform, preferredHeight: 18f);
+
+            // Card grid (2×2 — cell size same as Q1; captionH auto-adjusts per card)
+            var gridRT = MakeRT("CardGrid", panel);
+            LE(gridRT, preferredHeight: 554f);
+            var grid             = gridRT.gameObject.AddComponent<GridLayoutGroup>();
+            grid.cellSize        = new Vector2(215f, 271f);
+            grid.spacing         = new Vector2(12f, 12f);
+            grid.constraint      = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = 2;
+            grid.childAlignment  = TextAnchor.UpperLeft;
+
+            var cardViews = new OnboardingOptionCardView[data.options.Count];
+            var values    = new string[data.options.Count];
+            for (int i = 0; i < data.options.Count; i++)
+            {
+                var opt    = data.options[i];
+                cardViews[i] = BuildImageCard(gridRT, roundRect, opt.imageName, opt.label, opt.subtitle);
+                values[i]    = opt.value;
+            }
+
+            // Nav bar
+            var navRT = MakeRT("NavBar", panel);
+            LE(navRT, preferredHeight: 44f);
+
+            var backBtn = BuildButton(navRT, roundRect, "BackButton", "Back",
+                SurfaceLight, InkPrimary, alpha: 1f);
+            backBtn.anchorMin        = new Vector2(0f, 0.5f);
+            backBtn.anchorMax        = new Vector2(0f, 0.5f);
+            backBtn.pivot            = new Vector2(0f, 0.5f);
+            backBtn.anchoredPosition = Vector2.zero;
+            backBtn.sizeDelta        = new Vector2(120f, 44f);
+            var backCG = backBtn.gameObject.AddComponent<CanvasGroup>();
+
+            var nextBtn = BuildButton(navRT, roundRect, "NextButton", "Next",
+                InkPrimary, BtnText, alpha: 1f);
+            nextBtn.anchorMin = new Vector2(0f, 0.5f);
+            nextBtn.anchorMax = new Vector2(1f, 0.5f);
+            nextBtn.pivot     = new Vector2(1f, 0.5f);
+            nextBtn.offsetMin = new Vector2(132f, -22f);
+            nextBtn.offsetMax = new Vector2(0f,   22f);
+            var nextCG = nextBtn.gameObject.AddComponent<CanvasGroup>();
+            nextCG.alpha = 0.45f;
+
+            // Controller
+            var controller = panel.gameObject.AddComponent<OnboardingImagePageController>();
+            controller.Setup(cardViews, values,
+                nextBtn.GetComponent<Button>(), nextBtn, nextCG, backCG, isFirstPage);
+
+            if (hidden) panel.gameObject.SetActive(false);
+        }
+
         // ── Phase 1 ──────────────────────────────────────────────────────────
 
         [MenuItem("Tools/RoomRevive/Onboarding/Phase 1 — Build Q1 Shell")]

@@ -128,7 +128,7 @@ CellWrapper  (GridLayout child — OnboardingOptionCardView here)
 | Columns | 2 (fixed) |
 | Grid preferred height | 554 px |
 | Photo area | 211 × 211 px (square — card 271 − 56 caption − 4 inset = 211) |
-| Caption height | 56 px |
+| Caption height | 56 px (with subtitle) · 44 px (no subtitle — Q2) |
 | Caption padding | 14 left/right, 10 top, 12 bottom |
 | Caption label/sub spacing | 2 px |
 
