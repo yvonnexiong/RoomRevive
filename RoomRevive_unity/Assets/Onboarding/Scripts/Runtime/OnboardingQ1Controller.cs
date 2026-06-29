@@ -11,7 +11,18 @@ namespace RoomRevive.Onboarding
         [SerializeField] CanvasGroup                _nextGroup;
         [SerializeField] CanvasGroup                _backGroup;
 
-        OnboardingOptionCardView _selected;
+        [SerializeField] string[] _values;
+        OnboardingOptionCardView  _selected;
+
+        public string SelectedValue
+        {
+            get
+            {
+                if (_selected == null || _values == null) return null;
+                int i = System.Array.IndexOf(_cards, _selected);
+                return i >= 0 ? _values[i] : null;
+            }
+        }
 
         void Start()
         {
@@ -47,13 +58,15 @@ namespace RoomRevive.Onboarding
 
         // Called by the editor build script to wire serialized references
         public void Setup(OnboardingOptionCardView[] cards,
-            Button nextButton, RectTransform nextRT, CanvasGroup nextGroup, CanvasGroup backGroup)
+            Button nextButton, RectTransform nextRT, CanvasGroup nextGroup, CanvasGroup backGroup,
+            string[] values = null)
         {
             _cards      = cards;
             _nextButton = nextButton;
             _nextRT     = nextRT;
             _nextGroup  = nextGroup;
             _backGroup  = backGroup;
+            _values     = values;
         }
     }
 }

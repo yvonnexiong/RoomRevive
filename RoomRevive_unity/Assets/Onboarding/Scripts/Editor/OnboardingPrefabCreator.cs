@@ -399,6 +399,30 @@ namespace RoomRevive.Onboarding.Editor
             if (hidden) panel.gameObject.SetActive(false);
         }
 
+        // ── Phase 7 ──────────────────────────────────────────────────────────
+
+        [MenuItem("Tools/RoomRevive/Onboarding/Phase 7 — Wire Navigation")]
+        static void Phase7()
+        {
+            var root = PrefabUtility.LoadPrefabContents(PrefabPath);
+            if (root == null) { Debug.LogError("[Onboarding] Run Phase 1 first."); return; }
+
+            // Ensure Q1Panel name is correct (in case Phase 1 was run before this fix)
+            var oldPanel = root.transform.Find("Panel");
+            if (oldPanel != null) oldPanel.name = "Q1Panel";
+
+            // Drop FlowController on the root Canvas object — recreate if already present
+            var existing = root.GetComponent<OnboardingFlowController>();
+            if (existing != null) Object.DestroyImmediate(existing);
+            root.AddComponent<OnboardingFlowController>();
+
+            PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+            PrefabUtility.UnloadPrefabContents(root);
+            AssetDatabase.Refresh();
+            Selection.activeObject = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+            Debug.Log("[Onboarding] Phase 7 done — OnboardingFlowController added to root. Press Play to test full flow.");
+        }
+
         // ── Phase 6 ──────────────────────────────────────────────────────────
 
         [MenuItem("Tools/RoomRevive/Onboarding/Phase 6 — Build Q4 Page")]
@@ -680,8 +704,8 @@ namespace RoomRevive.Onboarding.Editor
             rootRT.sizeDelta = new Vector2(480f, 780f);
             root.transform.localScale = Vector3.one * 0.001f;
 
-            // ── Panel ─────────────────────────────────────────────────────────
-            var panel = MakeRT("Panel", root.transform);
+            // ── Q1 Panel ──────────────────────────────────────────────────────
+            var panel = MakeRT("Q1Panel", root.transform);
             panel.anchorMin = Vector2.zero;
             panel.anchorMax = Vector2.one;
             panel.offsetMin = panel.offsetMax = Vector2.zero;
@@ -803,7 +827,8 @@ namespace RoomRevive.Onboarding.Editor
             // ── Controller ────────────────────────────────────────────────────
             var controller = panel.gameObject.AddComponent<OnboardingQ1Controller>();
             controller.Setup(cardViews,
-                nextBtn.GetComponent<Button>(), nextBtn, nextCG, backCG);
+                nextBtn.GetComponent<Button>(), nextBtn, nextCG, backCG,
+                values: new[] { "modern", "designer", "cottage style", "natural & scandinavian" });
 
             // ── Save ──────────────────────────────────────────────────────────
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
