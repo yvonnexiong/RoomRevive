@@ -8,13 +8,13 @@ namespace RoomRevive.Onboarding
     // Pass nextLabel="See my kitchen" on Q4; leave default for Q3.
     public class OnboardingTextPageController : MonoBehaviour
     {
-        OnboardingTextRowView[] _rows;
-        string[]                _values;
-        Button                  _nextButton;
-        CanvasGroup             _nextGroup;
-        CanvasGroup             _backGroup;
-        bool                    _isFirstPage;
-        OnboardingTextRowView   _selected;
+        [SerializeField] OnboardingTextRowView[] _rows;
+        [SerializeField] string[]               _values;
+        [SerializeField] Button                 _nextButton;
+        [SerializeField] CanvasGroup            _nextGroup;
+        [SerializeField] CanvasGroup            _backGroup;
+        [SerializeField] bool                   _isFirstPage;
+        OnboardingTextRowView _selected; // runtime state, not serialized
 
         public string SelectedValue
         {

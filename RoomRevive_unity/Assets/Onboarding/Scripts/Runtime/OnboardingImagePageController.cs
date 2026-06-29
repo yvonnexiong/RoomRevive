@@ -8,14 +8,14 @@ namespace RoomRevive.Onboarding
     // Supports combo greying: call ApplyComboFilter from the flow controller on page entry.
     public class OnboardingImagePageController : MonoBehaviour
     {
-        OnboardingOptionCardView[] _cards;
-        string[]                   _values;
-        Button                     _nextButton;
-        RectTransform              _nextRT;
-        CanvasGroup                _nextGroup;
-        CanvasGroup                _backGroup;
-        bool                       _isFirstPage;
-        OnboardingOptionCardView   _selected;
+        [SerializeField] OnboardingOptionCardView[] _cards;
+        [SerializeField] string[]                   _values;
+        [SerializeField] Button                     _nextButton;
+        [SerializeField] RectTransform              _nextRT;
+        [SerializeField] CanvasGroup                _nextGroup;
+        [SerializeField] CanvasGroup                _backGroup;
+        [SerializeField] bool                       _isFirstPage;
+        OnboardingOptionCardView _selected; // runtime state, not serialized
 
         public string SelectedValue
         {

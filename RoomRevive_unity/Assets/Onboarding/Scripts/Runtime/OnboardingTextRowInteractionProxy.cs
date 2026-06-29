@@ -9,7 +9,7 @@ namespace RoomRevive.Onboarding
         IPointerEnterHandler, IPointerExitHandler,
         IPointerDownHandler,  IPointerUpHandler
     {
-        OnboardingTextRowView _view;
+        [SerializeField] OnboardingTextRowView _view;
         public void Init(OnboardingTextRowView view) => _view = view;
 
         public void OnPointerEnter(PointerEventData _) => _view?.OnHoverEnter();
