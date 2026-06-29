@@ -39,7 +39,8 @@ namespace RoomRevive.Onboarding
             _ring.color    = selected ? s_teal       : _ringDefault;
             _caption.color = selected ? s_teal       : _captionDefault;
             _label.color   = (selected ? Color.white : s_inkPri).linear;
-            _sub.color     = (selected ? Color.white : s_inkSec).linear;
+            if (_sub != null && _sub.gameObject.activeSelf)
+                _sub.color = (selected ? Color.white : s_inkSec).linear;
         }
 
         public void SetDisabled(bool disabled)

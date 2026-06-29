@@ -167,6 +167,71 @@ namespace RoomRevive.Onboarding.Editor
             AssetDatabase.CreateAsset(ScriptableObject.CreateInstance<OnboardingTheme>(), ThemePath);
         }
 
+        // ── Phase 3 ──────────────────────────────────────────────────────────
+
+        [MenuItem("Tools/RoomRevive/Onboarding/Phase 3 — Create Question Assets")]
+        static void Phase3()
+        {
+            EnsureFolder("Assets/Onboarding/Data");
+
+            CreateQuestionAsset("Assets/Onboarding/Data/Q1_Style.asset",
+                prompt:       "Which style do you prefer?",
+                stepLabel:    "1 of 4",
+                imageCards:   true,
+                new OnboardingOptionData { label = "Clean & Uncluttered", subtitle = "Modern",       value = "modern",                  imageName = "kitchen_style_1" },
+                new OnboardingOptionData { label = "Bold & Dramatic",      subtitle = "Designer",     value = "designer",                imageName = "kitchen_style_2" },
+                new OnboardingOptionData { label = "Warm & Cozy",          subtitle = "Cottage",      value = "cottage style",           imageName = "kitchen_style_3" },
+                new OnboardingOptionData { label = "Calm & Natural",       subtitle = "Scandinavian", value = "natural & scandinavian",  imageName = "kitchen_style_4" }
+            );
+
+            // Q2: no subtitles — caption area will be shorter (44 px vs 56 px)
+            CreateQuestionAsset("Assets/Onboarding/Data/Q2_Palette.asset",
+                prompt:       "Which colours feel most like home?",
+                stepLabel:    "2 of 4",
+                imageCards:   true,
+                new OnboardingOptionData { label = "Light & Airy",       subtitle = "", value = "light", imageName = "swatches_stack_1" },
+                new OnboardingOptionData { label = "Dark & Moody",       subtitle = "", value = "dark",  imageName = "swatches_stack_2" },
+                new OnboardingOptionData { label = "Warm Wood Tones",    subtitle = "", value = "wood",  imageName = "swatches_stack_3" },
+                new OnboardingOptionData { label = "Colourful & Playful",subtitle = "", value = "bold",  imageName = "swatches_stack_4" }
+            );
+
+            CreateQuestionAsset("Assets/Onboarding/Data/Q3_Household.asset",
+                prompt:       "How many are you usually cooking for?",
+                stepLabel:    "3 of 4",
+                imageCards:   false,
+                new OnboardingOptionData { label = "1–2 people", subtitle = "", value = "compact"  },
+                new OnboardingOptionData { label = "3–4 people", subtitle = "", value = "standard" },
+                new OnboardingOptionData { label = "5+ people",  subtitle = "", value = "host"     }
+            );
+
+            CreateQuestionAsset("Assets/Onboarding/Data/Q4_Investment.asset",
+                prompt:       "How much would you like to invest?",
+                stepLabel:    "4 of 4",
+                imageCards:   false,
+                new OnboardingOptionData { label = "Essential", subtitle = "Affordable",        value = "Essential" },
+                new OnboardingOptionData { label = "Signature", subtitle = "Mid-range",         value = "Signature" },
+                new OnboardingOptionData { label = "Premium",   subtitle = "High-end",          value = "Premium"   },
+                new OnboardingOptionData { label = "Show All",  subtitle = "Explore everything",value = "any"       }
+            );
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("[Onboarding] Phase 3 done — Q1–Q4 question assets created/updated.");
+        }
+
+        static void CreateQuestionAsset(string path, string prompt, string stepLabel,
+            bool imageCards, params OnboardingOptionData[] options)
+        {
+            // Always recreate so values stay in sync with this script
+            AssetDatabase.DeleteAsset(path);
+            var asset = ScriptableObject.CreateInstance<OnboardingQuestionData>();
+            asset.prompt       = prompt;
+            asset.stepLabel    = stepLabel;
+            asset.useImageCards = imageCards;
+            asset.options      = new System.Collections.Generic.List<OnboardingOptionData>(options);
+            AssetDatabase.CreateAsset(asset, path);
+        }
+
         // ── Phase 1 ──────────────────────────────────────────────────────────
 
         [MenuItem("Tools/RoomRevive/Onboarding/Phase 1 — Build Q1 Shell")]
@@ -358,7 +423,10 @@ namespace RoomRevive.Onboarding.Editor
             cardMask.showMaskGraphic = true;
             cardBody.gameObject.AddComponent<Button>();
 
-            const float captionH = 56f;
+            bool hasSubtitle = !string.IsNullOrEmpty(subtitle);
+            // 56 px with subtitle (label 22 + sub 17 + pad 10+12 − spacing rounding)
+            // 44 px without (label 22 + pad 10+12 only)
+            float captionH = hasSubtitle ? 56f : 44f;
 
             // Photo: fills CardBody except bottom captionH pixels
             var photoRT = MakeRT("Photo", cardBody.transform);
@@ -395,6 +463,7 @@ namespace RoomRevive.Onboarding.Editor
             var sTMP = MakeTMP("Sub", captionImg.transform, subtitle, 12f, FontStyles.Normal,
                 InkSecondary, TextAlignmentOptions.Left);
             LE(sTMP.rectTransform, preferredHeight: 17f);
+            sTMP.gameObject.SetActive(hasSubtitle);
 
             var view = cell.gameObject.AddComponent<OnboardingOptionCardView>();
             view.Init(ring, cardBody, captionImg, lTMP, sTMP);
