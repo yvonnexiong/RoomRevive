@@ -12,23 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a15277f8e1df8c4db4e5ccb495abcf9, type: 3}
   m_Name: Q2_Palette
   m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.Onboarding.OnboardingQuestionData
-  questionText: Which colours feel most like home?
-  fieldName: tone
-  isImageQuestion: 1
+  prompt: Which colours feel most like home?
+  stepLabel: 2 of 4
+  useImageCards: 1
   options:
   - label: Light & Airy
     subtitle: 
     value: light
-    image: {fileID: 21300000, guid: 55c357e08ab6e5e4b945928ab69f9567, type: 3}
+    imageName: swatches_stack_1
   - label: Dark & Moody
     subtitle: 
     value: dark
-    image: {fileID: 21300000, guid: ae93ced4cdb0f8b4794a916c50e7642b, type: 3}
+    imageName: swatches_stack_2
   - label: Warm Wood Tones
     subtitle: 
     value: wood
-    image: {fileID: 21300000, guid: 81e0b0ab73f5c8f4abc8b571984ea929, type: 3}
+    imageName: swatches_stack_3
   - label: Colourful & Playful
     subtitle: 
     value: bold
-    image: {fileID: 21300000, guid: a53052bf7ccdf0e4888d6fdb2929cdf5, type: 3}
+    imageName: swatches_stack_4

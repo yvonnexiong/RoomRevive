@@ -12,19 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a15277f8e1df8c4db4e5ccb495abcf9, type: 3}
   m_Name: Q3_Household
   m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.Onboarding.OnboardingQuestionData
-  questionText: How many are you usually cooking for?
-  fieldName: household
-  isImageQuestion: 0
+  prompt: How many are you usually cooking for?
+  stepLabel: 3 of 4
+  useImageCards: 0
   options:
   - label: "1\u20132 people"
     subtitle: 
     value: compact
-    image: {fileID: 0}
+    imageName: 
   - label: "3\u20134 people"
     subtitle: 
     value: standard
-    image: {fileID: 0}
+    imageName: 
   - label: 5+ people
     subtitle: 
     value: host
-    image: {fileID: 0}
+    imageName: 

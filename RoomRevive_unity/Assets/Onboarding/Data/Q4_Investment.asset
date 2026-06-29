@@ -12,23 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a15277f8e1df8c4db4e5ccb495abcf9, type: 3}
   m_Name: Q4_Investment
   m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.Onboarding.OnboardingQuestionData
-  questionText: How much would you like to invest?
-  fieldName: budget
-  isImageQuestion: 0
+  prompt: How much would you like to invest?
+  stepLabel: 4 of 4
+  useImageCards: 0
   options:
   - label: Essential
     subtitle: Affordable
     value: Essential
-    image: {fileID: 0}
+    imageName: 
   - label: Signature
     subtitle: Mid-range
     value: Signature
-    image: {fileID: 0}
+    imageName: 
   - label: Premium
     subtitle: High-end
     value: Premium
-    image: {fileID: 0}
+    imageName: 
   - label: Show All
     subtitle: Explore everything
     value: any
-    image: {fileID: 0}
+    imageName: 

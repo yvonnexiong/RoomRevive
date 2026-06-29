@@ -12,23 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a15277f8e1df8c4db4e5ccb495abcf9, type: 3}
   m_Name: Q1_Style
   m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.Onboarding.OnboardingQuestionData
-  questionText: Which style do you prefer?
-  fieldName: style
-  isImageQuestion: 1
+  prompt: Which style do you prefer?
+  stepLabel: 1 of 4
+  useImageCards: 1
   options:
   - label: Clean & Uncluttered
     subtitle: Modern
     value: modern
-    image: {fileID: 21300000, guid: d28ad7582ac61ce47920dc419ed3764b, type: 3}
-  - label: Bold & Statement-Making
+    imageName: kitchen_style_1
+  - label: Bold & Dramatic
     subtitle: Designer
     value: designer
-    image: {fileID: 21300000, guid: cb6a7fb6e13d81f428073ec5a5a04cec, type: 3}
+    imageName: kitchen_style_2
   - label: Warm & Cozy
     subtitle: Cottage
     value: cottage style
-    image: {fileID: 21300000, guid: 786ba7c8836919941bf7fc6915ecfceb, type: 3}
+    imageName: kitchen_style_3
   - label: Calm & Natural
     subtitle: Scandinavian
     value: natural & scandinavian
-    image: {fileID: 21300000, guid: bb52d27aa7e494f4a87779d1cf187b95, type: 3}
+    imageName: kitchen_style_4
