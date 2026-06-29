@@ -399,6 +399,38 @@ namespace RoomRevive.Onboarding.Editor
             if (hidden) panel.gameObject.SetActive(false);
         }
 
+        // ── Phase 6 ──────────────────────────────────────────────────────────
+
+        [MenuItem("Tools/RoomRevive/Onboarding/Phase 6 — Build Q4 Page")]
+        static void Phase6()
+        {
+            var roundRect     = AssetDatabase.LoadAssetAtPath<Sprite>(SpritePath);
+            var progBarSprite = AssetDatabase.LoadAssetAtPath<Sprite>(ProgBarSpritePath) ?? roundRect;
+            var bgGradient    = AssetDatabase.LoadAssetAtPath<Sprite>(BgGradientPath);
+            if (roundRect == null) { Debug.LogError("[Onboarding] Run Phase 0 first."); return; }
+            s_font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontPath);
+
+            var q4Data = AssetDatabase.LoadAssetAtPath<OnboardingQuestionData>("Assets/Onboarding/Data/Q4_Investment.asset");
+            if (q4Data == null) { Debug.LogError("[Onboarding] Run Phase 3 first."); return; }
+
+            var root = PrefabUtility.LoadPrefabContents(PrefabPath);
+            if (root == null) { Debug.LogError("[Onboarding] Run Phase 1 first."); return; }
+
+            var old4 = root.transform.Find("Q4Panel");
+            if (old4 != null) Object.DestroyImmediate(old4.gameObject);
+
+            BuildTextRowPage(root.transform, "Q4Panel", q4Data,
+                roundRect, progBarSprite, bgGradient,
+                activeSegments: 4, isFirstPage: false,
+                nextLabel: "See my kitchen", hidden: true);
+
+            PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+            PrefabUtility.UnloadPrefabContents(root);
+            AssetDatabase.Refresh();
+            Selection.activeObject = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+            Debug.Log("[Onboarding] Phase 6 done — Q4Panel added (hidden). CTA reads 'See my kitchen'.");
+        }
+
         // ── Phase 5 ──────────────────────────────────────────────────────────
 
         [MenuItem("Tools/RoomRevive/Onboarding/Phase 5 — Build Q3 Page")]
