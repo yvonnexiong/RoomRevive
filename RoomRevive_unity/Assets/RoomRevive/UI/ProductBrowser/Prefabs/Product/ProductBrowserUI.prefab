@@ -1183,7 +1183,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2434010558343039226, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_text
-      value: 356 L
+      value: 39 dB
       objectReference: {fileID: 0}
     - target: {fileID: 2434010558343039226, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_fontColor32.rgba

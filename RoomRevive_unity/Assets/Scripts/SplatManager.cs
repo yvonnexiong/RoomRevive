@@ -927,18 +927,15 @@ public class SplatManager : MonoBehaviour
         lastTransitionCenterWorld = origin;
     }
 
+    private Transform _resolvedOriginCam;
+
     private Vector3 ResolveLiveTransitionOriginWorld()
     {
         if (useCameraOriginForTransition)
         {
-            if (cameraOriginReference != null)
-                return cameraOriginReference.position;
-
-            if (cameraReference != null)
-                return cameraReference.transform.position;
-
-            if (autoUseMainCamera && Camera.main != null)
-                return Camera.main.transform.position;
+            Transform cam = ResolveOriginCamera();
+            if (cam != null)
+                return cam.position;
         }
 
         if (transitionCenter != null)
@@ -948,6 +945,23 @@ public class SplatManager : MonoBehaviour
             return circleEffect.SphereCenterWorld;
 
         return transform.position;
+    }
+
+    // Resolves the viewer transform the transition centers on: explicit reference first, then the XR
+    // head (CenterEyeAnchor) — reliable when several cameras are tagged MainCamera — then Camera.main.
+    private Transform ResolveOriginCamera()
+    {
+        if (cameraOriginReference != null) return cameraOriginReference;
+        if (cameraReference != null) return cameraReference.transform;
+
+        if (_resolvedOriginCam != null) return _resolvedOriginCam;
+
+        GameObject eye = GameObject.Find("CenterEyeAnchor");
+        if (eye != null) return _resolvedOriginCam = eye.transform;
+
+        if (autoUseMainCamera && Camera.main != null) return _resolvedOriginCam = Camera.main.transform;
+
+        return null;
     }
 
     private bool CanUseCutoutTransition(SplatRoom previousRoom, SplatRoom nextRoom)
