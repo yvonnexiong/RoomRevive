@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_29ba30d1ab48c230 LASER 461
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 29ba30d1ab48c230
+  catalogKey: 29ba30d1ab48c230
+  brandName: Nobilia
+  productName: LASER 461
+  subtitle: Modern kitchen
+  emotionalLine: Success colour taupe grey
+  shortDescription: 'Planning right up to the ceiling to get the maximum amount of
+    space out of the room. Storage space organised individually, efficiently and
+    aesthetically, both visually and functionally, even in smaller kitchens. A touch
+    of nature: With their eye-catching grain, the kitchen island, worktop and niche
+    in Nevada oak reproduction form a pleasant contrast to the matt grey kitchen
+    fronts.'
+  productImage: {fileID: 0}
+  specs:
+  - Taupe grey
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 461_Taupe_grey.jpg
+  splatWtMaterial: 392_Nevada_oak_reproduction.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

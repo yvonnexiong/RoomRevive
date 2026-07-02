@@ -3,7 +3,127 @@ guid: 31ebc5c8dcc59354084bcac19d271782
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Alu_elox
+    second: {fileID: 2100000, guid: ced07f374b6534a40bcb0bc42edaa7a4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Bedruckung_Planes
+    second: {fileID: 2100000, guid: 6f150c973036f554f9a4db0e4ab48f57, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Blende
+    second: {fileID: 2100000, guid: cc31e3dbb915ce94ca3da1d79e801173, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Display
+    second: {fileID: 2100000, guid: d9b0d83d841e34c49a7004233edffdf4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: DynaCool_Licht
+    second: {fileID: 2100000, guid: 82df87037f71d8f4ba885604d3b29ed1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Einlegeglas
+    second: {fileID: 2100000, guid: 6df11e9dd38b40546b0ffa459442cc86, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: FlexiLight_Gradient_2x45
+    second: {fileID: 2100000, guid: 08561951268c5a54ca913a58ee185780, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Humidifier
+    second: {fileID: 2100000, guid: 07c9c853c4d3d6a46983e08794bce27f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: InnenweissTuer
+    second: {fileID: 2100000, guid: 7607d4d37abe2f545ba06cf562228a08, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: KST-Behaelter
+    second: {fileID: 2100000, guid: db2b3779fde5fed41a4408dcd3f02eec, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: KST-SilberMetallic
+    second: {fileID: 2100000, guid: 8b91aaa52d7e5ea42a7a4f2599e9502b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kst-grau
+    second: {fileID: 2100000, guid: 896146fba08a8664a9488c29b2391f6b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kst-schwarz
+    second: {fileID: 2100000, guid: 77fd83ddaae061341952430d65c176aa, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kst-weiss
+    second: {fileID: 2100000, guid: 79154041848c3c347807c4e6314497c0, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kuehlschrank_InnenWeiss
+    second: {fileID: 2100000, guid: 44222389b48887b49beb2208175673cb, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Metal_Weiss
+    second: {fileID: 2100000, guid: 82a5af9b7db6b644389e36d23d9de286, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: RAL System 0005000
+    second: {fileID: 2100000, guid: d4757096246ab0d469fe606ea87c91e7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Rueckseite_Metall
+    second: {fileID: 2100000, guid: 9269b28041db3414cb93de21941b2f69, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Rueckwand_Stahl
+    second: {fileID: 2100000, guid: d7ad64f8db437ba4aa29e0fa51637e18, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Scharniere-Metall
+    second: {fileID: 2100000, guid: 47d0bd7d8aaf8a845ae2fc9be84a3869, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Stahlverzinkt
+    second: {fileID: 2100000, guid: 90fb408518cb1bc4eb6152bd84ec4fbd, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: "T\xFCrabstellerGlas_ORIG"
+    second: {fileID: 2100000, guid: f00e8df79f25839418512ea39be1b765, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: el
+    second: {fileID: 2100000, guid: 2155f77d5dd094e4a9eecc82b8a6bbc7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: gummi_el_dunkler
+    second: {fileID: 2100000, guid: c5430b95b253abc4699cbe1fa41d3401, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

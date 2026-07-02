@@ -70,6 +70,7 @@ namespace RoomRevive
         MaterialPropertyBlock _mpb;
         float _gazeT;
         Color _currentColor;
+        bool _suppressed;   // forced-hidden while the linked UI is open
 
         // ── Unity lifecycle ──────────────────────────────────────────────────
 
@@ -97,8 +98,8 @@ namespace RoomRevive
                 return;
             }
 
-            // ── Compute GazeT from camera angle ──────────────────────────────
-            float targetGazeT = ComputeGazeT();
+            // ── Compute GazeT from camera angle (or force hidden while suppressed) ──
+            float targetGazeT = _suppressed ? 1f : ComputeGazeT();
             _gazeT = Mathf.Lerp(_gazeT, targetGazeT, Time.deltaTime * _gazeSmoothing);
 
             // ── Scale ────────────────────────────────────────────────────────
@@ -157,5 +158,8 @@ namespace RoomRevive
             _currentColor = color;
             PushToShader(0f, _gazeT);
         }
+
+        /// <summary>Force the sphere hidden regardless of gaze angle (e.g. while the linked UI is open).</summary>
+        public void SetSuppressed(bool suppressed) => _suppressed = suppressed;
     }
 }

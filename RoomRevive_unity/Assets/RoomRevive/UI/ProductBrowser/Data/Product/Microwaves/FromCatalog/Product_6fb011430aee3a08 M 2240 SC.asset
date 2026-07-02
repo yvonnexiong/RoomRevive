@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_6fb011430aee3a08 M 2240 SC
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 6fb011430aee3a08
+  catalogKey: 6fb011430aee3a08
+  brandName: Miele
+  productName: M 2240 SC
+  subtitle: Silver
+  emotionalLine: Spacious 26 L built-in microwave with grill
+  shortDescription: "A larger 26 L cavity takes full-size plates while the grill
+    adds colour and crunch \u2014 ideal for households that cook for more than one."
+  productImage: {fileID: 0}
+  specs:
+  - 26 L
+  - 900 W
+  - Grill
+  fromPrice: From EUR 1,326
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 
+  splatWtMaterial: 
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

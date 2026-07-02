@@ -3,7 +3,47 @@ guid: de3ae0f1ecebec94795d915dbba08e2a
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Black
+    second: {fileID: 2100000, guid: e1b7870f77a339442bbe11559aeb012a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Display
+    second: {fileID: 2100000, guid: 422d00eaa94998a4e9b22a6e63f03652, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Griffbloecke
+    second: {fileID: 2100000, guid: 0cbf268135ccba44bbf0eabbedb8f2de, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kst-weiss
+    second: {fileID: 2100000, guid: 33decc8b32844234fbf651f6fe2582d8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kuehlschrank_InnenWeiss
+    second: {fileID: 2100000, guid: 6a3008ec11aa9e048927d2fb42226704, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Miele-Logo_CleanSteel.002
+    second: {fileID: 2100000, guid: 67c85765b655a9f4fabe7aaecbd4d904, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Scharniere-Metall
+    second: {fileID: 2100000, guid: 566901b33b0ee40489ac6474be5af004, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: stahl-clean
+    second: {fileID: 2100000, guid: b4e0f0a6bd8507d4f888368ab518557c, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

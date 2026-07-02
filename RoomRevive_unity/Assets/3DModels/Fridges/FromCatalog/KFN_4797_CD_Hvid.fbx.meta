@@ -3,7 +3,137 @@ guid: 046abe9faee84794a85a0a98af949dce
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Alu_Griff
+    second: {fileID: 2100000, guid: 238315c645ee39c40ba5666e55f75285, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Alu_elox
+    second: {fileID: 2100000, guid: 48b228ac6e28edb42960ff836f4f28e6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Bedruckung_Planes
+    second: {fileID: 2100000, guid: 70606602e8eddfc4e99040ae9e905adf, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Black
+    second: {fileID: 2100000, guid: 14d93c5e63c81334e85790bf1aad98e4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Blende
+    second: {fileID: 2100000, guid: e36516741fb2e78459e0b5eaa3b0dbc2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Display
+    second: {fileID: 2100000, guid: ffc3c0f3da4853640b24829c0a46d883, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: DynaCool_logo
+    second: {fileID: 2100000, guid: 062c28649e600c7479e6d7c3cb200b64, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Einlegeglas
+    second: {fileID: 2100000, guid: c272aff4adfad18499073dc1fe270356, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Eiswuerfelschale
+    second: {fileID: 2100000, guid: 3d13dc8be0a35e44e9509f9267342e5c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: InnenweissTuer
+    second: {fileID: 2100000, guid: 84256acf4f9cf154fb927819d40e1976, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: KST-Behaelter
+    second: {fileID: 2100000, guid: fb60886cd85a324439ce4ddc4ed4dd66, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: KST-SilberMetallic
+    second: {fileID: 2100000, guid: 6f7fc4d2b9b42934686cddb8de3ed9fb, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kst-grau
+    second: {fileID: 2100000, guid: 88d84526b23040e4a954e6abb9aa91ec, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kst-grau-neu
+    second: {fileID: 2100000, guid: 48e050fac0770024381a82cd6320f387, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kst-schwarz
+    second: {fileID: 2100000, guid: 99b676b2c809a324083ae315ba5da1fc, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kst-weiss
+    second: {fileID: 2100000, guid: 27beeee212144f5448d3d5498f545aa8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kuehlschrank_InnenWeiss
+    second: {fileID: 2100000, guid: 872f63722a42d3e488055d7644d59e29, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Lichter
+    second: {fileID: 2100000, guid: cc4cbc7e4fcc17a47b8244167c983d42, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Metal_Weiss
+    second: {fileID: 2100000, guid: ba813edb776a2de4e8ce6ed5825b2525, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Miele_Logo_WS
+    second: {fileID: 2100000, guid: a2868cf2a802c1e40bb85ea2206df392, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Rueckseite_Metall
+    second: {fileID: 2100000, guid: 015d1a96f6b100f40b7b14292f4ad257, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Rueckwand_Stahl
+    second: {fileID: 2100000, guid: f1fe93af850215c49987d53f85706ad9, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Scharniere-Metall
+    second: {fileID: 2100000, guid: 19818e73d66eb21479b8de4893e9b741, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Schubladen_Gefrierfach_Front
+    second: {fileID: 2100000, guid: 4084868d3392df1468697c401f44e0bb, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Stahlverzinkt
+    second: {fileID: 2100000, guid: a5bc190cc2ef94849a85767fccfc87e9, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: "T\xFCrabstellerGlas_ORIG"
+    second: {fileID: 2100000, guid: 5fa5c2481578ae743a63e63374c03a82, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

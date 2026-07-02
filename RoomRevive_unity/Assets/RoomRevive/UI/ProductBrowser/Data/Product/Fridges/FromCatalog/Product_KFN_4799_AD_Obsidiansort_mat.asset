@@ -32,6 +32,7 @@ MonoBehaviour:
   splatWtMaterial: 
   variants: []
   startsSelectedByDefault: 0
+  pinnedFirst: 0
   onSelectedAssetEvent:
     m_PersistentCalls:
       m_Calls: []

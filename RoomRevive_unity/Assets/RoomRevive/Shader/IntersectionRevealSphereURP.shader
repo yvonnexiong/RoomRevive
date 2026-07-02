@@ -166,6 +166,13 @@ Shader "XRCC/Intersection Reveal Sphere URP"
 
                 intersectionBand *= sceneDepthValid;
 
+                // Occlusion mask: this sphere fragment is hidden when it sits BEHIND the nearest scene
+                // surface the camera sees (so the shell glow doesn't draw over/through nearer objects).
+                // The contact seam itself is at the surface, so this leaves it intact.
+                float behindScene = sphereEyeDepth - sceneEyeDepth;
+                float occlusionMask = 1.0 - smoothstep(thickness, thickness + softness, behindScene);
+                occlusionMask = lerp(1.0, occlusionMask, sceneDepthValid);
+
                 float time = _Time.y;
 
                 float noiseScale = max(0.001, _NoiseScale);
@@ -191,7 +198,8 @@ Shader "XRCC/Intersection Reveal Sphere URP"
                 float shellAlpha =
                     saturate(_ShellAlpha) *
                     fresnel *
-                    _IntersectionColor.a;
+                    _IntersectionColor.a *
+                    occlusionMask;   // shell respects scene occlusion — not drawn behind other objects
 
                 float finalAlpha = saturate(max(intersectionAlpha, shellAlpha));
 

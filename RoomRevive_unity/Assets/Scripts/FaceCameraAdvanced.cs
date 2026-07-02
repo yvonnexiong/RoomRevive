@@ -21,6 +21,10 @@ public class FaceCameraAdvanced : MonoBehaviour
     [Tooltip("Invert the facing direction. Enable this if the object faces away from the camera.")]
     public bool invertDirection = false;
 
+    [Tooltip("Mirror the object horizontally (flips the local X scale). Useful for billboards/text " +
+             "that should read as a reflection.")]
+    public bool mirror = false;
+
     [Header("Axis Locks")]
     [Tooltip("If true, the object's X rotation will stay locked to lockedEulerAngles.x.")]
     public bool lockXRotation = false;
@@ -115,6 +119,21 @@ public class FaceCameraAdvanced : MonoBehaviour
         }
 
         transform.rotation = Quaternion.Euler(targetEuler);
+
+        ApplyMirror();
+    }
+
+    // Flips the object horizontally by setting the sign of the local X scale to match 'mirror'.
+    private void ApplyMirror()
+    {
+        Vector3 scale = transform.localScale;
+        float desiredX = Mathf.Abs(scale.x) * (mirror ? -1f : 1f);
+
+        if (!Mathf.Approximately(scale.x, desiredX))
+        {
+            scale.x = desiredX;
+            transform.localScale = scale;
+        }
     }
 
     [ContextMenu("Use Current Rotation As Locked Rotation")]

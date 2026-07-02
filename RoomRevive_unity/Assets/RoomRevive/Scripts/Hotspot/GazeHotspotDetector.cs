@@ -32,12 +32,26 @@ namespace RoomRevive
             if (Physics.Raycast(_cam.position, _cam.forward, out RaycastHit hitInfo, 10f, hotspotLayer))
                 hit = hitInfo.collider.GetComponent<HotspotInteractable>();
 
+            // A visibility controller can disable a hotspot between frames. Treat
+            // inactive or disabled components as no hit, even when still cached.
+            if (hit != null && !hit.isActiveAndEnabled)
+                hit = null;
+
             if (hit != _currentTarget)
             {
-                if (_currentTarget != null) _currentTarget.OnGazeExit();
+                if (_currentTarget != null && _currentTarget.isActiveAndEnabled)
+                    _currentTarget.OnGazeExit();
+
                 _currentTarget = hit;
                 _dwellTimer = 0f;
-                if (_currentTarget != null) _currentTarget.OnGazeEnter();
+                if (_currentTarget != null && _currentTarget.isActiveAndEnabled)
+                    _currentTarget.OnGazeEnter();
+            }
+
+            if (_currentTarget != null && !_currentTarget.isActiveAndEnabled)
+            {
+                _currentTarget = null;
+                _dwellTimer = 0f;
             }
 
             if (_currentTarget != null)
@@ -56,7 +70,7 @@ namespace RoomRevive
             // --- Proximity-based dot scaling for all hotspots ---
             foreach (var h in _allHotspots)
             {
-                if (h == null) continue;
+                if (h == null || !h.isActiveAndEnabled) continue;
 
                 if (h == _currentTarget)
                 {
@@ -68,6 +82,15 @@ namespace RoomRevive
                 float t = Mathf.InverseLerp(proximityOuterRadius, proximityInnerRadius, d);
                 h.SetProximityScale(t);
             }
+        }
+
+        private void OnDisable()
+        {
+            if (_currentTarget != null && _currentTarget.isActiveAndEnabled)
+                _currentTarget.OnGazeExit();
+
+            _currentTarget = null;
+            _dwellTimer = 0f;
         }
 
         // Perpendicular distance from a ray to a world point

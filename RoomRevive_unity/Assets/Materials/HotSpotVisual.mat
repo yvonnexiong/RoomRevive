@@ -110,7 +110,7 @@ Material:
     - _GridIntensity: 0.28
     - _GridLineWidth: 0.025
     - _GridScale: 8
-    - _InnerAlpha: 0.034
+    - _InnerAlpha: 0.05
     - _Metallic: 0
     - _NoiseIntensity: 0.14
     - _NoiseScale: 8

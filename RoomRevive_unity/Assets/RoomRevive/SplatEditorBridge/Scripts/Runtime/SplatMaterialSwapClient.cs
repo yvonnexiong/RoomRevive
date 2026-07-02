@@ -28,8 +28,9 @@ namespace RoomRevive.SplatEditorBridge
     public class SplatMaterialSwapClient : MonoBehaviour
     {
         [Header("Server")]
-        [Tooltip("Base URL of the local splat-editor server. Localhost only — no auth, no CORS.")]
-        public string baseUrl = "http://localhost:8766";
+        [Tooltip("Base URL of the local splat-editor server. Localhost only — no auth, no CORS. " +
+                 "Use 127.0.0.1 (not localhost) to avoid the IPv4/IPv6 resolution quirk.")]
+        public string baseUrl = "http://127.0.0.1:8766";
 
         [Header("Debug")]
         [Tooltip("Log every request/response. Warnings are always logged regardless.")]
@@ -121,7 +122,7 @@ namespace RoomRevive.SplatEditorBridge
             if (hasWt)  sb.Append("\"wt\":\"").Append(EscapeJson(wt)).Append('"');
             sb.Append('}');
 
-            string url = (string.IsNullOrEmpty(baseUrl) ? "http://localhost:8766" : baseUrl).TrimEnd('/') + "/api/swap";
+            string url = (string.IsNullOrEmpty(baseUrl) ? "http://127.0.0.1:8766" : baseUrl).TrimEnd('/') + "/api/swap";
             byte[] data = Encoding.UTF8.GetBytes(sb.ToString());
             System.Threading.ThreadPool.QueueUserWorkItem(_ =>
             {

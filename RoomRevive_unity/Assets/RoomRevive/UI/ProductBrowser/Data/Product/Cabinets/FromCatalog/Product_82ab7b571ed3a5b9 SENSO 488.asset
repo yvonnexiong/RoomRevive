@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_82ab7b571ed3a5b9 SENSO 488
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 82ab7b571ed3a5b9
+  catalogKey: 82ab7b571ed3a5b9
+  brandName: Nobilia
+  productName: SENSO 488
+  subtitle: Natural & scandinavian kitchen
+  emotionalLine: White is exciting
+  shortDescription: "It\u2019s the trend: the premium matt front in a timeless, modern
+    white, is set apart from other furniture finishes. Thanks to its velvety warm
+    feel, it invites people to touch it and feel comfortable."
+  productImage: {fileID: 0}
+  specs:
+  - Premium honed white
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 488_Premium_honed_white.jpg
+  splatWtMaterial: 362_Como_oak_reproduction.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

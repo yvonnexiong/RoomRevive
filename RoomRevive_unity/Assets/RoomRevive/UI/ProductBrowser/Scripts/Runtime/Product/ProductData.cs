@@ -77,6 +77,10 @@ namespace RoomRevive.ProductBrowser
         [Tooltip("If true, ProductCatalog.GetDefaultProduct() returns this product first.")]
         public bool startsSelectedByDefault;
 
+        [Tooltip("If on, this product is pinned to the FRONT of every catalog it belongs to (above " +
+                 "un-pinned products; multiple pinned products keep their relative order).")]
+        public bool pinnedFirst;
+
         [Header("Optional Asset Event")]
         [Tooltip("Fired when this product is selected. NOTE: asset events cannot reference scene objects. " +
                  "Use ProductVariantRouter on the scene prefab for scene wiring.")]
@@ -86,6 +90,21 @@ namespace RoomRevive.ProductBrowser
         void OnValidate()
         {
             UnityEditor.EditorApplication.delayCall += RefreshReferencingViews;
+            UnityEditor.EditorApplication.delayCall += ResortContainingCatalogs;
+        }
+
+        // Re-orders any catalog holding this product so pinned products lead. Deferred — AssetDatabase
+        // calls aren't allowed directly inside OnValidate.
+        void ResortContainingCatalogs()
+        {
+            UnityEditor.EditorApplication.delayCall -= ResortContainingCatalogs;
+            if (this == null) return;
+            foreach (string guid in AssetDatabase.FindAssets("t:ProductCatalog"))
+            {
+                var cat = AssetDatabase.LoadAssetAtPath<ProductCatalog>(AssetDatabase.GUIDToAssetPath(guid));
+                if (cat != null && cat.SortPinnedFirstIfContains(this))
+                    EditorUtility.SetDirty(cat);
+            }
         }
 
         void RefreshReferencingViews()

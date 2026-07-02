@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_70ffc804e057d9cd NOVALUX 513
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 70ffc804e057d9cd
+  catalogKey: 70ffc804e057d9cd
+  brandName: Nobilia
+  productName: NOVALUX 513
+  subtitle: Designer kitchen
+  emotionalLine: Glossy design
+  shortDescription: Genuine lacquered fronts with a high-gloss finish remain in vogue
+    - now also available in the popular color taupe grey. The warm shade of gray
+    with a slight hint of brown creates a relaxed, modern ambience. The all-round
+    lacquered fronts score points with a slim edge radius of 1.8 mm.
+  productImage: {fileID: 0}
+  specs:
+  - Lacquer, taupe gray high gloss
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 513_Taupe_gray_high_gloss.jpg
+  splatWtMaterial: 344_Black_granite_d_cor.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

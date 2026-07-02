@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_48cbb18a7db597b1 M 2230 SC
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 48cbb18a7db597b1
+  catalogKey: 48cbb18a7db597b1
+  brandName: Miele
+  productName: M 2230 SC
+  subtitle: Silver
+  emotionalLine: Clean 17 L built-in microwave, sensor-simple
+  shortDescription: A quietly capable solo microwave for fast reheating and defrosting,
+    with intuitive controls that stay out of your way.
+  productImage: {fileID: 0}
+  specs:
+  - 17 L
+  - 800 W
+  fromPrice: From EUR 1,138
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 
+  splatWtMaterial: 
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

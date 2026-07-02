@@ -257,7 +257,9 @@ namespace RoomRevive
         {
             if (objects == null) return;
             foreach (var go in objects)
-                if (go != null && go != enableFirst) go.SetActive(false);
+                // Never disable the splat root or THIS manager's own GameObject — if the manager were
+                // listed in a phase (mis-config), disabling itself would kill the whole flow.
+                if (go != null && go != enableFirst && go != gameObject) go.SetActive(false);
         }
 
         // Turn on every object that belongs to the active phase (enableFirst is managed separately).

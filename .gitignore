@@ -26,3 +26,16 @@ Thumbs.db
 HTML_Editor/Splats/MaskSplat_TableLifted.ply
 World Splats/SuperSplatEditor.ssproj
 HTML_Editor/Splats/YinanOriginalHighQuality.ply
+
+# Oversized splat/source assets — kept local, not pushed (GitHub 100MB limit)
+/RoomRevive_unity/Assets/WorldLabsWorlds/YinanOriginalHighQuality/
+/RoomRevive_unity/Assets/WorldLabsWorlds/kitchenIsland_Floor/kitchenIsland_Floor_shs.bytes
+/RoomRevive_unity/Assets/WorldLabsWorlds/Host and Gather Kitchen_new/Host and Gather Kitchen_new_shs.bytes
+/RoomRevive_unity/Assets/WorldLabsWorlds/CabinetStyle1_test/CabinetStyle1_test_shs.bytes
+/HTML_Editor/Splats/YinanKitchenHighRes_NoLamp.blend
+/RoomRevive_unity/Assets/WorldLabsWorlds/CabinetStyle2_test/CabinetStyle2_test_shs.bytes
+/RoomRevive_unity/Assets/WorldLabsWorlds/Modern kitchen with island- test/Modern kitchen with island- test_shs.bytes
+/RoomRevive_unity/Assets/WorldLabsWorlds/kitchen-combined/kitchen-combined_shs.bytes
+/RoomRevive_unity/Assets/WorldLabsWorlds/kitchen-combined_test/kitchen-combined_test_shs.bytes
+/RoomRevive_unity/Assets/WorldLabsWorlds/kitchen-copy/kitchen-copy_shs.bytes
+/RoomRevive_unity/Assets/WorldLabsWorlds/kitchenLastSelected/kitchenLastSelected_shs.bytes

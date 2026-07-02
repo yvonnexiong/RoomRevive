@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_G5540SCU_cleansteel_realsize G 5540 SCU SL Active - 2
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: G5540SCU_cleansteel_realsize
+  catalogKey: G5540SCU_cleansteel_realsize
+  brandName: Miele
+  productName: G 5540 SCU SL Active - 2
+  subtitle: "Built-under dishwasher, 45 cm \xB7 clean steel"
+  emotionalLine: "Built-under 45 cm \u2014 Miele quality at an attractive price"
+  shortDescription: QuickPowerWash and ComfortClose for everyday convenience.
+  productImage: {fileID: 0}
+  specs:
+  - 9 settings
+  - Class E
+  - 8.1 L/cycle
+  - Noise C
+  fromPrice: From EUR 1,299
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 
+  splatWtMaterial: 
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

@@ -86,9 +86,15 @@ namespace RoomRevive.ProductBrowser.EditorTools
             {
                 indexProp.intValue = selected;
                 serializedObject.ApplyModifiedProperties();
-                // Trigger live preview in the editor.
                 if (!Application.isPlaying)
-                    controller.SendMessage("OnValidate", null, SendMessageOptions.DontRequireReceiver);
+                {
+                    // Live UI preview only when active — SendMessage asserts on an inactive GameObject,
+                    // and browser UIs are usually inactive in the scene.
+                    if (controller.gameObject.activeInHierarchy)
+                        controller.SendMessage("OnValidate", null, SendMessageOptions.DontRequireReceiver);
+                    // Always push the swap to the HTML editor (works even when the UI is inactive).
+                    controller.EditorPushInitialProductToSplatEditor();
+                }
             }
         }
 

@@ -47,6 +47,10 @@ namespace RoomRevive.ProductBrowser
         [Tooltip("If true, products wrap around at the first/last position.")]
         public bool wrapAroundProducts = false;
 
+        [Header("3D Model Visibility")]
+        [Tooltip("When enabled, the ProductVariantRouter disables the currently selected 3D model. This is off by default and can be controlled externally by the Gaussian cutout manager.")]
+        public bool disableCurrent3DModel = false;
+
         [Header("Keyboard Debug (Editor / PC)")]
         public bool keyboardDebug = true;
 
@@ -70,6 +74,15 @@ namespace RoomRevive.ProductBrowser
         [Header("Editor")]
         [Tooltip("When off, OnValidate no longer calls ApplyInitialState — the UI stops auto-updating in the editor. Toggle via the inspector button.")]
         public bool liveBinding = true;
+
+        [Tooltip("Editor only: when the Initial Product changes (OnValidate), POST its cabinet/worktop " +
+                 "materials to the live HTML splat editor so the splat preview updates without entering Play. " +
+                 "Kitchens only — no-op for products without splat materials. Play mode handles this via the router.")]
+        public bool pushSelectionToSplatEditor = true;
+
+        [Tooltip("Base URL of the local splat-editor server used by the editor-mode push above. " +
+                 "Use 127.0.0.1 (not localhost) to avoid the IPv4/IPv6 resolution quirk.")]
+        public string splatEditorBaseUrl = "http://127.0.0.1:8766";
 
         [Header("Debug")]
         public bool debugLogs = true;
@@ -105,11 +118,14 @@ namespace RoomRevive.ProductBrowser
                 cta.onClick.RemoveListener(OpenSwap);
                 cta.onClick.AddListener(OpenSwap);
             }
+
+            RefreshCurrent3DModelVisibility();
         }
 
         void OnEnable()
         {
             if (favoriteButton != null) favoriteButton.onClicked.AddListener(OnFavoriteButtonClicked);
+            RefreshCurrent3DModelVisibility();
         }
 
         void OnDisable()
@@ -204,10 +220,13 @@ namespace RoomRevive.ProductBrowser
 #if UNITY_EDITOR
         void OnValidate()
         {
-            if (!liveBinding) return;
             UnityEditor.EditorApplication.delayCall += () =>
             {
                 if (this == null) return;
+
+                RefreshCurrent3DModelVisibility();
+
+                if (!liveBinding) return;
                 ApplyInitialState();
             };
         }
@@ -237,10 +256,45 @@ namespace RoomRevive.ProductBrowser
                     var router = GetComponent<ProductVariantRouter>()
                                  ?? GetComponentInChildren<ProductVariantRouter>(true);
                     router?.ForwardProductChanged(_selectedProduct);
+
+                    PushSelectionToSplatEditorInEditor(_selectedProduct);
                 }
 #endif
             }
         }
+
+#if UNITY_EDITOR
+        // Edit-mode only: when the Initial Product changes via OnValidate, POST its cabinet/worktop
+        // material filenames to the live HTML splat editor so the splat preview updates without entering
+        // Play. Play mode does this through CabinetMaterialSwapRouter → SplatMaterialSwapClient instead.
+        void PushSelectionToSplatEditorInEditor(ProductData product)
+        {
+            if (!pushSelectionToSplatEditor || product == null) return;
+
+            bool hasCab = !string.IsNullOrEmpty(product.splatCabMaterial);
+            bool hasWt  = !string.IsNullOrEmpty(product.splatWtMaterial);
+            if (!hasCab && !hasWt) return; // not a kitchen / nothing to swap
+
+            RoomRevive.SplatEditorBridge.SplatMaterialSwapClient.SwapMaterialsEditor(
+                splatEditorBaseUrl, product.splatCabMaterial, product.splatWtMaterial);
+
+            if (debugLogs)
+                Debug.Log($"[ProductBrowser] (editor) pushed swap → cab='{product.splatCabMaterial}', " +
+                          $"wt='{product.splatWtMaterial}'", this);
+        }
+
+        // Resolves the current Initial Product and posts its cabinet/worktop materials to the live HTML
+        // splat editor. Called by the custom inspector when the Initial Product dropdown changes — safe
+        // even when the browser GameObject is INACTIVE (SendMessage("OnValidate") asserts on inactive
+        // objects) and does no UI work, so it can't throw on an unbuilt view.
+        public void EditorPushInitialProductToSplatEditor()
+        {
+            ProductCategoryData cat = initialCategory ?? fridgesCategory ?? cabinetsCategory ?? lightsCategory;
+            if (cat?.catalog == null || cat.catalog.Count == 0) return;
+            int index = Mathf.Clamp(initialProductIndex, 0, cat.catalog.Count - 1);
+            PushSelectionToSplatEditorInEditor(cat.catalog.GetProduct(index));
+        }
+#endif
 
         void Update()
         {
@@ -248,6 +302,43 @@ namespace RoomRevive.ProductBrowser
         }
 
         // ── Public API ───────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Sets the external visibility override for this browser's selected 3D model.
+        /// Product selection is preserved while the model is hidden.
+        /// </summary>
+        public void SetCurrent3DModelDisabled(bool disabled)
+        {
+            if (disableCurrent3DModel == disabled)
+            {
+                return;
+            }
+
+            disableCurrent3DModel = disabled;
+            RefreshCurrent3DModelVisibility();
+        }
+
+        /// <summary>
+        /// Reapplies the current visibility override to this browser's model routers.
+        /// </summary>
+        public void RefreshCurrent3DModelVisibility()
+        {
+            ProductVariantRouter[] routers =
+                GetComponentsInChildren<ProductVariantRouter>(true);
+
+            for (int i = 0; i < routers.Length; i++)
+            {
+                ProductVariantRouter router = routers[i];
+
+                if (router.controller != null && router.controller != this)
+                {
+                    continue;
+                }
+
+                router.controller = this;
+                router.RefreshCurrentModelVisibility();
+            }
+        }
 
         /// <summary>
         /// Opens the Discover panel for the given category, showing the first (or default) product.

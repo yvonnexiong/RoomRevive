@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_cm_6360_milkperfection_lotushvid_cm CM 6360 MilkPerfection - 1
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: cm_6360_milkperfection_lotushvid_cm
+  catalogKey: cm_6360_milkperfection_lotushvid_cm
+  brandName: Miele
+  productName: CM 6360 MilkPerfection - 1
+  subtitle: "Freestanding espresso machine \xB7 lotus white"
+  emotionalLine: WiFiConn@ct with a wide range of specialities
+  shortDescription: WiFiConn@ct and a large range of coffee specialities, with a
+    glass milk flask.
+  productImage: {fileID: 0}
+  specs:
+  - Lotus white
+  - 25 x 36 x 43 cm
+  fromPrice: From EUR 1,983
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 
+  splatWtMaterial: 
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

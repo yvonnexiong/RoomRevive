@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_977714109cb2fb00 KM 8482 FR
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 977714109cb2fb00
+  catalogKey: 977714109cb2fb00
+  brandName: Miele
+  productName: KM 8482 FR
+  subtitle: Induktionskogeplade GOLD
+  emotionalLine: 806 mm | Individual cooking zones and PowerFlex XL cooking area
+  shortDescription: 
+  productImage: {fileID: 0}
+  specs:
+  - 4 zones
+  - Induction
+  - 7.4 kW
+  fromPrice: From EUR 1,782
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 
+  splatWtMaterial: 
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

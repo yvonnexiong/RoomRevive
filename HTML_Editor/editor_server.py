@@ -14,11 +14,44 @@
 #
 # Run:  python editor_server.py 8766
 
-import http.server, socketserver, json, os, sys, threading
+import http.server, socketserver, json, os, sys, threading, shutil, re
+from urllib.parse import urlparse, parse_qs
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8766
 ROOT = os.path.dirname(os.path.abspath(__file__))
 os.chdir(ROOT)  # serve this folder regardless of where we're launched from
+
+# Live splat (what LiveSplatLoader watches / the browser auto-saves) and the "previous selection"
+# backup. Paths are relative to this file so they work on any machine / clone location.
+_LIVE_SPZ   = os.path.normpath(os.path.join(ROOT, "..", "RoomRevive_unity", "LiveSplat", "kitchen-copy.spz"))
+_BACKUP_SPZ = os.path.normpath(os.path.join(ROOT, "..", "RoomRevive_unity", "LiveSplat", "kitchenLastSelected.spz"))
+# Persisted editor session (mask + both channels' settings + camera) — written by "Save session",
+# read back on load so the exact setup auto-restores. Plain JSON next to this server.
+_SESSION_FILE = os.path.join(ROOT, "editor_session.json")
+# Where the batch pre-render saves each combo's baked .spz (so runtime loads it without the server).
+_PRERENDER_DIR = os.path.join(ROOT, "Prerendered Cabinets")
+
+def save_prerender(key, data):
+    """Write a baked combo .spz to Prerendered Cabinets/<key>.spz. Returns the filename."""
+    safe = re.sub(r'[^a-zA-Z0-9._-]+', '_', key or '').strip('_') or 'combo'
+    os.makedirs(_PRERENDER_DIR, exist_ok=True)
+    path = os.path.join(_PRERENDER_DIR, safe + '.spz')
+    with open(path, 'wb') as f:
+        f.write(data)
+    print(f"[prerender] saved {safe}.spz ({len(data)} bytes)")
+    return safe + '.spz'
+
+def backup_live_spz():
+    """Copy the current live splat to the 'last selected' backup BEFORE a new swap overwrites it,
+    so kitchenLastSelected.spz always holds the state from just before the latest change."""
+    try:
+        if os.path.exists(_LIVE_SPZ):
+            shutil.copy2(_LIVE_SPZ, _BACKUP_SPZ)
+            print(f"[backup] {os.path.basename(_LIVE_SPZ)} -> {os.path.basename(_BACKUP_SPZ)}")
+        else:
+            print(f"[backup] live splat not found, skipped: {_LIVE_SPZ}")
+    except Exception as e:
+        print(f"[backup] failed: {e}")
 
 _lock = threading.Lock()
 _command = {"id": 0, "cab": None, "wt": None}  # latest swap request (id increments on each POST)
@@ -61,6 +94,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self._json({"cab": list_materials("CabinetMaterials"),
                         "wt": list_materials("WorktopMaterials")})
             return
+        if path == "/api/session":
+            try:
+                if os.path.exists(_SESSION_FILE):
+                    with open(_SESSION_FILE, "r", encoding="utf-8") as f:
+                        self._json({"ok": True, "session": json.load(f)})
+                else:
+                    self._json({"ok": True, "session": None})
+            except Exception as e:
+                self._json({"ok": False, "error": str(e)}, 500)
+            return
         return super().do_GET()  # normal static file serving
 
     def do_POST(self):
@@ -75,12 +118,39 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
             cab = data.get("cab")
             wt = data.get("wt")
+            # Snapshot the current live splat as "last selected" before this swap is applied.
+            backup_live_spz()
             with _lock:
                 _command["id"] += 1
                 _command["cab"] = cab
                 _command["wt"] = wt
                 cid = _command["id"]
             self._json({"ok": True, "id": cid, "cab": cab, "wt": wt})
+            return
+        if path == "/api/save_prerender":
+            try:
+                key = (parse_qs(urlparse(self.path).query).get("key") or [""])[0]
+                n = int(self.headers.get("Content-Length", 0) or 0)
+                raw = self.rfile.read(n) if n else b""
+                if not raw:
+                    self._json({"ok": False, "error": "empty body"}, 400)
+                    return
+                name = save_prerender(key, raw)
+                self._json({"ok": True, "file": name, "bytes": len(raw)})
+            except Exception as e:
+                self._json({"ok": False, "error": str(e)}, 500)
+            return
+        if path == "/api/session":
+            try:
+                n = int(self.headers.get("Content-Length", 0) or 0)
+                raw = self.rfile.read(n) if n else b"{}"
+                data = json.loads(raw.decode("utf-8") or "{}")   # validate it's JSON
+                with open(_SESSION_FILE, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=1)
+                print(f"[session] saved -> {os.path.basename(_SESSION_FILE)}")
+                self._json({"ok": True, "path": os.path.basename(_SESSION_FILE)})
+            except Exception as e:
+                self._json({"ok": False, "error": str(e)}, 400)
             return
         self._json({"ok": False, "error": "unknown endpoint"}, 404)
 

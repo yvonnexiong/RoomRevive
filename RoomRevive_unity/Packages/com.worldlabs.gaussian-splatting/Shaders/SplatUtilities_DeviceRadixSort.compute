@@ -95,12 +95,14 @@ uint _SplatCutoutsCount;
 
 #define SPLAT_CUTOUT_TYPE_ELLIPSOID 0
 #define SPLAT_CUTOUT_TYPE_BOX 1
+#define SPLAT_CUTOUT_TYPE_ARC 2
 
 struct GaussianCutoutShaderData // match GaussianCutout.ShaderData in C#
 {
     float4x4 mat;
     uint typeAndFlags;
     int cutIndices[8];
+    float arcParam; // Arc type: cos(halfAngle)
 };
 StructuredBuffer<GaussianCutoutShaderData> _SplatCutouts;
 
@@ -179,7 +181,12 @@ bool IncludedInLayers(int cutRanges[], const int idx)
 
 bool IsSplatCutAtLayer(float3 pos, const int idx)
 {
-    bool finalCut = false;
+    // Combine all cutouts instead of returning on the first hit, so a normal "keep-inside" cutout
+    // and invert "hide-inside" cutouts nested inside it stack correctly: invert always wins, and with
+    // any normal cutout present, splats outside every normal region are hidden.
+    bool anyNormal = false;
+    bool insideAnyNormal = false;
+    bool insideAnyInvert = false;
     for (uint i = 0; i < _SplatCutoutsCount; ++i)
     {
         GaussianCutoutShaderData cutData = _SplatCutouts[i];
@@ -196,20 +203,30 @@ bool IsSplatCutAtLayer(float3 pos, const int idx)
         // cutIndices[0] == -1 means no layer filter set — apply cutout to all splats
         if (cutData.cutIndices[0] >= 0 && !included) continue;
         
-        bool invert = (cutData.typeAndFlags & 0xFF00) != 0;
+        bool invert = (cutData.typeAndFlags & 0x100u) != 0;
 
         float3 cutoutPos = mul(cutData.mat, float4(pos, 1)).xyz;
-        if (type == SPLAT_CUTOUT_TYPE_ELLIPSOID)
+        bool inside;
+        if (type == SPLAT_CUTOUT_TYPE_ARC)
         {
-            if (dot(cutoutPos, cutoutPos) <= 1) return invert;
+            float h = length(cutoutPos.xz);                              // horizontal dist from the wedge apex
+            bool withinArc = cutData.arcParam <= 1.0f &&
+                             ((h < 1e-5) || (cutoutPos.z >= cutData.arcParam * h));
+            inside = !withinArc; // arc cutout volume is outside the visible wedge
         }
-        if (type == SPLAT_CUTOUT_TYPE_BOX)
+        else if (type == SPLAT_CUTOUT_TYPE_ELLIPSOID)
+            inside = dot(cutoutPos, cutoutPos) <= 1;
+        else
+            inside = all(abs(cutoutPos) <= 1);
+        if (invert)
+            insideAnyInvert = insideAnyInvert || inside;   // invert cutouts hide what's inside them
+        else
         {
-            if (all(abs(cutoutPos) <= 1)) return invert;
+            anyNormal = true;
+            insideAnyNormal = insideAnyNormal || inside;   // normal cutouts keep what's inside them
         }
-        finalCut |= !invert;
     }
-    return finalCut;
+    return insideAnyInvert || (anyNormal && !insideAnyNormal);
 }
 /*
 bool IsSplatCut(float3 pos) { return false;IsSplatCutAtLayer(pos, -1);}
@@ -219,27 +236,39 @@ bool IsSplatCut(float3 pos) { return false;IsSplatCutAtLayer(pos, -1);}
 
 bool IsSplatCut(float3 pos)
 {
-    bool finalCut = false;
+    bool anyNormal = false;
+    bool insideAnyNormal = false;
+    bool insideAnyInvert = false;
     for (uint i = 0; i < _SplatCutoutsCount; ++i)
     {
         GaussianCutoutShaderData cutData = _SplatCutouts[i];
         uint type = cutData.typeAndFlags & 0xFF;
         if (type == 0xFF) // invalid/null cutout, ignore
             continue;
-        bool invert = (cutData.typeAndFlags & 0xFF00) != 0;
+        bool invert = (cutData.typeAndFlags & 0x100u) != 0;
 
         float3 cutoutPos = mul(cutData.mat, float4(pos, 1)).xyz;
-        if (type == SPLAT_CUTOUT_TYPE_ELLIPSOID)
+        bool inside;
+        if (type == SPLAT_CUTOUT_TYPE_ARC)
         {
-            if (dot(cutoutPos, cutoutPos) <= 1) return invert;
+            float h = length(cutoutPos.xz);                              // horizontal dist from the wedge apex
+            bool withinArc = cutData.arcParam <= 1.0f &&
+                             ((h < 1e-5) || (cutoutPos.z >= cutData.arcParam * h));
+            inside = !withinArc; // arc cutout volume is outside the visible wedge
         }
-        if (type == SPLAT_CUTOUT_TYPE_BOX)
+        else if (type == SPLAT_CUTOUT_TYPE_ELLIPSOID)
+            inside = dot(cutoutPos, cutoutPos) <= 1;
+        else
+            inside = all(abs(cutoutPos) <= 1);
+        if (invert)
+            insideAnyInvert = insideAnyInvert || inside;
+        else
         {
-            if (all(abs(cutoutPos) <= 1)) return invert;
+            anyNormal = true;
+            insideAnyNormal = insideAnyNormal || inside;
         }
-        finalCut |= !invert;
     }
-    return finalCut;
+    return insideAnyInvert || (anyNormal && !insideAnyNormal);
 }
 
 [numthreads(GROUP_SIZE,1,1)]

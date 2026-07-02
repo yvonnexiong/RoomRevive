@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Splat Quality Optimizer</title>
+<style>
+:root{
+  --bg:#0e0f13; --panel:#16181f; --panel2:#1d2029; --line:#2a2e3a;
+  --text:#e7e9ef; --muted:#9aa0ad; --accent:#5ad1a0; --accent2:#6aa6ff;
+  --warn:#ffb454; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
+#app{display:flex;height:100%}
+#side{width:340px;min-width:340px;height:100%;overflow-y:auto;background:var(--panel);
+  border-right:1px solid var(--line);padding:14px 14px 40px}
+#stage{flex:1;position:relative;background:radial-gradient(120% 120% at 50% 0%,#15171d 0%,#0b0c10 70%)}
+canvas{width:100%;height:100%;display:block;cursor:grab}
+canvas:active{cursor:grabbing}
+h1{font-size:15px;margin:2px 0 2px;letter-spacing:.2px}
+.sub{color:var(--muted);font-size:11px;margin:0 0 12px;line-height:1.45}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin-bottom:11px}
+.card h2{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin:0 0 9px;display:flex;align-items:center;gap:7px}
+.card h2 .dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:7px 0}
+.row label{font-size:12px;color:var(--text)}
+.row .hint{font-size:10.5px;color:var(--muted)}
+input[type=number]{width:74px;background:#0d0e12;border:1px solid var(--line);color:var(--text);
+  border-radius:6px;padding:5px 7px;font-family:var(--mono);font-size:12px}
+input[type=range]{width:130px;accent-color:var(--accent)}
+.check{display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;user-select:none}
+.check input{accent-color:var(--accent);width:15px;height:15px}
+.opbody{margin-top:6px;padding-left:23px;opacity:.45;pointer-events:none;transition:opacity .12s}
+.opbody.on{opacity:1;pointer-events:auto}
+.note{font-size:10.5px;color:var(--muted);line-height:1.45;margin:6px 0 0}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+  background:var(--panel2);color:var(--text);padding:9px 12px;font-size:12.5px;font-weight:600}
+button:hover{border-color:#3a4150}
+button.primary{background:var(--accent);color:#06281c;border-color:transparent}
+button.ghost{background:transparent}
+button:disabled{opacity:.4;cursor:not-allowed}
+.btnrow{display:flex;gap:8px;margin-top:6px}
+.btnrow button{flex:1}
+/* top stat bar */
+#statbar{position:absolute;top:12px;left:50%;transform:translateX(-50%);display:flex;gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;
+  font-family:var(--mono);font-size:11.5px;backdrop-filter:blur(6px)}
+#statbar .s{background:rgba(20,22,28,.85);padding:7px 14px;text-align:center;min-width:92px}
+#statbar .s .k{color:var(--muted);font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:2px}
+#statbar .s .v{font-size:13px}
+#statbar .s.removed .v{color:var(--warn)}
+#statbar .s.kept .v{color:var(--accent)}
+/* view toggle pill */
+#viewtoggle{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;
+  background:rgba(20,22,28,.85);border:1px solid var(--line);border-radius:999px;padding:3px;backdrop-filter:blur(6px)}
+#viewtoggle button{border:none;background:transparent;border-radius:999px;padding:6px 16px;font-size:12px;color:var(--muted)}
+#viewtoggle button.act{background:var(--accent);color:#06281c}
+/* drop hint */
+#drop{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;
+  gap:14px;color:var(--muted);text-align:center;pointer-events:none}
+#drop .big{font-size:17px;color:var(--text)}
+#drop.hide{display:none}
+#drop .pick{pointer-events:auto;font-size:13px}
+.dragover #stage{outline:2px dashed var(--accent);outline-offset:-10px}
+#busy{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  background-size:200% 100%;animation:slide 1s linear infinite;display:none}
+@keyframes slide{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.kbd{font-family:var(--mono);background:#0d0e12;border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:10.5px}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <h1>Splat Quality Optimizer</h1>
+    <p class="sub">Upload a <b>.spz</b> or <b>.ply</b>, dial in the cleanup, and export a polished <b>.spz</b> that
+    renders sharper on Quest 3. Spherical-harmonic colour is preserved.</p>
+
+    <div class="card">
+      <h2><span class="dot"></span>Cleanup &nbsp;·&nbsp; remove bad splats</h2>
+
+      <label class="check"><input type="checkbox" id="floaterOn" checked> Remove floaters</label>
+      <div class="opbody on" id="floaterBody">
+        <div class="row"><label>Voxel cell (m)</label><input type="number" id="flCell" step="0.01" min="0.01" value="0.06"></div>
+        <div class="row"><label>Min neighbours</label><input type="number" id="flMin" step="1" min="1" value="15"></div>
+        <div class="row"><label>Solid alpha</label><input type="number" id="flSolid" step="0.05" min="0" max="1" value="0.20"></div>
+        <p class="note">Deletes isolated specks whose 3×3×3 neighbourhood holds fewer than <b>min neighbours</b> opaque splats. The #1 cause of fuzzy edges. Raise min neighbours to cut more.</p>
+      </div>
+
+      <label class="check" style="margin-top:10px"><input type="checkbox" id="pruneOn" checked> Prune faint splats</label>
+      <div class="opbody on" id="pruneBody">
+        <div class="row"><label>Min opacity</label><input type="number" id="minAlpha" step="0.01" min="0" max="1" value="0.06"></div>
+        <p class="note">Removes near-transparent splats that only add blend noise and sorting cost.</p>
+      </div>
+
+      <label class="check" style="margin-top:10px"><input type="checkbox" id="bigOn" checked> Remove oversized splats</label>
+      <div class="opbody on" id="bigBody">
+        <div class="row"><label>Max size (m)</label><input type="number" id="bigM" step="0.01" min="0.02" value="0.35"></div>
+        <p class="note">Deletes giant stretched "spike" gaussians that smear across surfaces and edges.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot" style="background:var(--accent2)"></span>Smoothing &nbsp;·&nbsp; reshape survivors</h2>
+
+      <label class="check"><input type="checkbox" id="clampOn" checked> Clamp splat size</label>
+      <div class="opbody on" id="clampBody">
+        <div class="row"><label>Max size (m)</label><input type="number" id="clampM" step="0.01" min="0.01" value="0.12"></div>
+        <p class="note">Caps how large any single splat can be, so big blobby gaussians sit flush against the surface instead of bulging over edges.</p>
+      </div>
+
+      <label class="check" style="margin-top:10px"><input type="checkbox" id="anisoOn" checked> Limit stretch (anti-needle)</label>
+      <div class="opbody on" id="anisoBody">
+        <div class="row"><label>Max stretch ratio</label><input type="number" id="anisoR" step="0.5" min="1.5" value="4"></div>
+        <p class="note">Fattens thin "needle" splats so their longest axis is at most this many times their shortest. Needles are a major edge-shimmer source on mobile.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot" style="background:var(--warn)"></span>Density &nbsp;·&nbsp; fewer = better sort</h2>
+      <label class="check"><input type="checkbox" id="decimateOn"> Voxel decimate <span class="hint">&nbsp;(aggressive)</span></label>
+      <div class="opbody" id="decimateBody">
+        <div class="row"><label>Cell (m)</label><input type="number" id="decM" step="0.005" min="0.005" value="0.02"></div>
+        <p class="note">Keeps only the strongest splat per cell. Fewer splats let Quest depth-sort every frame more accurately → less popping. Larger cell = lighter &amp; smoother, but softer detail.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Preview look <span class="hint" style="margin-left:auto;font-weight:400">(does not affect export)</span></h2>
+      <div class="row"><label>Splat size</label><input type="range" id="splatScale" min="40" max="160" value="100"></div>
+      <div class="row"><label>Exposure</label><input type="range" id="exposure" min="50" max="180" value="100"></div>
+    </div>
+
+    <label class="check" style="margin:2px 0 10px"><input type="checkbox" id="autoApply" checked> Auto-apply on change</label>
+    <div class="btnrow"><button id="applyBtn" class="primary">Apply</button><button id="resetBtn" class="ghost">Reset values</button></div>
+    <div class="btnrow"><button id="dlBtn" disabled>Download .spz</button><button id="saveBtn" disabled title="Write straight to the file Unity's LiveSplatLoader watches">Save to Unity file…</button></div>
+    <p class="note" id="saveStatus">Tip: point “Save to Unity file…” at your <span class="kbd">LiveSplat/kitchen-copy.spz</span> for live preview in the headset.</p>
+    <input type="file" id="fileinput" accept=".spz,.ply" style="display:none">
+  </aside>
+
+  <section id="stage">
+    <div id="busy"></div>
+    <canvas id="gl"></canvas>
+    <div id="statbar" style="display:none">
+      <div class="s"><span class="k">Original</span><span class="v" id="stOrig">–</span></div>
+      <div class="s removed"><span class="k">Removed</span><span class="v" id="stRem">–</span></div>
+      <div class="s kept"><span class="k">Optimized</span><span class="v" id="stOpt">–</span></div>
+      <div class="s"><span class="k">~.spz size</span><span class="v" id="stSize">–</span></div>
+    </div>
+    <div id="viewtoggle" style="display:none">
+      <button id="vOpt" class="act">Optimized</button>
+      <button id="vOrig">Original</button>
+    </div>
+    <div id="drop">
+      <div class="big">Drop a .spz or .ply here</div>
+      <div>or</div>
+      <button class="pick primary" id="pickBtn">Choose file…</button>
+      <div style="font-size:11px"><span class="kbd">drag</span> orbit · <span class="kbd">shift-drag</span> pan · <span class="kbd">scroll</span> zoom · <span class="kbd">WASD</span> walk</div>
+    </div>
+  </section>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
+const SH_C0=0.28209479177387814, SPZ_MAGIC=0x5053474e, SH_DIMS={0:0,1:9,2:24,3:45};
+
+/* ───────── codecs (ported from the RoomRevive splat editors, SH-preserving) ───────── */
+async function gunzip(buf){return new Uint8Array(await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer());}
+async function gzip(bytes){return await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'))).blob();}
+
+function parseSPZ(bytes){
+  const dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(dv.getUint32(0,true)!==SPZ_MAGIC)throw new Error('Not an SPZ file (bad magic)');
+  const version=dv.getUint32(4,true); if(version!==2&&version!==1)throw new Error('Unsupported SPZ version '+version);
+  const n=dv.getUint32(8,true),shDegree=dv.getUint8(12),fracBits=dv.getUint8(13),flags=dv.getUint8(14);
+  let off=16; const need=n*(9+1+3+3+3+SH_DIMS[shDegree]);
+  if(bytes.length<16+need)throw new Error('Truncated SPZ payload');
+  const positions=new Float32Array(n*3),div=1/(1<<fracBits);
+  for(let i=0;i<n*3;i++){let v=bytes[off]|(bytes[off+1]<<8)|(bytes[off+2]<<16);if(v&0x800000)v-=0x1000000;positions[i]=v*div;off+=3;}
+  const alphasU8=bytes.slice(off,off+n);off+=n;
+  const cb=bytes.slice(off,off+n*3);off+=n*3;const colors=new Float32Array(n*3);
+  for(let i=0;i<n*3;i++)colors[i]=clamp(0.5+((cb[i]/255-0.5)/0.15)*SH_C0,0,1);
+  const scalesLog=new Float32Array(n*3);for(let i=0;i<n*3;i++)scalesLog[i]=bytes[off+i]/16-10;off+=n*3;
+  const quats=new Float32Array(n*4);
+  for(let i=0;i<n;i++){const x=bytes[off]/127.5-1,y=bytes[off+1]/127.5-1,z=bytes[off+2]/127.5-1;off+=3;const w=Math.sqrt(Math.max(0,1-x*x-y*y-z*z));quats[i*4]=w;quats[i*4+1]=x;quats[i*4+2]=y;quats[i*4+3]=z;}
+  const shBytes=shDegree>0?bytes.slice(off,off+n*SH_DIMS[shDegree]):null;
+  return {n,shDegree,fracBits,flags,positions,alphasU8,colors,scalesLog,quats,shBytes};
+}
+function encodeSPZ(s){
+  const n=s.n, shDims=s.shBytes?SH_DIMS[s.shDegree]:0, fracBits=12;
+  const out=new Uint8Array(16+n*(9+1+3+3+3+shDims)),dv=new DataView(out.buffer);
+  dv.setUint32(0,SPZ_MAGIC,true);dv.setUint32(4,2,true);dv.setUint32(8,n,true);
+  out[12]=s.shBytes?s.shDegree:0;out[13]=fracBits;out[14]=s.flags||0;out[15]=0;
+  let off=16;const mul=1<<fracBits,lim=0x7fffff;
+  for(let i=0;i<n*3;i++){let v=Math.round(s.positions[i]*mul);v=clamp(v,-lim-1,lim)&0xffffff;out[off]=v&0xff;out[off+1]=(v>>8)&0xff;out[off+2]=(v>>16)&0xff;off+=3;}
+  out.set(s.alphasU8,off);off+=n;
+  for(let i=0;i<n*3;i++)out[off+i]=clamp(Math.round((((s.colors[i]-0.5)/SH_C0)*0.15+0.5)*255),0,255);off+=n*3;
+  for(let i=0;i<n*3;i++)out[off+i]=clamp(Math.round((s.scalesLog[i]+10)*16),0,255);off+=n*3;
+  for(let i=0;i<n;i++){let w=s.quats[i*4],x=s.quats[i*4+1],y=s.quats[i*4+2],z=s.quats[i*4+3];const l=Math.hypot(w,x,y,z)||1;w/=l;x/=l;y/=l;z/=l;if(w<0){x=-x;y=-y;z=-z;}
+    out[off++]=clamp(Math.round(x*127.5+127.5),0,255);out[off++]=clamp(Math.round(y*127.5+127.5),0,255);out[off++]=clamp(Math.round(z*127.5+127.5),0,255);}
+  if(s.shBytes){out.set(s.shBytes,off);off+=s.shBytes.length;}
+  return out;
+}
+function parsePLY(bytes){
+  let hEnd=0;
+  for(let i=0;i<bytes.length-11;i++){if(bytes[i]===101&&bytes[i+1]===110&&bytes[i+2]===100&&bytes[i+3]===95&&bytes[i+4]===104&&bytes[i+5]===101&&bytes[i+6]===97&&bytes[i+7]===100&&bytes[i+8]===101&&bytes[i+9]===114){hEnd=i+10;while(hEnd<bytes.length&&(bytes[hEnd]===10||bytes[hEnd]===13))hEnd++;break;}}
+  if(!hEnd)throw new Error('PLY end_header not found');
+  const lines=new TextDecoder().decode(bytes.slice(0,hEnd)).split('\n').map(l=>l.trim()).filter(l=>l.length);
+  if(!lines[0].startsWith('ply'))throw new Error('Not a PLY file');
+  if(!lines.find(l=>l.startsWith('format')&&l.includes('binary_little_endian')))throw new Error('Only binary_little_endian PLY supported');
+  const vl=lines.find(l=>l.startsWith('element vertex'));if(!vl)throw new Error('No vertex element');
+  const n=parseInt(vl.split(/\s+/)[2]);
+  const TS={char:1,uchar:1,short:2,ushort:2,int:4,uint:4,float:4,double:8,int8:1,uint8:1,int16:2,uint16:2,int32:4,uint32:4,float32:4,float64:8};
+  const props=[];let off=0,inV=false;
+  for(const l of lines){if(l.startsWith('element')){inV=l.startsWith('element vertex');continue;}if(!inV||!l.startsWith('property')||l.startsWith('property list'))continue;const parts=l.split(/\s+/);props.push({nm:parts[2],off,sz:TS[parts[1]]||4});off+=TS[parts[1]]||4;}
+  const stride=off,idx={};props.forEach(p=>idx[p.nm]=p);
+  const positions=new Float32Array(n*3),alphasU8=new Uint8Array(n),colors=new Float32Array(n*3),scalesLog=new Float32Array(n*3),quats=new Float32Array(n*4);
+  const dv=new DataView(bytes.buffer,bytes.byteOffset+hEnd);
+  const gf=(nm,row)=>{const p=idx[nm];return p?dv.getFloat32(row*stride+p.off,true):0;};
+  for(let i=0;i<n;i++){positions[i*3]=gf('x',i);positions[i*3+1]=gf('y',i);positions[i*3+2]=gf('z',i);
+    alphasU8[i]=Math.round(255/(1+Math.exp(-gf('opacity',i))));
+    colors[i*3]=clamp(0.5+SH_C0*gf('f_dc_0',i),0,1);colors[i*3+1]=clamp(0.5+SH_C0*gf('f_dc_1',i),0,1);colors[i*3+2]=clamp(0.5+SH_C0*gf('f_dc_2',i),0,1);
+    scalesLog[i*3]=gf('scale_0',i);scalesLog[i*3+1]=gf('scale_1',i);scalesLog[i*3+2]=gf('scale_2',i);
+    const qw=gf('rot_0',i),qx=gf('rot_1',i),qy=gf('rot_2',i),qz=gf('rot_3',i),ql=Math.sqrt(qw*qw+qx*qx+qy*qy+qz*qz)||1;
+    quats[i*4]=qw/ql;quats[i*4+1]=qx/ql;quats[i*4+2]=qy/ql;quats[i*4+3]=qz/ql;}
+  return {n,shDegree:0,fracBits:12,flags:0,positions,alphasU8,colors,scalesLog,quats,shBytes:null};
+}
+
+/* ───────── the optimizer ───────── */
+function readOpts(){return {
+  floaterOn:$('floaterOn').checked, flCell:+$('flCell').value, flMin:+$('flMin').value, flSolid:+$('flSolid').value,
+  pruneOn:$('pruneOn').checked, minAlpha:+$('minAlpha').value,
+  bigOn:$('bigOn').checked, bigM:+$('bigM').value,
+  clampOn:$('clampOn').checked, clampM:+$('clampM').value,
+  anisoOn:$('anisoOn').checked, anisoR:+$('anisoR').value,
+  decimateOn:$('decimateOn').checked, decM:+$('decM').value,
+};}
+function floaterFlags(src,o,remove){
+  const n=src.n,p=src.positions,op=src.alphasU8;
+  const CELL=Math.max(0.005,o.flCell),MIN=Math.max(1,o.flMin),SOLID=Math.round(clamp(o.flSolid,0,1)*255);
+  const OFF=1<<19,SP=1<<20,vx=new Int32Array(n),vy=new Int32Array(n),vz=new Int32Array(n),counts=new Map();
+  for(let i=0;i<n;i++){const a=Math.floor(p[i*3]/CELL),b=Math.floor(p[i*3+1]/CELL),c=Math.floor(p[i*3+2]/CELL);vx[i]=a;vy[i]=b;vz[i]=c;
+    if(op[i]>=SOLID){const k=((a+OFF)*SP+(b+OFF))*SP+(c+OFF);counts.set(k,(counts.get(k)||0)+1);}}
+  for(let i=0;i<n;i++){if(remove[i])continue;const a=vx[i],b=vy[i],c=vz[i];let dens=0;
+    for(let dx=-1;dx<=1;dx++){const A=(a+dx+OFF)*SP;for(let dy=-1;dy<=1;dy++){const AB=(A+(b+dy+OFF))*SP+(c+OFF);
+      dens+=(counts.get(AB-1)||0)+(counts.get(AB)||0)+(counts.get(AB+1)||0);}}
+    if(dens<MIN)remove[i]=1;}
+}
+function voxelDecimate(src,idx,cell){
+  const p=src.positions,best=new Map(),OFF=1<<19,SP=1<<20;
+  const imp=i=>src.alphasU8[i]*(Math.exp(src.scalesLog[i*3])+Math.exp(src.scalesLog[i*3+1])+Math.exp(src.scalesLog[i*3+2]));
+  for(const i of idx){const a=Math.floor(p[i*3]/cell),b=Math.floor(p[i*3+1]/cell),c=Math.floor(p[i*3+2]/cell);
+    const k=((a+OFF)*SP+(b+OFF))*SP+(c+OFF);const e=best.get(k);if(e===undefined||imp(i)>imp(e))best.set(k,i);}
+  return [...best.values()];
+}
+function optimize(src,o){
+  const n=src.n,remove=new Uint8Array(n);
+  if(o.pruneOn){const t=Math.round(o.minAlpha*255);for(let i=0;i<n;i++)if(src.alphasU8[i]<t)remove[i]=1;}
+  if(o.bigOn){const limv=Math.log(Math.max(0.001,o.bigM));for(let i=0;i<n;i++){if(remove[i])continue;
+    const s=Math.max(src.scalesLog[i*3],src.scalesLog[i*3+1],src.scalesLog[i*3+2]);if(s>limv)remove[i]=1;}}
+  if(o.floaterOn)floaterFlags(src,o,remove);
+  let idx=[];for(let i=0;i<n;i++)if(!remove[i])idx.push(i);
+  if(o.decimateOn&&idx.length)idx=voxelDecimate(src,idx,Math.max(0.005,o.decM));
+  const m=idx.length,sh=src.shBytes,st=sh?SH_DIMS[src.shDegree]:0;
+  const out={n:m,shDegree:src.shDegree,fracBits:src.fracBits,flags:src.flags,
+    positions:new Float32Array(m*3),alphasU8:new Uint8Array(m),colors:new Float32Array(m*3),
+    scalesLog:new Float32Array(m*3),quats:new Float32Array(m*4),shBytes:sh?new Uint8Array(m*st):null};
+  const clampLim=o.clampOn?Math.log(Math.max(0.001,o.clampM)):Infinity;
+  const anisoLog=o.anisoOn?Math.log(Math.max(1.001,o.anisoR)):Infinity;
+  for(let j=0;j<m;j++){const i=idx[j];
+    out.positions[j*3]=src.positions[i*3];out.positions[j*3+1]=src.positions[i*3+1];out.positions[j*3+2]=src.positions[i*3+2];
+    out.alphasU8[j]=src.alphasU8[i];
+    out.colors[j*3]=src.colors[i*3];out.colors[j*3+1]=src.colors[i*3+1];out.colors[j*3+2]=src.colors[i*3+2];
+    out.quats[j*4]=src.quats[i*4];out.quats[j*4+1]=src.quats[i*4+1];out.quats[j*4+2]=src.quats[i*4+2];out.quats[j*4+3]=src.quats[i*4+3];
+    let s0=src.scalesLog[i*3],s1=src.scalesLog[i*3+1],s2=src.scalesLog[i*3+2];
+    if(o.clampOn){if(s0>clampLim)s0=clampLim;if(s1>clampLim)s1=clampLim;if(s2>clampLim)s2=clampLim;}
+    if(o.anisoOn){const mx=Math.max(s0,s1,s2),fl=mx-anisoLog;if(s0<fl)s0=fl;if(s1<fl)s1=fl;if(s2<fl)s2=fl;}
+    out.scalesLog[j*3]=s0;out.scalesLog[j*3+1]=s1;out.scalesLog[j*3+2]=s2;
+    if(sh)out.shBytes.set(sh.subarray(i*st,i*st+st),j*st);
+  }
+  return out;
+}
+
+/* ───────── WebGL2 splat renderer (ported from splat_360_editor) ───────── */
+const canvas=$('gl');
+const gl=canvas.getContext('webgl2',{antialias:false,alpha:true,premultipliedAlpha:true});
+if(!gl){document.body.innerHTML='WebGL2 required';throw new Error('no webgl2');}
+const _fb=new Float32Array(1),_ib=new Int32Array(_fb.buffer);
+function toHalf(v){_fb[0]=v;const x=_ib[0];let b=(x>>16)&0x8000,m=(x>>12)&0x07ff;const e=(x>>23)&0xff;
+  if(e<103)return b;if(e>142){b|=0x7c00;b|=((e===255)?0:1)&&(x&0x007fffff);return b;}if(e<113){m|=0x0800;b|=(m>>(114-e))+((m>>(113-e))&1);return b;}b|=((e-112)<<10)|(m>>1);b+=m&1;return b;}
+const packHalf2x16=(a,b)=>(toHalf(a)|(toHalf(b)<<16))>>>0;
+function lookAt(eye,t,up){let zx=eye[0]-t[0],zy=eye[1]-t[1],zz=eye[2]-t[2];let zl=Math.hypot(zx,zy,zz)||1;zx/=zl;zy/=zl;zz/=zl;
+  let xx=up[1]*zz-up[2]*zy,xy=up[2]*zx-up[0]*zz,xz=up[0]*zy-up[1]*zx;let xl=Math.hypot(xx,xy,xz)||1;xx/=xl;xy/=xl;xz/=xl;
+  const yx=zy*xz-zz*xy,yy=zz*xx-zx*xz,yz=zx*xy-zy*xx;
+  return new Float32Array([xx,yx,zx,0,xy,yy,zy,0,xz,yz,zz,0,-(xx*eye[0]+xy*eye[1]+xz*eye[2]),-(yx*eye[0]+yy*eye[1]+yz*eye[2]),-(zx*eye[0]+zy*eye[1]+zz*eye[2]),1]);}
+function perspective(f0,a,n,f){const g=1/Math.tan(f0/2),nf=1/(n-f);return new Float32Array([g/a,0,0,0,0,g,0,0,0,0,(f+n)*nf,-1,0,0,2*f*n*nf,0]);}
+
+const VS=`#version 300 es
+precision highp float;precision highp int;precision highp usampler2D;
+uniform usampler2D u_data;uniform mat4 u_view,u_proj;uniform vec2 u_focal,u_viewport;uniform float u_splatScale,u_exposure;
+in vec2 a_corner;in int a_index;out vec4 vColor;out vec2 vPos;
+void main(){int ix=(a_index&1023)<<1;int iy=a_index>>10;uvec4 t0=texelFetch(u_data,ivec2(ix,iy),0);
+ vec3 p=vec3(uintBitsToFloat(t0.x),uintBitsToFloat(t0.y),uintBitsToFloat(t0.z));
+ vec4 cam=u_view*vec4(p,1.0);vec4 cp=u_proj*cam;float clip=1.2*cp.w;
+ if(cp.z<-clip||cp.x<-clip||cp.x>clip||cp.y<-clip||cp.y>clip){gl_Position=vec4(0.,0.,2.,1.);return;}
+ uvec4 t1=texelFetch(u_data,ivec2(ix|1,iy),0);
+ vec2 c0=unpackHalf2x16(t1.x),c1=unpackHalf2x16(t1.y),c2=unpackHalf2x16(t1.z);
+ mat3 S=mat3(c0.x,c0.y,c1.x,c0.y,c1.y,c2.x,c1.x,c2.x,c2.y);float tz=cam.z;
+ mat3 J=mat3(-u_focal.x/tz,0.,0.,0.,-u_focal.y/tz,0.,u_focal.x*cam.x/(tz*tz),u_focal.y*cam.y/(tz*tz),0.);
+ mat3 M=J*mat3(u_view);mat3 C=M*S*transpose(M);
+ float cxx=C[0][0]+0.3,cyy=C[1][1]+0.3,cxy=C[1][0];float mid=0.5*(cxx+cyy),rad=length(vec2(0.5*(cxx-cyy),cxy));
+ float l1=mid+rad,l2=mid-rad;if(l2<0.){gl_Position=vec4(0.,0.,2.,1.);return;}
+ vec2 dir=normalize(vec2(cxy,l1-cxx));vec2 major=min(sqrt(2.*l1),1024.)*u_splatScale*dir;vec2 minor=min(sqrt(2.*l2),1024.)*u_splatScale*vec2(dir.y,-dir.x);
+ uint col=t0.w;vec3 rgb=vec3(float(col&255u),float((col>>8)&255u),float((col>>16)&255u))/255.;
+ float a=float((col>>24)&255u)/255.;rgb*=u_exposure;
+ vColor=vec4(rgb,a);vPos=a_corner;vec2 ndc=cp.xy/cp.w;
+ gl_Position=vec4(ndc+a_corner.x*major/u_viewport+a_corner.y*minor/u_viewport,0.,1.);}`;
+const FS=`#version 300 es
+precision highp float;in vec4 vColor;in vec2 vPos;out vec4 frag;
+void main(){float A=-dot(vPos,vPos);if(A<-4.)discard;float B=exp(A)*vColor.a;frag=vec4(B*vColor.rgb,B);}`;
+function compile(t,s){const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(sh));return sh;}
+const prog=gl.createProgram();gl.attachShader(prog,compile(gl.VERTEX_SHADER,VS));gl.attachShader(prog,compile(gl.FRAGMENT_SHADER,FS));gl.linkProgram(prog);
+if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(prog));
+const U=n=>gl.getUniformLocation(prog,n);
+const uView=U('u_view'),uProj=U('u_proj'),uFocal=U('u_focal'),uVp=U('u_viewport'),uSplatScale=U('u_splatScale'),uExposure=U('u_exposure');
+
+const svao=gl.createVertexArray();gl.bindVertexArray(svao);
+const quadBuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,quadBuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-2,-2,2,-2,-2,2,2,2]),gl.STATIC_DRAW);
+const aCorner=gl.getAttribLocation(prog,'a_corner');gl.enableVertexAttribArray(aCorner);gl.vertexAttribPointer(aCorner,2,gl.FLOAT,false,0,0);
+const idxBuf=gl.createBuffer();const aIndex=gl.getAttribLocation(prog,'a_index');gl.bindBuffer(gl.ARRAY_BUFFER,idxBuf);gl.enableVertexAttribArray(aIndex);gl.vertexAttribIPointer(aIndex,1,gl.INT,0,0);gl.vertexAttribDivisor(aIndex,1);
+gl.bindVertexArray(null);
+const dataTex=gl.createTexture();
+gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,dataTex);
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+gl.pixelStorei(gl.UNPACK_ALIGNMENT,1);
+
+let scene=null,texRows=0,drawCount=0,sortIdx=null;
+let viewMat=null,projMat=null,needSort=true;
+const cam={target:[0,1,0],theta:0.6,phi:1.35,radius:6,fov:60*Math.PI/180};
+
+function quatToCov(qw,qx,qy,qz,sx,sy,sz,o){const r00=1-2*(qy*qy+qz*qz),r01=2*(qx*qy-qw*qz),r02=2*(qx*qz+qw*qy),r10=2*(qx*qy+qw*qz),r11=1-2*(qx*qx+qz*qz),r12=2*(qy*qz-qw*qx),r20=2*(qx*qz-qw*qy),r21=2*(qy*qz+qw*qx),r22=1-2*(qx*qx+qy*qy);
+ const m00=r00*sx,m01=r01*sy,m02=r02*sz,m10=r10*sx,m11=r11*sy,m12=r12*sz,m20=r20*sx,m21=r21*sy,m22=r22*sz;
+ o[0]=m00*m00+m01*m01+m02*m02;o[1]=m00*m10+m01*m11+m02*m12;o[2]=m00*m20+m01*m21+m02*m22;o[3]=m10*m10+m11*m11+m12*m12;o[4]=m10*m20+m11*m21+m12*m22;o[5]=m20*m20+m21*m21+m22*m22;}
+function colorWord(s,i){const r=clamp(Math.round(s.colors[i*3]*255),0,255),g=clamp(Math.round(s.colors[i*3+1]*255),0,255),b=clamp(Math.round(s.colors[i*3+2]*255),0,255);return(r|(g<<8)|(b<<16)|(s.alphasU8[i]<<24))>>>0;}
+function buildGPUData(s){const n=s.n;texRows=Math.max(1,Math.ceil(n/1024));const texData=new Uint32Array(2048*texRows*4);const f2u=new Uint32Array(1),f2f=new Float32Array(f2u.buffer),cov=new Float32Array(6);
+ for(let i=0;i<n;i++){const row=i>>10,col=(i&1023)<<1,base=(row*2048+col)*4;
+  f2f[0]=s.positions[i*3];texData[base]=f2u[0];f2f[0]=s.positions[i*3+1];texData[base+1]=f2u[0];f2f[0]=s.positions[i*3+2];texData[base+2]=f2u[0];texData[base+3]=colorWord(s,i);
+  const sx=Math.exp(s.scalesLog[i*3]),sy=Math.exp(s.scalesLog[i*3+1]),sz=Math.exp(s.scalesLog[i*3+2]);
+  quatToCov(s.quats[i*4],s.quats[i*4+1],s.quats[i*4+2],s.quats[i*4+3],sx,sy,sz,cov);
+  texData[base+4]=packHalf2x16(cov[0],cov[1]);texData[base+5]=packHalf2x16(cov[2],cov[3]);texData[base+6]=packHalf2x16(cov[4],cov[5]);texData[base+7]=0;}
+ gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,dataTex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA32UI,2048,texRows,0,gl.RGBA_INTEGER,gl.UNSIGNED_INT,texData);needSort=true;}
+
+let mtD=null,mtC=null,mtS=null,lastKey='';
+function sortSplats(zx,zy,zz){const n=scene.n,p=scene.positions;if(!mtD||mtD.length!==n)mtD=new Int32Array(n);if(!mtC){mtC=new Uint32Array(65536);mtS=new Uint32Array(65536);}
+ let mn=Infinity,mx=-Infinity;for(let i=0;i<n;i++){const v=-(zx*p[i*3]+zy*p[i*3+1]+zz*p[i*3+2]);const q=(v*4096)|0;mtD[i]=q;if(q<mn)mn=q;if(q>mx)mx=q;}
+ mtC.fill(0);const sc=65535/Math.max(1,mx-mn);for(let i=0;i<n;i++){const b=((mtD[i]-mn)*sc)|0;mtD[i]=b;mtC[b]++;}mtS[0]=0;for(let i=1;i<65536;i++)mtS[i]=mtS[i-1]+mtC[i-1];
+ const out=new Int32Array(n);for(let i=0;i<n;i++)out[mtS[mtD[i]]++]=i;sortIdx=out;gl.bindVertexArray(svao);gl.bindBuffer(gl.ARRAY_BUFFER,idxBuf);gl.bufferData(gl.ARRAY_BUFFER,sortIdx,gl.DYNAMIC_DRAW);gl.bindVertexArray(null);drawCount=n;}
+
+function eyePos(){return[cam.target[0]+cam.radius*Math.sin(cam.phi)*Math.sin(cam.theta),cam.target[1]+cam.radius*Math.cos(cam.phi),cam.target[2]+cam.radius*Math.sin(cam.phi)*Math.cos(cam.theta)];}
+function updateMatrices(){const dpr=Math.min(window.devicePixelRatio||1,2);const W=Math.max(1,Math.round(canvas.clientWidth*dpr)),H=Math.max(1,Math.round(canvas.clientHeight*dpr));
+ if(canvas.width!==W||canvas.height!==H){canvas.width=W;canvas.height=H;}
+ viewMat=lookAt(eyePos(),cam.target,[0,1,0]);projMat=perspective(cam.fov,W/H,0.05,600);
+ const f=(H/2)/Math.tan(cam.fov/2);
+ gl.useProgram(prog);gl.uniformMatrix4fv(uView,false,viewMat);gl.uniformMatrix4fv(uProj,false,projMat);gl.uniform2f(uFocal,f,f);gl.uniform2f(uVp,W,H);}
+
+const keys={};
+window.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if('wasdqe'.includes(k)&&e.target.tagName!=='INPUT')keys[k]=true;});
+window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
+function applyWalk(){if(!scene)return;const spd=0.04;let fx=0,fz=0,sx=0,sz=0,uy=0;
+ const e=eyePos(),t=cam.target;let dx=t[0]-e[0],dz=t[2]-e[2];const L=Math.hypot(dx,dz)||1;dx/=L;dz/=L;const rx=dz,rz=-dx;
+ if(keys.w){fx+=dx;fz+=dz;}if(keys.s){fx-=dx;fz-=dz;}if(keys.d){sx+=rx;sz+=rz;}if(keys.a){sx-=rx;sz-=rz;}if(keys.e)uy+=1;if(keys.q)uy-=1;
+ if(fx||fz||sx||sz||uy){cam.target[0]+=(fx+sx)*spd;cam.target[2]+=(fz+sz)*spd;cam.target[1]+=uy*spd;needSort=true;}}
+
+function frame(){requestAnimationFrame(frame);if(!scene)return;applyWalk();updateMatrices();
+ const zk=viewMat[2].toFixed(3)+','+viewMat[6].toFixed(3)+','+viewMat[10].toFixed(3);
+ if(needSort||zk!==lastKey){needSort=false;lastKey=zk;sortSplats(viewMat[2],viewMat[6],viewMat[10]);}
+ gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,canvas.width,canvas.height);
+ gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.useProgram(prog);gl.disable(gl.DEPTH_TEST);gl.enable(gl.BLEND);gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA,gl.ONE,gl.ONE_MINUS_DST_ALPHA,gl.ONE);
+ gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,dataTex);gl.uniform1i(U('u_data'),0);
+ if(drawCount>0){gl.bindVertexArray(svao);gl.drawArraysInstanced(gl.TRIANGLE_STRIP,0,4,drawCount);gl.bindVertexArray(null);}}
+requestAnimationFrame(frame);
+
+/* ───────── camera controls ───────── */
+let drag=null;
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+canvas.addEventListener('pointerdown',e=>{if(!scene)return;canvas.setPointerCapture(e.pointerId);const pan=e.button===2||e.button===1||e.shiftKey;drag={mode:pan?'pan':'orbit',x:e.clientX,y:e.clientY};});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;
+ if(drag.mode==='orbit'){cam.theta-=(e.clientX-drag.x)*0.006;cam.phi=clamp(cam.phi-(e.clientY-drag.y)*0.006,0.05,Math.PI-0.05);}
+ else{const e0=eyePos();let fx=cam.target[0]-e0[0],fz=cam.target[2]-e0[2];const L=Math.hypot(fx,fz)||1;fx/=L;fz/=L;const rx=fz,rz=-fx;const s=cam.radius*0.0016;
+  cam.target[0]-=(e.clientX-drag.x)*rx*s;cam.target[2]-=(e.clientX-drag.x)*rz*s;cam.target[1]+=(e.clientY-drag.y)*s;}
+ drag.x=e.clientX;drag.y=e.clientY;needSort=true;});
+window.addEventListener('pointerup',()=>{drag=null;});
+canvas.addEventListener('wheel',e=>{if(!scene)return;e.preventDefault();cam.radius=clamp(cam.radius*Math.exp(e.deltaY*0.0011),0.3,80);needSort=true;},{passive:false});
+function frameAll(s){let mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];const p=s.positions,op=s.alphasU8;
+ for(let i=0;i<s.n;i++){if(op[i]<40)continue;for(let k=0;k<3;k++){const v=p[i*3+k];if(v<mn[k])mn[k]=v;if(v>mx[k])mx[k]=v;}}
+ if(!isFinite(mn[0])){mn=[-1,-1,-1];mx=[1,1,1];}
+ cam.target=[(mn[0]+mx[0])/2,(mn[1]+mx[1])/2,(mn[2]+mx[2])/2];
+ cam.radius=Math.max(1.2,Math.hypot(mx[0]-mn[0],mx[1]-mn[1],mx[2]-mn[2])*0.7);needSort=true;}
+
+/* ───────── app state & wiring ───────── */
+let original=null, optimized=null, showing='opt', baseName='kitchen';
+const fmt=n=>n.toLocaleString();
+
+function setScene(s){scene=s;buildGPUData(s);}
+function estSpzMB(s){const shDims=s.shBytes?SH_DIMS[s.shDegree]:0;const bytes=16+s.n*(9+1+3+3+3+shDims);return (bytes*0.55)/1048576;}
+
+function runOptimize(){
+  if(!original)return;
+  $('busy').style.display='block';
+  // let the bar paint before the heavy synchronous pass
+  requestAnimationFrame(()=>{
+    const t0=performance.now();
+    optimized=optimize(original,readOpts());
+    $('stOrig').textContent=fmt(original.n);
+    $('stOpt').textContent=fmt(optimized.n);
+    const rem=original.n-optimized.n, pct=original.n?Math.round(rem/original.n*100):0;
+    $('stRem').textContent=fmt(rem)+'  ('+pct+'%)';
+    $('stSize').textContent=estSpzMB(optimized).toFixed(1)+' MB';
+    if(showing==='opt')setScene(optimized);
+    $('dlBtn').disabled=$('saveBtn').disabled=false;
+    $('busy').style.display='none';
+    console.log('optimize',(performance.now()-t0).toFixed(0)+'ms');
+  });
+}
+const autoRun=()=>{ if($('autoApply').checked) runOptimize(); };
+
+async function loadFile(file){
+  try{
+    $('busy').style.display='block';
+    const raw=new Uint8Array(await file.arrayBuffer());
+    let buf=raw; if(buf[0]===0x1f&&buf[1]===0x8b)buf=await gunzip(buf);
+    original=(buf[0]===0x70&&buf[1]===0x6c&&buf[2]===0x79)?parsePLY(buf):parseSPZ(buf);
+    baseName=file.name.replace(/\.(spz|ply)$/i,'').replace(/-marble|-restyled|-combined/i,'')||'kitchen';
+    $('drop').classList.add('hide');$('statbar').style.display='flex';$('viewtoggle').style.display='flex';
+    frameAll(original);
+    showing='opt';setView('opt',false);
+    runOptimize();                 // always compute once on load (even if auto-apply off)
+    if(!original.shBytes)$('saveStatus').textContent='Loaded · this file has no spherical-harmonic colour (SH degree 0).';
+  }catch(e){console.error(e);alert('Could not load: '+e.message);$('busy').style.display='none';}
+}
+
+function setView(which,rebuild=true){
+  showing=which;
+  $('vOpt').classList.toggle('act',which==='opt');
+  $('vOrig').classList.toggle('act',which==='orig');
+  if(rebuild&&original){setScene(which==='opt'?(optimized||original):original);}
+}
+$('vOpt').onclick=()=>setView('opt');
+$('vOrig').onclick=()=>setView('orig');
+
+/* operation enable toggles → dim the body */
+[['floaterOn','floaterBody'],['pruneOn','pruneBody'],['bigOn','bigBody'],['clampOn','clampBody'],['anisoOn','anisoBody'],['decimateOn','decimateBody']]
+ .forEach(([c,b])=>{const f=()=>{$(b).classList.toggle('on',$(c).checked);autoRun();};$(c).addEventListener('change',f);});
+/* number inputs → re-run (debounced) */
+let deb=null;
+['flCell','flMin','flSolid','minAlpha','bigM','clampM','anisoR','decM'].forEach(id=>
+  $(id).addEventListener('input',()=>{clearTimeout(deb);deb=setTimeout(autoRun,260);}));
+
+/* preview-only look */
+$('splatScale').addEventListener('input',()=>{gl.useProgram(prog);gl.uniform1f(uSplatScale,+$('splatScale').value/100);});
+$('exposure').addEventListener('input',()=>{gl.useProgram(prog);gl.uniform1f(uExposure,+$('exposure').value/100);});
+gl.useProgram(prog);gl.uniform1f(uSplatScale,1);gl.uniform1f(uExposure,1);
+
+$('applyBtn').onclick=runOptimize;
+$('resetBtn').onclick=()=>{
+  const defs={floaterOn:1,flCell:0.06,flMin:15,flSolid:0.2,pruneOn:1,minAlpha:0.06,bigOn:1,bigM:0.35,clampOn:1,clampM:0.12,anisoOn:1,anisoR:4,decimateOn:0,decM:0.02};
+  for(const k in defs){const el=$(k);if(el.type==='checkbox')el.checked=!!defs[k];else el.value=defs[k];}
+  [['floaterOn','floaterBody'],['pruneOn','pruneBody'],['bigOn','bigBody'],['clampOn','clampBody'],['anisoOn','anisoBody'],['decimateOn','decimateBody']].forEach(([c,b])=>$(b).classList.toggle('on',$(c).checked));
+  runOptimize();
+};
+
+/* file input / drag-drop */
+$('pickBtn').onclick=()=>$('fileinput').click();
+$('fileinput').addEventListener('change',e=>{if(e.target.files[0])loadFile(e.target.files[0]);e.target.value='';});
+window.addEventListener('dragover',e=>{e.preventDefault();document.body.classList.add('dragover');});
+window.addEventListener('dragleave',e=>{if(e.relatedTarget===null)document.body.classList.remove('dragover');});
+window.addEventListener('drop',e=>{e.preventDefault();document.body.classList.remove('dragover');const f=[...e.dataTransfer.files].find(f=>/\.(ply|spz)$/i.test(f.name));if(f)loadFile(f);});
+
+/* export */
+async function encodeBlob(){const enc=encodeSPZ(optimized||original);return await gzip(enc);}
+$('dlBtn').onclick=async()=>{try{$('busy').style.display='block';const blob=await encodeBlob();
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=baseName+'-optimized.spz';a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);$('busy').style.display='none';
+  $('saveStatus').textContent='Saved '+a.download+'  ·  '+(blob.size/1048576).toFixed(1)+' MB';
+ }catch(e){console.error(e);alert('Export failed: '+e.message);$('busy').style.display='none';}};
+
+let saveHandle=null;
+$('saveBtn').onclick=async()=>{
+  try{
+    if(!window.showSaveFilePicker){alert('This browser can’t write files directly — use Chrome/Edge, or just use Download.');return;}
+    if(!saveHandle){
+      saveHandle=await window.showSaveFilePicker({suggestedName:baseName+'-optimized.spz',
+        types:[{description:'SPZ splat',accept:{'application/octet-stream':['.spz']}}]});
+    }
+    $('busy').style.display='block';const blob=await encodeBlob();
+    const w=await saveHandle.createWritable();await w.write(blob);await w.close();
+    $('busy').style.display='none';
+    $('saveStatus').textContent='● Wrote '+saveHandle.name+'  ·  '+(blob.size/1048576).toFixed(1)+' MB — click again to re-save after edits';
+    $('saveBtn').textContent='Re-save to '+saveHandle.name;
+  }catch(e){if(e.name!=='AbortError'){console.error(e);alert('Save failed: '+e.message);}$('busy').style.display='none';}
+};
+
+/* optional ?url= to auto-load */
+(()=>{const u=new URLSearchParams(location.search).get('url');
+ if(u)fetch(u).then(r=>r.blob()).then(b=>{b.name=u.split('/').pop();return loadFile(b);}).catch(()=>{});})();
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_ca79fcb8fb27c687 EASYTOUCH 970
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: ca79fcb8fb27c687
+  catalogKey: ca79fcb8fb27c687
+  brandName: Nobilia
+  productName: EASYTOUCH 970
+  subtitle: Designer kitchen
+  emotionalLine: Conscious decision
+  shortDescription: 'Greener living in the city! Mineral green elements with taupe
+    gray accents give the kitchen its modern naturalness. A good idea that makes
+    everyday urban life a little more sustainable: a small pantry that everyone would
+    love to have. It is discreetly concealed behind a passage door.'
+  productImage: {fileID: 0}
+  specs:
+  - Taupe grey ultramatt
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 970_Taupe_grey_ultramatt.jpg
+  splatWtMaterial: 784_Fossil_grey_Xtra_Ceramic.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

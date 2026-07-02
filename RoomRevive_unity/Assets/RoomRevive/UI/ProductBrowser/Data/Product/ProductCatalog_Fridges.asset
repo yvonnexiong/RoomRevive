@@ -13,14 +13,10 @@ MonoBehaviour:
   m_Name: ProductCatalog_Fridges
   m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductCatalog
   products:
-  - {fileID: 11400000, guid: be49751dcdd2e3e4187bd2343391fd7b, type: 2}
-  - {fileID: 11400000, guid: d98e3d60652a2cd4bb4beab015418fe1, type: 2}
-  - {fileID: 11400000, guid: 0114d747b0c932e489ea445871af930c, type: 2}
-  - {fileID: 11400000, guid: c071f1fe087579042bd3eb602acf7efd, type: 2}
-  - {fileID: 11400000, guid: 36dc185b95b2a044f9df2de53e87795c, type: 2}
   - {fileID: 11400000, guid: 0e717cbb948af7448afef190140aa502, type: 2}
   - {fileID: 11400000, guid: 3f0eedd422492064da9e57c49e0619d8, type: 2}
   - {fileID: 11400000, guid: 3a28968ef42f5614d8791afbe4559863, type: 2}
+  - {fileID: 11400000, guid: 36dc185b95b2a044f9df2de53e87795c, type: 2}
   - {fileID: 11400000, guid: 8e2f5c3999bc1244bba042ebce2d1011, type: 2}
   - {fileID: 11400000, guid: 15010330bc82a2741b7cf7a99ff716b0, type: 2}
   - {fileID: 11400000, guid: a3d114539e67ffd4aad97be0d8e9e2f1, type: 2}

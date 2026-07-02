@@ -49,14 +49,41 @@ namespace RoomRevive.ProductBrowser
 
         // ── Unity lifecycle ──────────────────────────────────────────────────
 
-        void Awake()    => ResolveDependencies();
-        void OnEnable() => ResolveDependencies();
+        void Awake()
+        {
+            ResolveDependencies();
+            RefreshCurrentModelVisibility();
+        }
+
+        void OnEnable()
+        {
+            ResolveDependencies();
+            RefreshCurrentModelVisibility();
+        }
 
         // ── Public forwarding (editor preview + persistent listeners) ────────
 
         public void ForwardConfirm(int index)                  => OnProductConfirmed(index);
         public void ForwardProductChanged(ProductData product) => OnProductChanged(product);
         public void ForwardClosed()                            => OnBrowserClosed();
+
+        /// <summary>
+        /// Reapplies the selected 3D model while respecting the controller's
+        /// disableCurrent3DModel override.
+        /// </summary>
+        public void RefreshCurrentModelVisibility()
+        {
+            if (swapMode != RouterSwapMode.Model3D)
+            {
+                return;
+            }
+
+            int index = controller != null
+                ? Mathf.Max(0, controller.SelectedIndex)
+                : 0;
+
+            ApplyObjectSwap(index);
+        }
 
         // ── Handlers ─────────────────────────────────────────────────────────
 
@@ -88,9 +115,13 @@ namespace RoomRevive.ProductBrowser
         void ApplyObjectSwap(int index)
         {
             if (objectVariants == null || objectVariants.Length == 0) return;
+
+            bool disableSelectedModel =
+                controller != null && controller.disableCurrent3DModel;
+
             for (int i = 0; i < objectVariants.Length; i++)
                 if (objectVariants[i] != null)
-                    objectVariants[i].SetActive(i == index);
+                    objectVariants[i].SetActive(!disableSelectedModel && i == index);
         }
 
         void ApplyGaussianSplatSwap(int index)

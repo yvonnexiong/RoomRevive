@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dde912ae2fc84684ca3890353a7565d9, type: 3}
+  m_Name: Category_Cooktops
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductCategoryData
+  id: category_cooktops
+  displayName: Cooktops
+  catalog: {fileID: 11400000, guid: b2ea5b1cea629fd4db4ff3d1c244212d, type: 2}
+  swapType: 0
+  accentColor: {r: 0.85, g: 0.35, b: 0.2, a: 1}
+  discoverHeadline: Your cooktop, reimagined.
+  discoverSubline: A new cooktop, a new way to cook.

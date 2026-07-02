@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_5996dc2b7f1a8cd5 SOFTLINE 509
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 5996dc2b7f1a8cd5
+  catalogKey: 5996dc2b7f1a8cd5
+  brandName: Nobilia
+  productName: SOFTLINE 509
+  subtitle: Modern kitchen
+  emotionalLine: Natural composition
+  shortDescription: "Prepare something delectable far away from the hustle and bustle.
+    A coordinated colour scheme featuring light and natural tones such as wood, white,
+    bronze and cognac adds a touch of warmth to the kitchen design for an enhanced
+    sense of well being. Whether it\u2019s the Carrara Bronze marble worktop or exciting
+    bronze accents such as taps and bar handles, the elegant highlights round off
+    the diverse range of high-quality materials to perfection. Thanks to the fronts
+    with innovative anti fingerprint coating, you don\u2019t need to give a second
+    thought to unsightly fingerprints."
+  productImage: {fileID: 0}
+  specs:
+  - Perfect honed white
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 509_Perfect_honed_white.jpg
+  splatWtMaterial: 324_Carrara_bronze_marble_reproduction.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

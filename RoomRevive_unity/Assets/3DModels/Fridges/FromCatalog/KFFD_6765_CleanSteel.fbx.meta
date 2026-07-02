@@ -3,7 +3,72 @@ guid: 0990b19db7602bc4ba8c75efe5428c2c
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Black
+    second: {fileID: 2100000, guid: d6ecbe02c61820b44bb762f3abbebab7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Display
+    second: {fileID: 2100000, guid: 51d13fb4ccb9c0841ba40be2e307ea40, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: DynaCool_logo
+    second: {fileID: 2100000, guid: 5e2e08fbdcf490f4daf64144b6725bf7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Griffbloecke
+    second: {fileID: 2100000, guid: ba01095837f61b749b093d5d24bb267c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Gummi_schwarz_rueckseite
+    second: {fileID: 2100000, guid: e7139715f1e8192408eb78bcfc1fcd74, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kst-schwarz
+    second: {fileID: 2100000, guid: 892cdaca686dc784f901947b8b0afbee, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kst-weiss
+    second: {fileID: 2100000, guid: 4efbb7dd5995d7a469f19ec8b7e741b4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kuehlschrank_InnenWeiss
+    second: {fileID: 2100000, guid: 5badeabff5232a84f99ea6363db8b909, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material#2143878625
+    second: {fileID: 2100000, guid: 41c6699a92434ff439c0f4eab24db335, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Scharniere-Metall
+    second: {fileID: 2100000, guid: d08f6a75c35842c44b24626efeabe612, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: bst_dunkler
+    second: {fileID: 2100000, guid: af90df13646d20a4d8cdb81d5cd0a776, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: gummi_el_dunkler
+    second: {fileID: 2100000, guid: f40af9e5be9f95242b2d402722ed1bee, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: stahl-clean
+    second: {fileID: 2100000, guid: 3690544f2248f824fafd19a642b69b63, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dde912ae2fc84684ca3890353a7565d9, type: 3}
+  m_Name: Category_CoffeeMachines
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductCategoryData
+  id: category_coffeemachines
+  displayName: Coffee Machines
+  catalog: {fileID: 11400000, guid: 425eafc8adef10a4fbe5b10d99708b96, type: 2}
+  swapType: 0
+  accentColor: {r: 0.55, g: 0.4, b: 0.3, a: 1}
+  discoverHeadline: Your coffee, reimagined.
+  discoverSubline: Built-in coffee, exactly your style.

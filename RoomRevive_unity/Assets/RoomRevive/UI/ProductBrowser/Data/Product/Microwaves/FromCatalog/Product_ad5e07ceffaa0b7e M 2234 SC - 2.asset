@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_ad5e07ceffaa0b7e M 2234 SC - 2
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: ad5e07ceffaa0b7e
+  catalogKey: ad5e07ceffaa0b7e
+  brandName: Miele
+  productName: M 2234 SC - 2
+  subtitle: Silver
+  emotionalLine: 17 L built-in microwave with quartz grill
+  shortDescription: "Compact enough for any column unit, with a quartz grill for
+    golden tops and crisp edges \u2014 comfort food, faster."
+  productImage: {fileID: 0}
+  specs:
+  - 17 L
+  - 800 W
+  - Grill
+  fromPrice: From EUR 1,259
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 
+  splatWtMaterial: 
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

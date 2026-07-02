@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_DA_2578 DA 2578
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: DA_2578
+  catalogKey: DA_2578
+  brandName: Miele
+  productName: DA 2578
+  subtitle: "Canopy hood \xB7 GOLD"
+  emotionalLine: with energy-saving LED lighting and buttons for comfortable operation
+  shortDescription: 
+  productImage: {fileID: 0}
+  specs:
+  - "600 m\xB3/h"
+  - 67 dB
+  - Class A
+  - 51.7 kWh/yr
+  fromPrice: From EUR 1,138
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 
+  splatWtMaterial: 
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

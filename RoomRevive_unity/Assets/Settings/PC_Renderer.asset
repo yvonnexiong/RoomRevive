@@ -71,7 +71,8 @@ MonoBehaviour:
   - {fileID: 4616724669425652258}
   - {fileID: 512392105293574831}
   - {fileID: -5958710706320564636}
-  m_RendererFeatureMap: ad6b866f10d7b46c2212e65aa0e61140aff2bcade7611c07641e72e62e684ead
+  - {fileID: 6638636767566662195}
+  m_RendererFeatureMap: ad6b866f10d7b46c2212e65aa0e61140aff2bcade7611c07641e72e62e684ead338aa893f72c215c
   m_UseNativeRenderPass: 1
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
@@ -133,6 +134,24 @@ MonoBehaviour:
   m_Name: GaussianSplatURPFeature
   m_EditorClassIdentifier: GaussianSplatting::GaussianSplatting.Runtime.GaussianSplatURPFeature
   m_Active: 1
+--- !u!114 &6638636767566662195
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a17811ff37e5f184f94077ef8eb4abb0, type: 3}
+  m_Name: CameraArcSceneMaskRendererFeature
+  m_EditorClassIdentifier: Assembly-CSharp::GaussianSplatting.Runtime.CameraArcSceneMaskRendererFeature
+  m_Active: 1
+  settings:
+    maskShader: {fileID: 4800000, guid: 21042d11cf30fe84798bfd1c5b889d61, type: 3}
+    renderPassEvent: 500
+    skipSceneView: 0
+    requireCameraArcSceneMaskComponent: 1
 --- !u!114 &7833122117494664109
 MonoBehaviour:
   m_ObjectHideFlags: 0

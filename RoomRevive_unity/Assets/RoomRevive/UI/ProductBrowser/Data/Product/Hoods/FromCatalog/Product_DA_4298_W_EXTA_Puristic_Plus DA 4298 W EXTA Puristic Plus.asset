@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_DA_4298_W_EXTA_Puristic_Plus DA 4298 W EXTA Puristic Plus
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: DA_4298_W_EXTA_Puristic_Plus
+  catalogKey: DA_4298_W_EXTA_Puristic_Plus
+  brandName: Miele
+  productName: DA 4298 W EXTA Puristic Plus
+  subtitle: "Wall-mounted hood \xB7 PLATINUM"
+  emotionalLine: for combination with an external blower for a reduced noise level
+    in the kitchen
+  shortDescription: 
+  productImage: {fileID: 0}
+  specs:
+  - Class C
+  - 106.2 kWh/yr
+  fromPrice: From EUR 2,130
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 
+  splatWtMaterial: 
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

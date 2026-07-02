@@ -22,10 +22,10 @@ MonoBehaviour:
   m_LayerInfo:
   - x: 0
     y: 1920000
-  m_PosFormat: 2
-  m_ScaleFormat: 2
-  m_SHFormat: 3
-  m_ColorFormat: 2
+  m_PosFormat: 0
+  m_ScaleFormat: 0
+  m_SHFormat: 0
+  m_ColorFormat: 0
   m_clusteredSHData: {fileID: 0}
   m_layerData:
   - layer: 0
@@ -33,5 +33,5 @@ MonoBehaviour:
     m_ColorData: {fileID: 4900000, guid: 69d60d076c671634fa225974b1b05ed2, type: 3}
     m_OtherData: {fileID: 4900000, guid: 11552db745ce5594480b132a52128942, type: 3}
     m_SHData: {fileID: 4900000, guid: 4882786726c48a848975d6e8ecbb277a, type: 3}
-    m_ChunkData: {fileID: 4900000, guid: aef274846ec61c24eb271bf1a7835bca, type: 3}
+    m_ChunkData: {fileID: 0}
   m_Cameras: []

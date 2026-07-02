@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_0fc9f5366608636a NORDIC 788
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 0fc9f5366608636a
+  catalogKey: 0fc9f5366608636a
+  brandName: Nobilia
+  productName: NORDIC 788
+  subtitle: Cottage style kitchen
+  emotionalLine: Natural charme
+  shortDescription: "This bright, inviting and friendly ambience is the perfect place
+    to share special moments. Clear lines combine with the soft sand colour to create
+    a relaxed atmosphere and modern cottage style flair, which makes family and friends
+    feel right at home. With a focus on maximum cosiness, the elongated wall board
+    not only offers space for everything that\u2019s important to you, but also adds
+    a touch of personality to your kitchen. The glass elements with framed glass
+    doors ensure lightness and the typical Scandinavian look, whilst the interior
+    unit lighting creates just the right mood. Perfect for any occasion."
+  productImage: {fileID: 0}
+  specs:
+  - Lacquer, perfect honed sand
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 788_Perfect_honed_sand.jpg
+  splatWtMaterial: 349_Sand_grey_travertine_reproduction.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

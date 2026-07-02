@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_ebb9a433af1fb832 M 7244 TC - 3
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: ebb9a433af1fb832
+  catalogKey: ebb9a433af1fb832
+  brandName: Miele
+  productName: M 7244 TC - 3
+  subtitle: Gold
+  emotionalLine: Premium 46 L built-in microwave with 1500 W grill
+  shortDescription: "The flagship combination: a large 46 L cavity, automatic programmes
+    and a powerful 1500 W grill for properly crisp, golden results \u2014 the closest
+    a microwave gets to an oven."
+  productImage: {fileID: 0}
+  specs:
+  - 46 L
+  - 900 W
+  - Grill
+  fromPrice: From EUR 1,862
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 
+  splatWtMaterial: 
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

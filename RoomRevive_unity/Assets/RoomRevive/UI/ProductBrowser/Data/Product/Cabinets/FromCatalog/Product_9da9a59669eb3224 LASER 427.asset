@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_9da9a59669eb3224 LASER 427
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 9da9a59669eb3224
+  catalogKey: 9da9a59669eb3224
+  brandName: Nobilia
+  productName: LASER 427
+  subtitle: Designer kitchen
+  emotionalLine: Favourite colour White.
+  shortDescription: White continues to count among the most popular furnishing colours,
+    because White is timelessly beautiful and it just feels good. White is unobtrusive,
+    it makes rooms look and feel larger, and it outlasts the whims of fashionable
+    trends. In addition, White is incredibly versatile and changeable. White can
+    hold its own against coloured accents and vibrant contrasts as well as with cool
+    metals and natural wood tones, making it the perfect choice for both small and
+    large dream interiors.
+  productImage: {fileID: 0}
+  specs:
+  - Alpine white
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 427_Alpine_white.jpg
+  splatWtMaterial: 193_Alpine_white.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

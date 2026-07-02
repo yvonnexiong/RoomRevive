@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_c256365767c5d682 DAS 4920
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: c256365767c5d682
+  catalogKey: c256365767c5d682
+  brandName: Miele
+  productName: DAS 4920
+  subtitle: "Pull-out hood \xB7 GOLD"
+  emotionalLine: with EasySwitch controls for convenient operation
+  shortDescription: 
+  productImage: {fileID: 0}
+  specs:
+  - "600 m\xB3/h"
+  - 66 dB
+  - Class A+++
+  - 22.9 kWh/yr
+  fromPrice: From EUR 1,004
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 
+  splatWtMaterial: 
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

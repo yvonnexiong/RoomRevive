@@ -3,7 +3,52 @@ guid: f4df6103b9ba94f42b3eea342351e904
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: BB
+    second: {fileID: 2100000, guid: 8fefd22b98ac9bb47acbc977e3a4179f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Black
+    second: {fileID: 2100000, guid: f08558e29542cae439e27a11b2f4444c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Display
+    second: {fileID: 2100000, guid: d3a3a7453a447ce499e02fef9e27dd33, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Glas-matter
+    second: {fileID: 2100000, guid: 4f4138c5261f4c34c939a2b8901fee06, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Griffbloecke
+    second: {fileID: 2100000, guid: 4bc897b5506938f4ab598e018e40b770, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kst-schwarz
+    second: {fileID: 2100000, guid: df104f676e4d9d848a4560e04237deb9, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: PEBE_Logo.001
+    second: {fileID: 2100000, guid: 153fcebd8a640a64e8456fb06e9c4d41, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: bst
+    second: {fileID: 2100000, guid: 38a0a5021780f6f449ae9e76627cec84, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: gummi_bst_schwarz
+    second: {fileID: 2100000, guid: 75972d57d81747c408a2cce429e3231e, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_d8677ec36faa4b77 NORDIC 791
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: d8677ec36faa4b77
+  catalogKey: d8677ec36faa4b77
+  brandName: Nobilia
+  productName: NORDIC 791
+  subtitle: Cottage style kitchen
+  emotionalLine: Trend classic black
+  shortDescription: 'Black is a style-defining classic in both fashion and interior
+    design. The classic frame structure gives the color tone a modern stage: reduced
+    and expressive. The front color combines traditional values with urban aesthetics
+    and appeals to customers who appreciate a design-conscious country house interpretation'
+  productImage: {fileID: 0}
+  specs:
+  - Lacquer, Black Perfect matt
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 791_Black_Perfect_matt.jpg
+  splatWtMaterial: 366_Black_textured.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

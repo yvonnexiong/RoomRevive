@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_5ac47c62d1cc9f8e FLASH 455
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 5ac47c62d1cc9f8e
+  catalogKey: 5ac47c62d1cc9f8e
+  brandName: Nobilia
+  productName: FLASH 455
+  subtitle: Modern kitchen
+  emotionalLine: Virtually endless combination possibilities.
+  shortDescription: "Modularly designed kitchens in the trending material lacquered
+    laminate. The modular principle allows for plenty of storage space in kitchen
+    design for both small and large floor plans. The result is an informal kitchen
+    architecture with a structured room concept and well-thought-out functional solutions
+    and storage options. The effectively placed accents in Maracaibo light d\xE9cor
+    lend this kitchen its modern character."
+  productImage: {fileID: 0}
+  specs:
+  - Satin grey high gloss
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 455_Satin_grey_high_gloss.jpg
+  splatWtMaterial: 
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

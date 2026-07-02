@@ -237,14 +237,15 @@ namespace RoomRevive
             tbImg.color = TrackBgCol; tbImg.raycastTarget = false;
             Round(tbImg, TrackH * 0.5f);
 
-            // Fill Area (offset by half-handle on each side)
+            // Fill Area — matches the TrackBackground bounds exactly (no half-handle inset), so the
+            // fill spans the full track. The handle is hidden, so no inset is needed.
             var fillAreaGO = MakeGO("FillArea", sliderGO.transform);
             var faRT       = fillAreaGO.GetComponent<RectTransform>();
             faRT.anchorMin = new Vector2(0f, 0.5f);
             faRT.anchorMax = new Vector2(1f, 0.5f);
             faRT.pivot     = new Vector2(0.5f, 0.5f);
-            faRT.offsetMin = new Vector2(HandleSz * 0.5f, -TrackH * 0.5f);
-            faRT.offsetMax = new Vector2(-HandleSz * 0.5f, TrackH * 0.5f);
+            faRT.offsetMin = new Vector2(0f, -TrackH * 0.5f);
+            faRT.offsetMax = new Vector2(0f,  TrackH * 0.5f);
 
             var fillGO = MakeGO("Fill", fillAreaGO.transform);
             var fillRT = fillGO.GetComponent<RectTransform>();

@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_34120ce28c9a48a9 TOUCH 332
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 34120ce28c9a48a9
+  catalogKey: 34120ce28c9a48a9
+  brandName: Nobilia
+  productName: TOUCH 332
+  subtitle: Modern kitchen
+  emotionalLine: Small but beautiful.
+  shortDescription: "A dazzling White kitchen makes even the smallest room appear
+    spacious and adds a sizeable feel-good factor. The raised appliances are modern
+    \u2013 and with their Stainless steel appearance \u2013 a real eye-catcher."
+  productImage: {fileID: 0}
+  specs:
+  - Alpine white supermatt
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 332_Alpine_white_supermatt.jpg
+  splatWtMaterial: 193_Alpine_white.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_a033e42dc8e9bd71 FRAME 619
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: a033e42dc8e9bd71
+  catalogKey: a033e42dc8e9bd71
+  brandName: Nobilia
+  productName: FRAME 619
+  subtitle: Cottage style kitchen
+  emotionalLine: Macchiato design in harmony
+  shortDescription: Macchiato frame fronts combine classic design language with modern
+    coloring. In combination with marble, this creates an elegant and inviting Look,
+    which is particularly suitable for sophisticated country house designs. The calm
+    look brings clarity and a warm radiance to the room.
+  productImage: {fileID: 0}
+  specs:
+  - Lacquer laminate, Macchiato wood texture
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 619_Macchiato_wood_texture.jpg
+  splatWtMaterial: 218_Pangaea_grey_marble_reproduction.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

@@ -1,0 +1,150 @@
+{
+ "mask": "./Splats/FinalMaskSplat.spz",
+ "maskName": "FinalMaskSplat.spz",
+ "cab": {
+  "mat": "485_Premium_honed_sky.jpg",
+  "settings": {
+   "hueLo": "75",
+   "hueHi": "155",
+   "sat": "60",
+   "val": "12",
+   "fillgaps": false,
+   "tilesize": "63",
+   "texrot": "0",
+   "grainvar": "11",
+   "projection": "facet",
+   "mosaic": "0",
+   "contrast": "68",
+   "relief": "0",
+   "shading": "18",
+   "panocolor": "21",
+   "keeplight": "101",
+   "matchlight": "0"
+  },
+  "detail": 1,
+  "spread": 1.1,
+  "even": 0,
+  "autoplane": true,
+  "vonly": false,
+  "noOverhang": false,
+  "between": false,
+  "sparseBoost": 0,
+  "denseThresh": 14,
+  "betweenRadius": 0.03,
+  "flatten": {
+   "on": false,
+   "radius": 0.04,
+   "intensity": 0.5
+  }
+ },
+ "wt": {
+  "mat": "361_Caspian_grey_marble_reproduction.jpg",
+  "settings": {
+   "hueLo": "75",
+   "hueHi": "155",
+   "sat": "10",
+   "val": "24",
+   "fillgaps": false,
+   "tilesize": "63",
+   "texrot": "0",
+   "grainvar": "11",
+   "projection": "facet",
+   "mosaic": "0",
+   "contrast": "68",
+   "relief": "0",
+   "shading": "18",
+   "panocolor": "21",
+   "keeplight": "101",
+   "matchlight": "0"
+  },
+  "detail": 1,
+  "spread": 1.1,
+  "even": 0,
+  "autoplane": true,
+  "vonly": false,
+  "noOverhang": false,
+  "between": false,
+  "sparseBoost": 0,
+  "denseThresh": 14,
+  "betweenRadius": 0.03,
+  "flatten": {
+   "on": false,
+   "radius": 0.04,
+   "intensity": 0.5
+  }
+ },
+ "cam": {
+  "t": [
+   0.16743359990822043,
+   1.5040149759067174,
+   0.5483798694234965
+  ],
+  "th": -0.8844394226074235,
+  "ph": 0.8366697998046887,
+  "r": 1.953351984192524
+ },
+ "flips": {
+  "x": false,
+  "y": false,
+  "z": false
+ },
+ "globals": {
+  "exposure": "100",
+  "lighttint": "50",
+  "tinthue": "0",
+  "tintamt": "0",
+  "splatscale": "164",
+  "aa": "180",
+  "panoyaw": "0",
+  "crop-on": true,
+  "floater-on": false,
+  "floater-show": false,
+  "floater-dens": "15",
+  "cap-x": "0",
+  "cap-y": "1",
+  "cap-z": "0"
+ },
+ "cropBoxes": [
+  {
+   "mode": "keep",
+   "pos": [
+    6.955322265625,
+    -2.5429345703125,
+    -8.7512109375
+   ],
+   "rot": [
+    0,
+    10,
+    6
+   ],
+   "scale": [
+    17.94921875,
+    9.051123046875,
+    19.078125
+   ]
+  }
+ ],
+ "v2": {
+  "cm": 80,
+  "rot": 0,
+  "offU": 0,
+  "offV": 0,
+  "light": 0.6,
+  "bright": 1,
+  "contrast": 1,
+  "relief": 0.6,
+  "sat": 1.1,
+  "warm": 0.3,
+  "sheen": 0.35,
+  "detail": 0.4,
+  "perFace": true,
+  "project": "tri",
+  "prepSizeMul": 1,
+  "prepRadius": 2,
+  "prepSubdiv": 2,
+  "prepSparseBoost": 2,
+  "prepDenseThresh": 14,
+  "prepTarget": "cab",
+  "prepEqualize": false
+ }
+}

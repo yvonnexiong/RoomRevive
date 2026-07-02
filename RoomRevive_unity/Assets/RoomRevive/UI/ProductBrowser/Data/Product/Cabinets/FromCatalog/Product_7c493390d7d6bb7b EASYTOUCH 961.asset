@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_7c493390d7d6bb7b EASYTOUCH 961
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 7c493390d7d6bb7b
+  catalogKey: 7c493390d7d6bb7b
+  brandName: Nobilia
+  productName: EASYTOUCH 961
+  subtitle: Designer kitchen
+  emotionalLine: Aesthetics in a nutshell.
+  shortDescription: "Dark graphite, fine aluminium frames and exquisite glass \u2013
+    this straight-lined kitchen convinces with the appealing interplay of materials
+    in dark hues and thus creates a cosy atmosphere, where you will enjoy spending
+    a lot of time. The fronts have an innovative coating \u2013 so fingerprints don\u2019t
+    stand a chance."
+  productImage: {fileID: 0}
+  specs:
+  - Graphite black ultra matt
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 961_Graphite_black_ultra_matt.jpg
+  splatWtMaterial: 231_Oak_Bergamo_reproduction.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

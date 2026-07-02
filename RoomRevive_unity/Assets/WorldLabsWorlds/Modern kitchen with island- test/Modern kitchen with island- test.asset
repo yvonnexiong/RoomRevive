@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33b71fae31e6c7d438e8566dc713e666, type: 3}
+  m_Name: Modern kitchen with island- test
+  m_EditorClassIdentifier: 
+  m_FormatVersion: 20240801
+  m_SplatCount: 1920000
+  m_BoundsMin: {x: -31.5625, y: -29.703125, z: -31.0625}
+  m_BoundsMax: {x: 9.90625, y: 14.2578125, z: 9.78125}
+  m_DataHash:
+    serializedVersion: 2
+    Hash: 004c1d00a1d934010000000000000000
+  m_LayerInfo:
+  - x: 0
+    y: 1920000
+  m_PosFormat: 0
+  m_ScaleFormat: 0
+  m_SHFormat: 0
+  m_ColorFormat: 0
+  m_clusteredSHData: {fileID: 0}
+  m_layerData:
+  - layer: 0
+    m_PosData: {fileID: 4900000, guid: 10e793ffddadde14c92f641f79f6c2b8, type: 3}
+    m_ColorData: {fileID: 4900000, guid: 496702f4e62c893458602b831b67cbcf, type: 3}
+    m_OtherData: {fileID: 4900000, guid: bae068e9da7eec444b7f006619d0a9e7, type: 3}
+    m_SHData: {fileID: 4900000, guid: 3d1b27d7a8798b04fbe2167cb32d9cff, type: 3}
+    m_ChunkData: {fileID: 0}
+  m_Cameras: []

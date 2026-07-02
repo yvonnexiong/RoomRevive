@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6f3ead8468d95f4fb2536af87ca846b, type: 3}
+  m_Name: ProductCatalog_Microwaves
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductCatalog
+  products:
+  - {fileID: 11400000, guid: bdae848681b46c4499b05ee9dc0021a9, type: 2}
+  - {fileID: 11400000, guid: 0a4f4dd38b3eeff4689de9e0ae1e45f2, type: 2}
+  - {fileID: 11400000, guid: 50eecb85517e0a34eae22b57afbd17c8, type: 2}
+  - {fileID: 11400000, guid: f9e7bf0f25ec3d44bb13c5600949be2a, type: 2}
+  - {fileID: 11400000, guid: c00d1cf9cecf50e4989f535886c033f3, type: 2}
+  - {fileID: 11400000, guid: 9c8836639eff508438b0d5b666b317f2, type: 2}
+  - {fileID: 11400000, guid: 4ea66de493379814d9de43d63dacf957, type: 2}
+  - {fileID: 11400000, guid: ab38f1bb1db308e40955f17f947ff005, type: 2}
+  - {fileID: 11400000, guid: 2144b69512973d14aa533c6606951461, type: 2}
+  - {fileID: 11400000, guid: d809dd9bb3e40c64cbcf22f9ec37ef58, type: 2}
+  - {fileID: 11400000, guid: 7ce53b2e41ed2ae4eaf3db64a55d4a7f, type: 2}
+  - {fileID: 11400000, guid: f1260789d7e6b734abab1839ef7ff2c5, type: 2}

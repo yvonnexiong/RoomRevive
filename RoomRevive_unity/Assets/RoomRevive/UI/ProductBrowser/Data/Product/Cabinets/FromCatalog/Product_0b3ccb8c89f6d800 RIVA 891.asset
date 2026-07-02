@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_0b3ccb8c89f6d800 RIVA 891
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 0b3ccb8c89f6d800
+  catalogKey: 0b3ccb8c89f6d800
+  brandName: Nobilia
+  productName: RIVA 891
+  subtitle: Designer kitchen
+  emotionalLine: Cool concrete mix.
+  shortDescription: "Concrete has the reputation of being cold and uncomfortable
+    \u2013 we beg to differ. The warm colouring of the discreet White Concrete reproduction
+    d\xE9cor mixes perfectly with the modern Concrete Slate Grey reproduction and
+    is an ideal combination for connoisseurs of inviting industrial style. The matching
+    Smartcube shelf units look particularly cool here."
+  productImage: {fileID: 0}
+  specs:
+  - White Concrete reproduction
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 891_White_Concrete_reproduction.jpg
+  splatWtMaterial: 353_White_Concrete_reproduction.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

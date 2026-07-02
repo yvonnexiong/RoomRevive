@@ -37,6 +37,12 @@ public class LiveSplatLoader : MonoBehaviour
     [Tooltip("Renderer to load into. Leave empty to use a GaussianSplatRenderer on this GameObject.")]
     public GaussianSplatRenderer targetRenderer;
 
+    [Header("Transition")]
+    [Tooltip("When on, each new splat is handed to SplatManager.SwapToSpz() to drive the old→new reveal " +
+             "across SplatRenderer 1 (current/old) and SplatRenderer 2 (incoming new), instead of loading " +
+             "into Target Renderer above. Disable the standalone display renderer when using this.")]
+    public bool driveTransition = false;
+
     [Header("Watching")]
     [Tooltip("Reload automatically whenever the file changes on disk.")]
     public bool autoReload = true;
@@ -199,7 +205,7 @@ public class LiveSplatLoader : MonoBehaviour
     public void ReloadNow()
     {
         if (m_Renderer == null) ResolveRenderer();
-        if (m_Renderer == null) return;
+        if (m_Renderer == null && !driveTransition) return;
 
         try
         {
@@ -210,12 +216,26 @@ public class LiveSplatLoader : MonoBehaviour
             if (bytes == null || bytes.Length < 16) { m_Touched = true; return; } // not ready; try again next tick
 
             RuntimeSplatData rsd = RuntimeSplatProcessing.ProcessSPZBytes(bytes); // gzip NGSP → Morton-ordered, packed GPU buffers
-            m_Renderer.LoadFromRuntimeData(rsd);
+
+            // Either drive the old→new reveal via SplatManager (renderers 1 & 2) or load into our own renderer.
+            SplatManager sm = driveTransition ? SplatManager.GetOrFindInstance() : null;
+            if (sm != null) sm.SwapToSpz(rsd);
+            else            m_Renderer.LoadFromRuntimeData(rsd);
 
             m_LastLen = fi.Length;
             m_LastWriteUtc = fi.LastWriteTimeUtc;
             loadedSplatCount = rsd.splatCount;
             lastStatus = $"loaded {rsd.splatCount:N0} splats @ {DateTime.Now:HH:mm:ss}";
+
+#if UNITY_EDITOR
+            // Edit mode swaps the GPU buffers but doesn't auto-repaint, so the Scene/Game view keeps
+            // showing the stale frame until you nudge it. Force a repaint so the change shows at once.
+            if (!Application.isPlaying)
+            {
+                UnityEditor.SceneView.RepaintAll();
+                UnityEditor.EditorApplication.QueuePlayerLoopUpdate();
+            }
+#endif
         }
         catch (Exception e)
         {

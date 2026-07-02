@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_15477f67c76d1525 SENSO 496
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 15477f67c76d1525
+  catalogKey: 15477f67c76d1525
+  brandName: Nobilia
+  productName: SENSO 496
+  subtitle: Designer kitchen
+  emotionalLine: In the limelight
+  shortDescription: How about watching football with friends? Well equipped both
+    aesthetically and functionally, the statement kitchen is the perfect place to
+    prepare halftime snacks. Matt black and bronze-coloured elements form the ideal
+    team for a modern look. The dark design features unexpected bronze highlights
+    in the form of the recessed handles, sink and tap. Especially pleasing to the
+    eye is the shimmering metallic connection between the bronzecoloured niche cladding
+    and the back panel of the Smartcube shelves in the kitchen island.
+  productImage: {fileID: 0}
+  specs:
+  - Premium honed black
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 496_Premium_honed_black.jpg
+  splatWtMaterial: 790_Plain_Black_Xtra_Ceramic.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

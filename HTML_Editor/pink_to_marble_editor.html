@@ -26,6 +26,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--ui);font-size:13px
 canvas#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #hint{position:absolute;left:14px;bottom:12px;font-family:var(--mono);font-size:10.5px;color:var(--muted);pointer-events:none;line-height:1.7}
 kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;padding:0 4px;font-family:var(--mono);font-size:10px;color:var(--text);background:var(--panel2)}
+#capmarker{position:absolute;z-index:6;pointer-events:none;display:none;transform:translate(-50%,-50%)}
+#capmarker .cm-ring{width:18px;height:18px;border-radius:50%;border:2px solid var(--accent);box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 10px var(--accent);position:relative}
+#capmarker .cm-ring::after{content:"";position:absolute;left:50%;top:50%;width:4px;height:4px;border-radius:50%;background:var(--accent);transform:translate(-50%,-50%)}
+#capmarker .cm-lbl{position:absolute;left:50%;top:-7px;transform:translate(-50%,-100%);white-space:nowrap;font-family:var(--mono);font-size:10px;color:var(--accent);background:rgba(16,18,22,.85);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
 #dropzone{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(16,18,22,.92);z-index:20}
 #dropzone.hidden{display:none}
 #dropcard{max-width:430px;text-align:center;padding:42px 38px;border:1px dashed var(--line);border-radius:10px;background:var(--panel)}
@@ -56,6 +60,13 @@ button.primary:hover{filter:brightness(1.07)}
 button.ghost{background:transparent}
 button:disabled{opacity:.42;cursor:default;pointer-events:none}
 .btnrow{display:flex;gap:8px}.btnrow button{flex:1}
+.cbrow{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.cbrow .cbpick{flex:1;text-align:left;padding:5px 8px;background:#1a1c22;border:1px solid #2c2f38;border-radius:6px;color:var(--muted);font-size:12px}
+.cbrow.sel .cbpick{border-color:var(--accent);color:var(--text);background:#23252c}
+.cbrow .cbmode{flex:none;width:96px;font-size:11px;padding:4px}
+.cbrow .cbdel{flex:none;width:28px;padding:5px 0;background:#1a1c22;border:1px solid #2c2f38;border-radius:6px;color:#ff7a7a}
+.cbhead{font-size:11px;color:var(--muted);margin:7px 0 3px;font-weight:600;letter-spacing:.02em}
+.cbnum{flex:none;width:62px;background:#1a1c22;border:1px solid #2c2f38;border-radius:6px;color:var(--text);font-family:var(--mono);font-size:11px;padding:4px 6px}
 .check{display:flex;align-items:center;gap:8px;color:var(--muted);cursor:pointer;user-select:none}
 .check input{accent-color:var(--accent)}
 #pinkcount{font-family:var(--mono);font-size:11px;color:var(--pink)}
@@ -102,6 +113,9 @@ summary.dsum:hover{color:var(--text)}
     <div id="wordmark">MASK<em>→MATERIALS</em></div>
     <div id="filemeta">no mask loaded</div>
     <button id="btn-loadmask">🗺️ Load mask splat…</button>
+    <button id="btn-savesession" title="Save mask + materials + camera + look so it reloads next time">💾 Save session</button>
+    <label class="check" style="font-size:11px;white-space:nowrap" title="When on, auto-save the session on every change. When off, it saves only on the button or when Unity swaps."><input type="checkbox" id="autosave-on"> auto-save</label>
+    <label class="check" style="font-size:11px;white-space:nowrap" title="When on, the editor follows Unity: it applies whatever cabinet/worktop product Unity swaps to (including its Initial State) and re-applies the current one the moment you enable this."><input type="checkbox" id="unity-sync" checked> 🎮 Unity sync</label>
     <div id="stats"><b id="stat-pts">–</b> splats · <b id="stat-sel">0</b> sel</div>
   </div>
 
@@ -117,10 +131,18 @@ summary.dsum:hover{color:var(--text)}
           <button id="chooser-browse" style="flex:1">Browse…</button>
           <button id="chooser-default" class="primary" style="flex:1">Default kitchen</button>
         </div>
-        <input type="file" id="chooser-fileinput" accept=".spz" style="display:none">
+        <input type="file" id="chooser-fileinput" accept=".spz,.ply" style="display:none">
       </div>
     </div>
     <div id="hint">drag orbit · <kbd>shift</kbd>/right-drag pan · scroll zoom · double-click set pivot</div>
+    <div id="capmarker"><div class="cm-ring"></div><div class="cm-lbl">📷 capture</div></div>
+    <svg id="cropbox-svg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5;display:none;overflow:visible"></svg>
+    <div id="savemodal" style="position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;background:rgba(8,9,12,0.62)">
+      <div style="max-width:430px;width:82%;background:#16181d;border:1px solid #3a3d46;border-radius:12px;padding:22px;box-shadow:0 16px 50px rgba(0,0,0,.6)">
+        <div id="savemodal-msg" style="font-size:13.5px;line-height:1.55;color:#e9e7e1;white-space:pre-line"></div>
+        <button id="savemodal-ok" class="primary" style="width:100%;margin-top:16px">OK</button>
+      </div>
+    </div>
     <div id="dropzone">
       <div id="dropcard">
         <h1>MASK<em>→MATERIALS</em></h1>
@@ -132,7 +154,7 @@ summary.dsum:hover{color:var(--text)}
         </div>
         <div class="btnrow" style="justify-content:center">
           <button class="primary" id="btn-open">Load mask splat…</button>
-          <input type="file" id="fileinput" accept=".spz" style="display:none">
+          <input type="file" id="fileinput" accept=".spz,.ply" style="display:none">
         </div>
       </div>
     </div>
@@ -143,7 +165,39 @@ summary.dsum:hover{color:var(--text)}
       <button id="tab-cab" class="tab active">Cabinets</button>
       <button id="tab-wt" class="tab">Worktops</button>
       <button id="tab-combined" class="tab">Combined</button>
+      <button id="tab-v2" class="tab" style="white-space:nowrap">🚪 Cab&nbsp;V2</button>
       <button id="tab-cap" class="tab">📷 360</button>
+    </div>
+    <div class="sec" data-vis="v2" style="display:none">
+      <h2><span class="ic">🚪</span>Cabinet V2 — planar wood projection</h2>
+      <button id="v2-tex" style="width:100%">Load wood texture (4K–8K)…</button>
+      <input type="file" id="v2-texinput" accept="image/*" style="display:none">
+      <div class="status" id="v2-status" style="margin-top:6px">no texture · load a mask first</div>
+      <div class="row" style="margin-top:10px"><label style="flex:none;width:96px">Wood scale</label><input type="number" id="v2-cm-n" min="2" max="400" step="1" style="width:58px"><input type="range" id="v2-cm" min="2" max="400" step="1" value="80" style="flex:1;min-width:0"><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">cm</span></div>
+      <div class="row"><label style="flex:none;width:96px">Grain rotation</label><input type="number" id="v2-rot-n" min="0" max="180" step="1" style="width:58px"><input type="range" id="v2-rot" min="0" max="180" step="1" value="0" style="flex:1;min-width:0"><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">°</span></div>
+      <div class="row"><label style="flex:none;width:96px">Offset U</label><input type="number" id="v2-offu-n" min="-1" max="1" step="0.01" style="width:58px"><input type="range" id="v2-offu" min="-100" max="100" step="1" value="0" style="flex:1;min-width:0"></div>
+      <div class="row"><label style="flex:none;width:96px">Offset V</label><input type="number" id="v2-offv-n" min="-1" max="1" step="0.01" style="width:58px"><input type="range" id="v2-offv" min="-100" max="100" step="1" value="0" style="flex:1;min-width:0"></div>
+      <div class="row"><label style="flex:none;width:96px">Keep scan light</label><input type="number" id="v2-light-n" min="0" max="1" step="0.05" style="width:58px"><input type="range" id="v2-light" min="0" max="100" step="1" value="60" style="flex:1;min-width:0"></div>
+      <div class="row"><label style="flex:none;width:96px">Brightness</label><input type="number" id="v2-bright-n" min="0.3" max="2.5" step="0.05" style="width:58px"><input type="range" id="v2-bright" min="30" max="250" step="1" value="100" style="flex:1;min-width:0"></div>
+      <div class="row"><label style="flex:none;width:96px">Contrast</label><input type="number" id="v2-contrast-n" min="0.5" max="2.5" step="0.05" style="width:58px"><input type="range" id="v2-contrast" min="50" max="250" step="1" value="100" style="flex:1;min-width:0"></div>
+      <div class="row"><label style="flex:none;width:96px">Relief (grain)</label><input type="number" id="v2-relief-n" min="0" max="1.5" step="0.05" style="width:58px"><input type="range" id="v2-relief" min="0" max="150" step="1" value="60" style="flex:1;min-width:0"></div>
+      <div class="row"><label style="flex:none;width:96px">Micro-grain</label><input type="number" id="v2-detail-n" min="0" max="1" step="0.05" style="width:58px"><input type="range" id="v2-detail" min="0" max="100" step="1" value="40" style="flex:1;min-width:0"></div>
+      <div class="row"><label style="flex:none;width:96px">Saturation</label><input type="number" id="v2-sat-n" min="0" max="2" step="0.05" style="width:58px"><input type="range" id="v2-sat" min="0" max="200" step="1" value="110" style="flex:1;min-width:0"></div>
+      <div class="row"><label style="flex:none;width:96px">Warmth</label><input type="number" id="v2-warm-n" min="-1" max="1" step="0.05" style="width:58px"><input type="range" id="v2-warm" min="-100" max="100" step="1" value="30" style="flex:1;min-width:0"></div>
+      <div class="row"><label style="flex:none;width:96px">Grain sheen</label><input type="number" id="v2-sheen-n" min="0" max="1" step="0.05" style="width:58px"><input type="range" id="v2-sheen" min="0" max="100" step="1" value="35" style="flex:1;min-width:0"></div>
+      <div class="row" style="margin-top:8px"><label style="flex:none;width:78px">Projection</label><select id="v2-project" style="flex:1;min-width:0"><option value="tri">Triplanar — follows each cabinet's facing (neighbour normals)</option><option value="perface">Per-face — axis buckets</option><option value="single">Single plane</option></select></div>
+      <button id="v2-apply" class="primary" style="width:100%;margin-top:8px">Project wood onto cabinets</button>
+      <h2 style="margin-top:16px"><span class="ic">⊞</span>Density prep — equalize → fill → apply</h2>
+      <div class="row"><label style="flex:none;width:96px">Splat size ×</label><input type="number" id="v2-psize-n" min="0.3" max="3" step="0.05" style="width:58px"><input type="range" id="v2-psize" min="30" max="300" step="1" value="100" style="flex:1;min-width:0"></div>
+      <div class="row"><label style="flex:none;width:96px">Neighbour radius ×</label><input type="number" id="v2-prad-n" min="0.8" max="6" step="0.1" style="width:58px"><input type="range" id="v2-prad" min="80" max="600" step="5" value="200" style="flex:1;min-width:0"></div>
+      <div class="row"><label style="flex:none;width:96px">Subdivisions</label><input type="number" id="v2-psub-n" min="1" max="4" step="1" style="width:58px"><input type="range" id="v2-psub" min="1" max="4" step="1" value="2" style="flex:1;min-width:0"></div>
+      <div class="row"><label style="flex:none;width:96px">Sparse boost</label><input type="number" id="v2-pboost-n" min="0" max="4" step="1" style="width:58px"><input type="range" id="v2-pboost" min="0" max="4" step="1" value="2" style="flex:1;min-width:0"></div>
+      <div class="row"><label style="flex:none;width:96px">Dense threshold</label><input type="number" id="v2-pthr-n" min="3" max="40" step="1" style="width:58px"><input type="range" id="v2-pthr" min="3" max="40" step="1" value="14" style="flex:1;min-width:0"></div>
+      <div class="row"><label style="flex:none;width:96px">Apply to</label><select id="v2-ptarget" style="flex:1;min-width:0"><option value="cab">Cabinets</option><option value="wt">Worktops</option><option value="both">Both</option></select></div>
+      <div class="row"><label class="check"><input type="checkbox" id="v2-pequal"> Equalize splat sizes too (uniform — trades coverage/detail)</label></div>
+      <button id="v2-prep" class="primary" style="width:100%;margin-top:8px">⊞ Build crisp cabinets (densify + apply)</button>
+      <p class="note">Per splat: gathers neighbours within <i>Neighbour radius</i>, fits the local surface plane (PCA), then adds an N×N on-plane grid (up/down + left/right only). <b>Sparse boost</b> adds up to that many <i>extra</i> subdivisions where a splat has fewer neighbours than <b>Dense threshold</b> — so thin/patchy areas get filled harder while dense ones stay put. <i>Apply to</i> picks Cabinets, Worktops, or Both. Re-runs from the original — heavier, give it a moment.</p>
+      <p class="note"><b>One plane</b> is fit to the green cabinet region (PCA), grain kept vertical; each splat gets local UVs and samples the texture, multiplied by the scanned brightness (<i>Keep scan light</i>). Detail is limited by splat count — turn on <b>Add splats between</b> (Cabinets → subdivide) for more density. Per-face projection comes next.</p>
     </div>
     <div class="sec" data-vis="cap" style="display:none">
       <h2><span class="ic">📷</span>360 Capture</h2>
@@ -172,6 +226,8 @@ summary.dsum:hover{color:var(--text)}
         <input type="range" id="val" min="0" max="100" value="24"><span class="val" id="val-v">0.24</span></div>
       <div class="row"><label class="check"><input type="checkbox" id="hl" checked> Highlight region</label>
         <span id="pinkcount">0 splats</span></div>
+      <div class="row"><label class="check"><input type="checkbox" id="fillgaps"> ⛶ Fill gaps — also grab marks surrounded by the region</label></div>
+      <p class="note" style="margin-top:2px">The dark/brown marks aren't a hue your range covers (near-grey reads as hue 0). <b>Fill gaps</b> adds any unselected splat that sits inside the selected region (≥8 selected neighbours within ~5&nbsp;cm), so embedded marks come in without grabbing the background.</p>
     </div>
 
     <div class="sec" data-vis="setup">
@@ -215,7 +271,12 @@ summary.dsum:hover{color:var(--text)}
       <div class="row" style="margin:4px 0 0"><label style="flex:none;color:var(--muted)">Adjusting look for</label><span class="val" id="edittarget" style="flex:1;text-align:right;color:var(--accent)">Cabinets</span></div>
     </div>
 
-    <div class="sec">
+    <div class="sec" data-hide-cap="1">
+      <h2><span class="ic">🔄</span>Orientation</h2>
+      <div class="row" style="gap:14px;flex-wrap:wrap"><label class="check"><input type="checkbox" id="flipx"> ↔ Mirror X</label><label class="check"><input type="checkbox" id="flipy"> 🙃 Flip Y</label><label class="check"><input type="checkbox" id="flipz"> ↕ Flip Z</label></div>
+    </div>
+
+    <div class="sec" data-vis="cw">
       <h2><span class="ic">🎚️</span>Material look</h2>
       <div class="row" style="gap:6px;margin-bottom:6px">
         <select id="preset-select" style="flex:1;min-width:0"></select>
@@ -226,13 +287,13 @@ summary.dsum:hover{color:var(--text)}
         <button id="btn-preset-update" class="ghost">Update</button>
         <button id="btn-preset-del" class="ghost">Delete</button>
       </div>
-      <div class="row"><label>Tile size</label>
-        <input type="range" id="tilesize" min="10" max="400" value="63"><span class="val" id="tilesize-v">0.63 m</span></div>
+      <div class="row"><label style="flex:none;width:54px">Tile size</label>
+        <input type="number" id="tilesize-n" min="0.01" max="4" step="0.01" style="width:58px"><input type="range" id="tilesize" min="1" max="400" value="63" style="flex:1;min-width:0"><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">m</span></div>
       <div class="row"><label>Rotation</label>
         <input type="range" id="texrot" min="0" max="180" value="0"><span class="val" id="texrot-v">0°</span></div>
       <div class="row"><label>Grain variation</label>
         <input type="range" id="grainvar" min="0" max="100" value="11"><span class="val" id="grainvar-v">11%</span></div>
-      <div class="row"><label class="check"><input type="checkbox" id="facetsplit" checked> Per-facet projection (split bends)</label></div>
+      <div class="row"><label style="flex:none;width:78px">Projection</label><select id="projection" style="flex:1;min-width:0"><option value="facet">Per-facet — split bends (one plane per surface)</option><option value="tri">Triplanar — follows each facing (neighbour normals)</option><option value="single">Single plane</option></select></div>
       <div class="row"><label>Subdivide amount</label>
         <input type="range" id="detail" min="10" max="40" step="1" value="10"><span class="val" id="detail-v">off</span></div>
       <div class="row"><label>Subdivide spread</label>
@@ -240,6 +301,17 @@ summary.dsum:hover{color:var(--text)}
       <div class="row"><label>Subdivide evenness</label>
         <input type="range" id="even" min="0" max="100" step="5" value="0"><span class="val" id="even-v">off</span></div>
       <div class="row"><label class="check"><input type="checkbox" id="autoplane" checked> Snap subdivide to surface (H/V)</label></div>
+      <div class="row"><label class="check"><input type="checkbox" id="vonly"> ↕ Subdivide vertically only (up/down)</label></div>
+      <div class="row"><label class="check"><input type="checkbox" id="noverhang"> ⊠ Subdivide between splats only (no overhang past edges)</label></div>
+      <div class="row"><label class="check"><input type="checkbox" id="between"> ⋰ Add splats between (keep size — fills gaps, no enlarging)</label></div>
+      <div class="row"><label>Neighbour radius</label><input type="range" id="betweenrad" min="0.01" max="10" step="0.01" value="3"><span class="val" id="betweenrad-v">3 cm</span></div>
+      <div class="row"><label>Sparse boost</label><input type="range" id="sparseboost" min="0" max="6" step="0.05" value="0"><input type="number" id="sparseboost-n" class="cbnum" min="0" max="6" step="0.1"></div>
+      <div class="row"><label>Dense threshold</label><input type="range" id="densethr" min="1" max="40" step="1" value="14"><span class="val" id="densethr-v">14</span></div>
+      <p class="note" style="margin-top:2px">Two stages, in order: <b>Sparse boost</b> first <i>fills the gaps</i> — in thin areas it spreads new material-sampled splats out across the empty space (at the base density), then <b>Subdivide amount</b> makes everything finer, including those new ones. Dense areas are left alone. <b>Dense threshold</b> is relative to the region's <i>own</i> typical density (raise = fill more, lower = only the sparsest), measured within <i>Neighbour radius</i>. Uses the channel's material; with none applied it falls back to midpoint fill. Updates live; per Cabinets / Worktops tab.</p>
+      <div class="row" style="margin-top:10px"><label class="check"><input type="checkbox" id="flat-on"> ▦ Flatten surface (selected splats)</label></div>
+      <div class="row"><label style="flex:none;width:64px">Reach</label><input type="number" id="flat-rad-n" min="0.005" max="0.5" step="0.005" style="width:58px"><input type="range" id="flat-rad" min="5" max="500" step="1" value="40" style="flex:1;min-width:0"><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">m</span></div>
+      <div class="row"><label style="flex:none;width:64px">Intensity</label><input type="number" id="flat-int-n" min="0" max="1" step="0.05" style="width:58px"><input type="range" id="flat-int" min="0" max="100" step="1" value="50" style="flex:1;min-width:0"></div>
+      <p class="note" style="margin-top:2px">Flatten pulls each selected splat toward the average X/Z of its neighbours within <i>Reach</i> — it never moves a splat up or down, so a bumpy cabinet front smooths out. <i>Intensity</i> = how far toward that average.</p>
       <div class="row"><label>Floor mosaic</label>
         <input type="range" id="mosaic" min="0" max="150" value="0"><span class="val" id="mosaic-v">off</span></div>
       <div class="row"><label>Contrast</label>
@@ -262,7 +334,7 @@ summary.dsum:hover{color:var(--text)}
       <p class="note"><i>Auto-match</i> reads the material &amp; the scene lighting and sets contrast, shading, colour &amp; brightness for you. <i>Contrast</i> deepens the blacks; <i>Shading</i> bakes the room's light &amp; shadows; <i>Mosaic</i> breaks the floor into rotated stone tiles.</p>
     </div>
 
-    <div class="sec">
+    <div class="sec" data-hide-cap="1">
       <h2><span class="ic">💡</span>Lighting &amp; view</h2>
       <div class="row"><label>Strength</label>
         <input type="range" class="grad" id="exposure" min="20" max="260" value="100" style="background:linear-gradient(90deg,#0c0d10,#e9e7e1)"><span class="val" id="exposure-v">1.00×</span></div>
@@ -275,32 +347,50 @@ summary.dsum:hover{color:var(--text)}
       <p class="note" style="margin:2px 0 10px">Overall lighting on the whole scene — splats &amp; room. <i>Tint hue</i> picks any colour; raise <i>Tint amount</i> from <b>off</b> to cast it.</p>
       <div class="row"><label>Splat size</label>
         <input type="range" id="splatscale" min="40" max="250" value="164"><span class="val" id="splatscale-v">1.64×</span></div>
+      <div class="row"><label>Anti-aliasing</label>
+        <input type="range" id="aa" min="100" max="300" step="10" value="180"><span class="val" id="aa-v">1.8×</span></div>
+      <p class="note" style="margin-top:2px">Supersampling — renders the splats at this × the display resolution and downsamples, smoothing the soft splat edges. Higher = cleaner but heavier on the GPU.</p>
     </div>
 
-    <div class="sec">
+    <div class="sec" data-vis="comb">
       <h2><span class="ic">✂️</span>Crop box <span style="font-weight:400;color:var(--muted);font-size:11px">view only</span></h2>
-      <div class="row"><label class="check"><input type="checkbox" id="crop-on"> Enable — hide splats outside the box</label></div>
-      <div class="row"><label>X min</label><input type="range" id="cropxmin" min="-10" max="10" step="0.001" value="-10"><span class="val" id="cropxmin-v">–</span></div>
-      <div class="row"><label>X max</label><input type="range" id="cropxmax" min="-10" max="10" step="0.001" value="10"><span class="val" id="cropxmax-v">–</span></div>
-      <div class="row"><label>Y min</label><input type="range" id="cropymin" min="-10" max="10" step="0.001" value="-10"><span class="val" id="cropymin-v">–</span></div>
-      <div class="row"><label>Y max</label><input type="range" id="cropymax" min="-10" max="10" step="0.001" value="10"><span class="val" id="cropymax-v">–</span></div>
-      <div class="row"><label>Z min</label><input type="range" id="cropzmin" min="-10" max="10" step="0.001" value="-10"><span class="val" id="cropzmin-v">–</span></div>
-      <div class="row"><label>Z max</label><input type="range" id="cropzmax" min="-10" max="10" step="0.001" value="10"><span class="val" id="cropzmax-v">–</span></div>
-      <button id="btn-cropfit" style="width:100%;margin-top:6px">Reset box to full splat</button>
-      <p class="note" style="margin-top:6px">Hides splats whose centre is outside the box, in this viewer only — the exported / live Unity copy keeps every splat.</p>
+      <div class="row"><label class="check"><input type="checkbox" id="crop-on"> Enable — apply the boxes</label></div>
+      <div id="cropbox-list"></div>
+      <button id="btn-addbox" style="width:100%;margin:4px 0 8px">＋ Add crop box</button>
+      <div class="cbhead">Selected box — Position</div>
+      <div class="row"><label>X</label><input type="range" id="bpx"><input type="number" id="bpx-n" class="cbnum"></div>
+      <div class="row"><label>Y</label><input type="range" id="bpy"><input type="number" id="bpy-n" class="cbnum"></div>
+      <div class="row"><label>Z</label><input type="range" id="bpz"><input type="number" id="bpz-n" class="cbnum"></div>
+      <div class="cbhead">Rotation (°)</div>
+      <div class="row"><label>X</label><input type="range" id="brx"><input type="number" id="brx-n" class="cbnum"></div>
+      <div class="row"><label>Y</label><input type="range" id="bry"><input type="number" id="bry-n" class="cbnum"></div>
+      <div class="row"><label>Z</label><input type="range" id="brz"><input type="number" id="brz-n" class="cbnum"></div>
+      <div class="cbhead">Scale (size)</div>
+      <div class="row"><label>X</label><input type="range" id="bsx"><input type="number" id="bsx-n" class="cbnum"></div>
+      <div class="row"><label>Y</label><input type="range" id="bsy"><input type="number" id="bsy-n" class="cbnum"></div>
+      <div class="row"><label>Z</label><input type="range" id="bsz"><input type="number" id="bsz-n" class="cbnum"></div>
+      <button id="btn-cropfit" style="width:100%;margin-top:6px">Reset selected box to full splat</button>
+      <p class="note" style="margin-top:6px">Add one or more boxes; each is <b>keep inside</b> (show only what's in it) or <b>hide inside</b> (carve it out). A splat survives if it's inside <i>any</i> keep-box and <i>no</i> hide-box. View only — the export / live Unity copy keeps every splat.</p>
     </div>
 
-    <div class="sec">
+    <div class="sec" data-hide-cap="1">
       <h2><span class="ic">🧹</span>Floaters</h2>
       <div class="row"><label class="check"><input type="checkbox" id="floater-on"> Hide floaters (isolated splats)</label></div>
-      <div class="row"><label>Density cutoff</label><input type="range" id="floater-dens" min="1" max="60" step="1" value="15"><span class="val" id="floater-dens-v">15</span></div>
+      <div class="row"><label class="check"><input type="checkbox" id="floater-show"> 🟡 Show floaters as yellow</label></div>
+      <div class="row"><label>Density cutoff</label><input type="range" id="floater-dens" min="1" max="500" step="1" value="15"><span class="val" id="floater-dens-v">15</span></div>
       <p class="note" style="margin-top:6px">Removes splats whose 3×3×3 voxel neighbourhood (6&nbsp;cm cells) holds fewer than this many splats — the airborne “snow”. Affects the Combined view, the export, and the live Unity copy.</p>
     </div>
 
-    <div class="sec">
+    <div class="sec" data-hide-cap="1">
       <h2><span class="ic">🎨</span>Quick combos <span style="font-weight:400;color:var(--muted);font-size:11px">test</span></h2>
       <div id="combo-btns" style="display:flex;flex-direction:column;gap:6px"></div>
       <p class="note" style="margin-top:6px">One click applies a cabinet + worktop pair, then auto-saves to the linked Unity file.</p>
+      <div class="row" style="margin-top:8px;align-items:center;gap:8px">
+        <label class="check" style="flex:none;white-space:nowrap" title="How many combos to bake this run. 0 = all.">first <input type="number" id="prerender-max" value="5" min="0" step="1" style="width:48px"></label>
+        <label class="check" style="flex:none;white-space:nowrap" title="Save straight into HTML_Editor/Prerendered Cabinets via the server (no folder picker)."><input type="checkbox" id="prerender-server" checked> via server</label>
+        <button id="btn-prerender" style="flex:1">⚙ Pre-render cabinets</button>
+      </div>
+      <div id="prerender-status" style="font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:4px;text-align:center">bakes combos to .spz (Prerendered Cabinets) · 0 = all</div>
     </div>
 
     <div class="sec" style="border-bottom:0;margin-top:auto" data-vis="comb">
@@ -429,13 +519,21 @@ precision highp float; precision highp int; precision highp usampler2D;
 uniform usampler2D u_data; uniform usampler2D u_sel;
 uniform mat4 u_view, u_proj; uniform vec2 u_focal, u_viewport; uniform vec3 u_selTint;
 uniform float u_splatScale, u_exposure, u_selMix; uniform vec3 u_lightTint;
-uniform vec3 u_cropMin, u_cropMax; uniform float u_cropOn;
+uniform vec3 u_boxCenter[8], u_boxHalf[8]; uniform mat3 u_boxRot[8]; uniform int u_boxMode[8]; uniform int u_boxCount; uniform float u_cropOn;
 in vec2 a_corner; in int a_index; out vec4 vColor; out vec2 vPos;
 void main(){
   int ix=(a_index & 1023)<<1; int iy=a_index>>10;
   uvec4 t0=texelFetch(u_data, ivec2(ix,iy),0);
   vec3 p=vec3(uintBitsToFloat(t0.x),uintBitsToFloat(t0.y),uintBitsToFloat(t0.z));
-  if(u_cropOn>0.5 && (any(lessThan(p,u_cropMin))||any(greaterThan(p,u_cropMax)))){ gl_Position=vec4(0.0,0.0,2.0,1.0); return; }   // crop box (view only): cull splats outside the box
+  if(u_cropOn>0.5 && u_boxCount>0){   // crop boxes (view only): KEEP a splat if it's inside any keep-box; HIDE it if inside any hide-box
+    bool hasKeep=false, inKeep=false, inCut=false;
+    for(int bi=0; bi<8; bi++){ if(bi>=u_boxCount) break;
+      vec3 d = transpose(u_boxRot[bi])*(p - u_boxCenter[bi]);   // splat into the box's local frame (oriented box)
+      bool inside = all(lessThanEqual(abs(d), u_boxHalf[bi]));
+      if(u_boxMode[bi]==1){ hasKeep=true; if(inside) inKeep=true; } else if(inside){ inCut=true; }
+    }
+    if((hasKeep && !inKeep) || inCut){ gl_Position=vec4(0.0,0.0,2.0,1.0); return; }
+  }
   vec4 cam=u_view*vec4(p,1.0); vec4 clipPos=u_proj*cam; float clip=1.2*clipPos.w;
   if(clipPos.z<-clip||clipPos.x<-clip||clipPos.x>clip||clipPos.y<-clip||clipPos.y>clip){ gl_Position=vec4(0.0,0.0,2.0,1.0); return; }
   uvec4 t1=texelFetch(u_data, ivec2(ix|1,iy),0);
@@ -471,10 +569,10 @@ gl.useProgram(prog);
 const U=n=>gl.getUniformLocation(prog,n);
 const uView=U('u_view'),uProj=U('u_proj'),uFocal=U('u_focal'),uViewport=U('u_viewport'),uTint=U('u_selTint');
 const uSplatScale=U('u_splatScale'),uExposure=U('u_exposure'),uSelMix=U('u_selMix'),uLightTint=U('u_lightTint');
-const uCropMin=U('u_cropMin'),uCropMax=U('u_cropMax'),uCropOn=U('u_cropOn');
+const uBoxCenter=U('u_boxCenter'),uBoxHalf=U('u_boxHalf'),uBoxRot=U('u_boxRot'),uBoxMode=U('u_boxMode'),uBoxCount=U('u_boxCount'),uCropOn=U('u_cropOn');
 gl.uniform1i(U('u_data'),0); gl.uniform1i(U('u_sel'),1);
 gl.uniform3f(uTint,1.0,0.88,0.1); gl.uniform1f(uSplatScale,1.64); gl.uniform1f(uExposure,1.0); gl.uniform1f(uSelMix,0.6); gl.uniform3f(uLightTint,1,1,1);
-gl.uniform3f(uCropMin,-1e9,-1e9,-1e9); gl.uniform3f(uCropMax,1e9,1e9,1e9); gl.uniform1f(uCropOn,0);
+gl.uniform1i(uBoxCount,0); gl.uniform1f(uCropOn,0);
 gl.disable(gl.DEPTH_TEST); gl.enable(gl.BLEND);
 gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA,gl.ONE,gl.ONE_MINUS_DST_ALPHA,gl.ONE);
 gl.clearColor(0,0,0,0);
@@ -509,6 +607,8 @@ window.addEventListener('pagehide',()=>{ if(camSaveEnabled) saveCam(); });
 window.addEventListener('beforeunload',()=>{ if(camSaveEnabled) saveCam(); });
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'&&camSaveEnabled) saveCam(); });
 let viewMat=null, projMat=null, needSort=true, sortBusy=false;
+let flipX=false, flipY=false, flipZ=false; const FLIP=new Float32Array(16);   // view-only axis flips (reflect world X/Y/Z)
+function buildFlip(){ FLIP.set([flipX?-1:1,0,0,0, 0,flipY?-1:1,0,0, 0,0,flipZ?-1:1,0, 0,0,0,1]); return FLIP; }
 
 const workerSrc=`let positions=null,n=0; const cnt=new Uint32Array(65536);
 onmessage=(e)=>{ const d=e.data;
@@ -574,6 +674,7 @@ function buildGPUData(src){
   if(worker){ const posCopy=s.positions.slice(); worker.postMessage({type:'init',positions:posCopy.buffer,count:n},[posCopy.buffer]); }
   setCropRanges(s);   // re-fit the crop-box sliders to this splat's bounds
   needSort=true;
+  if(typeof paintFloaterView==='function'){ const fs=$('floater-show'); if(fs&&fs.checked) paintFloaterView(); }   // keep yellow overlay after rebuilds
 }
 function uploadColors(){ gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,dataTex);
   gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,2048,texRows,gl.RGBA_INTEGER,gl.UNSIGNED_INT,texData); }
@@ -582,11 +683,14 @@ function uploadSel(){ gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2
 
 function eyePos(){ return [cam.target[0]+cam.radius*Math.sin(cam.phi)*Math.sin(cam.theta),
   cam.target[1]+cam.radius*Math.cos(cam.phi), cam.target[2]+cam.radius*Math.sin(cam.phi)*Math.cos(cam.theta)]; }
+let superSample=1.8;   // anti-aliasing: render the splats at this × the display resolution, then downsample
 function updateMatrices(){
-  const dpr=Math.min(window.devicePixelRatio||1,2);
-  const W=Math.max(1,Math.round(canvas.clientWidth*dpr)), H=Math.max(1,Math.round(canvas.clientHeight*dpr));
+  const dpr=Math.min(window.devicePixelRatio||1,2)*superSample;
+  let W=Math.round(canvas.clientWidth*dpr), H=Math.round(canvas.clientHeight*dpr);
+  const MAX=4096; if(Math.max(W,H)>MAX){ const s=MAX/Math.max(W,H); W=Math.round(W*s); H=Math.round(H*s); }   // keep the backing buffer within GPU limits
+  W=Math.max(1,W); H=Math.max(1,H);
   if(canvas.width!==W||canvas.height!==H){ canvas.width=W; canvas.height=H; }
-  viewMat=lookAt(eyePos(),cam.target,[0,1,0]); projMat=perspective(cam.fov,W/H,0.05,600);
+  viewMat=lookAt(eyePos(),cam.target,[0,1,0]); if(flipX||flipY||flipZ) viewMat=mat4mul(viewMat,buildFlip()); projMat=perspective(cam.fov,W/H,0.05,600);
   gl.viewport(0,0,W,H); gl.uniformMatrix4fv(uView,false,viewMat); gl.uniformMatrix4fv(uProj,false,projMat);
   const f=(H/2)/Math.tan(cam.fov/2); gl.uniform2f(uFocal,f,f); gl.uniform2f(uViewport,W,H);
 }
@@ -603,8 +707,49 @@ function frame(){
   if(selDirty){ if(!chPreview) uploadSel(); selDirty=false; }
   gl.clear(gl.COLOR_BUFFER_BIT);
   if(drawCount>0) gl.drawArraysInstanced(gl.TRIANGLE_STRIP,0,4,drawCount);
+  updateCaptureMarker();
+  updateCropBox();
 }
 requestAnimationFrame(frame);
+/* project the capture position (cap-x/y/z) to screen and place the marker — only on the 360 tab */
+function updateCaptureMarker(){
+  const el=$('capmarker'); if(!el) return;
+  if(!captureMode||!viewMat||!projMat){ if(el.style.display!=='none') el.style.display='none'; return; }
+  const x=parseFloat($('cap-x').value),y=parseFloat($('cap-y').value),z=parseFloat($('cap-z').value);
+  if(!Number.isFinite(x)||!Number.isFinite(y)||!Number.isFinite(z)){ el.style.display='none'; return; }
+  const M=mat4mul(projMat,viewMat);
+  const cw=M[3]*x+M[7]*y+M[11]*z+M[15];
+  if(cw<=1e-4){ el.style.display='none'; return; }   // behind the camera
+  const ndcx=(M[0]*x+M[4]*y+M[8]*z+M[12])/cw, ndcy=(M[1]*x+M[5]*y+M[9]*z+M[13])/cw;
+  el.style.display='block';
+  el.style.left=((ndcx*0.5+0.5)*canvas.clientWidth)+'px';
+  el.style.top=((1-(ndcy*0.5+0.5))*canvas.clientHeight)+'px';
+}
+/* ---- 3D crop-box wireframes: project each box's 8 corners and draw its 12 edges as an SVG overlay (Combined tab).
+   keep-box = orange, hide-box = red, the selected box brighter/thicker. Up to 8 boxes × 12 edges = 96 lines. ---- */
+const cropSvg=$('cropbox-svg'), cropEdges=[];
+if(cropSvg){ const NS='http://www.w3.org/2000/svg';
+  for(let e=0;e<96;e++){ const ln=document.createElementNS(NS,'line'); ln.setAttribute('stroke-linecap','round'); ln.style.display='none'; cropSvg.appendChild(ln); cropEdges.push(ln); } }
+const CROP_EDGES=[[0,1],[0,2],[0,4],[1,3],[1,5],[2,3],[2,6],[3,7],[4,5],[4,6],[5,7],[6,7]];   // 12 edges of a box, corner bits = x|y<<1|z<<2
+function updateCropBox(){
+  if(!cropSvg) return;
+  if(!scene||!viewingCombined||!viewMat||!projMat||!(typeof cropBoxes!=='undefined')||!cropBoxes.length){ if(cropSvg.style.display!=='none') cropSvg.style.display='none'; return; }
+  const M=mat4mul(projMat,viewMat), W=canvas.clientWidth, H=canvas.clientHeight; let li=0;
+  for(let bi=0; bi<cropBoxes.length && bi<8; bi++){ const box=cropBoxes[bi], P=box.pos, S=box.scale, c=[];
+    if(!(P&&S)||![P[0],P[1],P[2],S[0],S[1],S[2]].every(Number.isFinite)){ for(let e=0;e<12;e++) cropEdges[li++].style.display='none'; continue; }
+    const R=eulerMat3(box.rot||[0,0,0]), hx=Math.abs(S[0])/2, hy=Math.abs(S[1])/2, hz=Math.abs(S[2])/2;
+    for(let i=0;i<8;i++){ const lx=(i&1)?hx:-hx, ly=(i&2)?hy:-hy, lz=(i&4)?hz:-hz;   // local corner → world: pos + R·local
+      const x=P[0]+R[0]*lx+R[1]*ly+R[2]*lz, y=P[1]+R[3]*lx+R[4]*ly+R[5]*lz, z=P[2]+R[6]*lx+R[7]*ly+R[8]*lz, cw=M[3]*x+M[7]*y+M[11]*z+M[15];
+      if(cw<=1e-4){ c.push(null); continue; }
+      const nx=(M[0]*x+M[4]*y+M[8]*z+M[12])/cw, ny=(M[1]*x+M[5]*y+M[9]*z+M[13])/cw; c.push([(nx*0.5+0.5)*W,(1-(ny*0.5+0.5))*H]); }
+    const sel=(bi===cropSel), col=(box.mode==='cut')?'#ff5a5a':'#f2a35e';
+    for(let e=0;e<12;e++){ const ln=cropEdges[li++], a=c[CROP_EDGES[e][0]], b=c[CROP_EDGES[e][1]];
+      if(a&&b){ ln.setAttribute('x1',a[0]);ln.setAttribute('y1',a[1]);ln.setAttribute('x2',b[0]);ln.setAttribute('y2',b[1]); ln.setAttribute('stroke',col); ln.setAttribute('stroke-width',sel?2:1.1); ln.setAttribute('stroke-opacity',sel?0.95:0.45); ln.style.display=''; }
+      else ln.style.display='none'; }
+  }
+  for(; li<96; li++) cropEdges[li].style.display='none';
+  if(cropSvg.style.display!=='') cropSvg.style.display='';
+}
 
 /* ---- camera input ---- */
 let drag=null;
@@ -651,6 +796,10 @@ canvas.addEventListener('dblclick',e=>{
 
 /* ---- view sliders ---- */
 $('splatscale').addEventListener('input',()=>{ const v=parseInt($('splatscale').value)/100; gl.uniform1f(uSplatScale,v); $('splatscale-v').textContent=v.toFixed(2)+'×'; });
+$('aa').addEventListener('input',()=>{ superSample=parseInt($('aa').value)/100; $('aa-v').textContent=superSample.toFixed(1)+'×'; });
+$('flipx').addEventListener('change',()=>{ flipX=$('flipx').checked; needSort=true; lastSortView=''; });
+$('flipy').addEventListener('change',()=>{ flipY=$('flipy').checked; needSort=true; lastSortView=''; });
+$('flipz').addEventListener('change',()=>{ flipZ=$('flipz').checked; needSort=true; lastSortView=''; });
 $('exposure').addEventListener('input',()=>{ const v=parseInt($('exposure').value)/100; gl.uniform1f(uExposure,v); $('exposure-v').textContent=v.toFixed(2)+'×'; scheduleCopySave(); });
 function hsv2rgb(h,s,v){ h=(((h%360)+360)%360)/60; const c=v*s, x=c*(1-Math.abs(h%2-1)), m=v-c; let r=0,g=0,b=0;
   if(h<1){r=c;g=x;} else if(h<2){r=x;g=c;} else if(h<3){g=c;b=x;} else if(h<4){g=x;b=c;} else if(h<5){r=x;b=c;} else {r=c;b=x;}
@@ -674,33 +823,59 @@ function recomputeLightTint(){
 }));
 $('hl').addEventListener('change',()=>{ gl.uniform1f(uSelMix,$('hl').checked?0.6:0.0); });
 
-/* ---- crop box (view only): cull splats whose centre is outside an adjustable box ---- */
-let sceneBounds=null, cropCustomized=false;
+/* ---- crop boxes (view only): an ARRAY of oriented boxes; each KEEPS or HIDES the splats inside it.
+   A splat survives if it's inside any keep-box (or there are none) AND not inside any hide-box. Each box has
+   position + rotation(°) + scale; the SELECTED box is edited by the sliders/number fields (and shown highlighted). ---- */
+let sceneBounds=null, cropBoxes=[], cropSel=0;
+const CB_CTL=[['bpx','pos',0],['bpy','pos',1],['bpz','pos',2],['brx','rot',0],['bry','rot',1],['brz','rot',2],['bsx','scale',0],['bsy','scale',1],['bsz','scale',2]];
+function eulerMat3(r){ const dx=r[0]*Math.PI/180,dy=r[1]*Math.PI/180,dz=r[2]*Math.PI/180,
+    cx=Math.cos(dx),sx=Math.sin(dx),cy=Math.cos(dy),sy=Math.sin(dy),cz=Math.cos(dz),sz=Math.sin(dz);
+  return [ cz*cy, cz*sy*sx-sz*cx, cz*sy*cx+sz*sx,  sz*cy, sz*sy*sx+cz*cx, sz*sy*cx-cz*sx,  -sy, cy*sx, cy*cx ]; }   // R (row-major) = Rz·Ry·Rx
+function fullBox(mode){ const a=sceneBounds?sceneBounds.min:[-1,-1,-1], b=sceneBounds?sceneBounds.max:[1,1,1];
+  return {mode:mode||'keep', pos:[(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2], rot:[0,0,0], scale:[(b[0]-a[0])||1,(b[1]-a[1])||1,(b[2]-a[2])||1]}; }
 function applyCrop(){
-  gl.uniform3f(uCropMin,+$('cropxmin').value,+$('cropymin').value,+$('cropzmin').value);
-  gl.uniform3f(uCropMax,+$('cropxmax').value,+$('cropymax').value,+$('cropzmax').value);
+  const n=Math.min(cropBoxes.length,8), ctr=new Float32Array(24), half=new Float32Array(24), rot=new Float32Array(72), md=new Int32Array(8);
+  for(let i=0;i<n;i++){ const b=cropBoxes[i]; ctr[i*3]=b.pos[0];ctr[i*3+1]=b.pos[1];ctr[i*3+2]=b.pos[2];
+    half[i*3]=Math.abs(b.scale[0])/2;half[i*3+1]=Math.abs(b.scale[1])/2;half[i*3+2]=Math.abs(b.scale[2])/2;
+    const R=eulerMat3(b.rot); for(let c=0;c<3;c++)for(let r2=0;r2<3;r2++) rot[i*9+c*3+r2]=R[r2*3+c];   // R column-major (shader transposes → R⁻¹)
+    md[i]=(b.mode==='keep')?1:0; }
+  gl.uniform3fv(uBoxCenter,ctr); gl.uniform3fv(uBoxHalf,half); gl.uniformMatrix3fv(uBoxRot,false,rot); gl.uniform1iv(uBoxMode,md); gl.uniform1i(uBoxCount,n);
   gl.uniform1f(uCropOn,$('crop-on').checked?1:0);
-  for(const id of ['cropxmin','cropxmax','cropymin','cropymax','cropzmin','cropzmax']) $(id+'-v').textContent=(+$(id).value).toFixed(2);
 }
-// Re-range the sliders to the displayed splat's bounding box; snap to full extent until the user edits one.
+function ctlVal(kind,axis){ const b=cropBoxes[cropSel]; if(!b)return 0; return (kind==='pos')?b.pos[axis]:(kind==='rot')?b.rot[axis]:b.scale[axis]; }
+function setCtlVal(kind,axis,v){ const b=cropBoxes[cropSel]; if(!b)return; if(kind==='pos')b.pos[axis]=v; else if(kind==='rot')b.rot[axis]=v; else b.scale[axis]=Math.max(0,v); }
+function boxToControls(){ for(const [id,kind,axis] of CB_CTL){ const v=ctlVal(kind,axis), s=$(id), nn=$(id+'-n'); if(s)s.value=v; if(nn)nn.value=Math.round(v*1000)/1000; } }
+function selectBox(i){ cropSel=clamp(i,0,Math.max(0,cropBoxes.length-1)); boxToControls(); renderCropList(); applyCrop(); }
+function addBox(){ if(cropBoxes.length>=8){ toast('Max 8 crop boxes',true); return; } cropBoxes.push(fullBox('keep')); selectBox(cropBoxes.length-1); toast('Added crop box '+cropBoxes.length); }
+function delBox(i){ cropBoxes.splice(i,1); if(!cropBoxes.length) cropBoxes.push(fullBox('keep')); selectBox(Math.min(cropSel,cropBoxes.length-1)); }
+function renderCropList(){ const host=$('cropbox-list'); if(!host) return; host.innerHTML='';
+  cropBoxes.forEach((b,i)=>{ const row=document.createElement('div'); row.className='cbrow'+(i===cropSel?' sel':'');
+    const pick=document.createElement('button'); pick.className='cbpick'; pick.textContent='Box '+(i+1); pick.title='Edit this box below'; pick.onclick=()=>selectBox(i);
+    const mode=document.createElement('select'); mode.className='cbmode'; mode.innerHTML='<option value="keep">keep inside</option><option value="cut">hide inside</option>'; mode.value=b.mode; mode.onchange=()=>{ b.mode=mode.value; renderCropList(); applyCrop(); };
+    const del=document.createElement('button'); del.className='cbdel'; del.textContent='✕'; del.title='Remove this box'; del.onclick=()=>delBox(i);
+    row.appendChild(pick); row.appendChild(mode); row.appendChild(del); host.appendChild(row); });
+}
+// Range the position/scale sliders to the splat's bounding box; seed one full-extent keep-box if none yet.
 function setCropRanges(s){
   const n=s.n, p=s.positions; if(!n||!p) return;
   let a=[Infinity,Infinity,Infinity], b=[-Infinity,-Infinity,-Infinity];
   for(let i=0;i<n;i++) for(let k=0;k<3;k++){ const v=p[i*3+k]; if(v<a[k])a[k]=v; if(v>b[k])b[k]=v; }
   sceneBounds={min:a.slice(),max:b.slice()};
-  const ax=[['cropxmin','cropxmax',0],['cropymin','cropymax',1],['cropzmin','cropzmax',2]];
-  for(const [lo,hi,k] of ax){ const r=(b[k]-a[k])||1, st=Math.max(r/400,1e-4), aa=a[k]-r*0.02, bb=b[k]+r*0.02;
-    const L=$(lo),H=$(hi); L.min=aa;L.max=bb;L.step=st; H.min=aa;H.max=bb;H.step=st;
-    if(!cropCustomized){ L.value=a[k]; H.value=b[k]; } else { L.value=clamp(+L.value,aa,bb); H.value=clamp(+H.value,aa,bb); } }
-  applyCrop();
+  for(const [id,kind,axis] of CB_CTL){ const s2=$(id),nn=$(id+'-n'); if(!s2)continue; const r=(b[axis]-a[axis])||1;
+    let lo,hi,st; if(kind==='pos'){ lo=a[axis]-r*0.5; hi=b[axis]+r*0.5; st=Math.max(r/400,1e-4); }
+      else if(kind==='rot'){ lo=-180; hi=180; st=1; } else { lo=0; hi=(r*2)||2; st=Math.max(r/400,1e-4); }
+    s2.min=lo;s2.max=hi;s2.step=st; if(nn){ nn.min=(kind==='scale')?0:''; nn.max=(kind==='rot')?180:''; nn.step=st; } }
+  if(!cropBoxes.length) cropBoxes=[fullBox('keep')];
+  selectBox(Math.min(cropSel,cropBoxes.length-1));
 }
-['cropxmin','cropxmax','cropymin','cropymax','cropzmin','cropzmax'].forEach(id=>$(id).addEventListener('input',()=>{ cropCustomized=true; applyCrop(); }));
+for(const [id,kind,axis] of CB_CTL){ const s=$(id),nn=$(id+'-n');
+  const onset=v=>{ if(!Number.isFinite(v))return; setCtlVal(kind,axis,v); const cv=ctlVal(kind,axis); if(s)s.value=cv; if(nn)nn.value=Math.round(cv*1000)/1000; applyCrop(); };
+  if(s) s.addEventListener('input',()=>onset(+s.value));
+  if(nn) nn.addEventListener('input',()=>onset(+nn.value));
+}
 $('crop-on').addEventListener('change',applyCrop);
-$('btn-cropfit').onclick=()=>{ if(!sceneBounds) return; cropCustomized=false;
-  $('cropxmin').value=sceneBounds.min[0]; $('cropxmax').value=sceneBounds.max[0];
-  $('cropymin').value=sceneBounds.min[1]; $('cropymax').value=sceneBounds.max[1];
-  $('cropzmin').value=sceneBounds.min[2]; $('cropzmax').value=sceneBounds.max[2];
-  applyCrop(); };
+$('btn-cropfit').onclick=()=>{ if(!sceneBounds||!cropBoxes[cropSel]) return; const m=cropBoxes[cropSel].mode; cropBoxes[cropSel]=fullBox(m); boxToControls(); applyCrop(); };
+if($('btn-addbox')) $('btn-addbox').onclick=addBox;
 
 /* ---- pink detection (by splat colour) ---- */
 function detectPink(){
@@ -715,6 +890,19 @@ function detectPink(){
     let h=0; if(d>1e-6){ if(mx===r)h=((g-b)/d)%6; else if(mx===g)h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; if(h<0)h+=360; }
     const on=(h>=hLo&&h<=hHi&&s>=sMin&&v>=vMin)?1:0;
     selected[i]=on; if(on)cnt++;
+  }
+  if(cnt>0 && $('fillgaps') && $('fillgaps').checked){   // morphological close: pull in unselected splats INSIDE the region (interior marks), not the boundary
+    const p=scene.positions, R=0.04, R2=R*R, cell=R, grid=new Map();
+    for(let i=0;i<n;i++){ const k=Math.floor(p[i*3]/cell)+','+Math.floor(p[i*3+1]/cell)+','+Math.floor(p[i*3+2]/cell); let a=grid.get(k); if(!a){a=[];grid.set(k,a);} a.push(i); }
+    const cand=new Set();   // cells next to the selected region → the only place an interior mark can be (skips the far background)
+    for(let i=0;i<n;i++){ if(!selected[i])continue; const gx=Math.floor(p[i*3]/cell),gy=Math.floor(p[i*3+1]/cell),gz=Math.floor(p[i*3+2]/cell);
+      for(let dz=-1;dz<=1;dz++)for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++) cand.add((gx+dx)+','+(gy+dy)+','+(gz+dz)); }
+    const add=new Uint8Array(n);
+    for(const ck of cand){ const arr=grid.get(ck); if(!arr)continue;
+      for(let q=0;q<arr.length;q++){ const i=arr[q]; if(selected[i])continue; const x=p[i*3],y=p[i*3+1],z=p[i*3+2],gx=Math.floor(x/cell),gy=Math.floor(y/cell),gz=Math.floor(z/cell); let sn=0,tn=0;
+        scan: for(let dz=-1;dz<=1;dz++)for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){ const a=grid.get((gx+dx)+','+(gy+dy)+','+(gz+dz)); if(!a)continue; for(let u=0;u<a.length;u++){ const j=a[u]; if(j===i)continue; const ex=p[j*3]-x,ey=p[j*3+1]-y,ez=p[j*3+2]-z; if(ex*ex+ey*ey+ez*ez<=R2){ tn++; if(selected[j])sn++; if(tn>=60) break scan; } } }
+        if(tn>=8 && sn>=tn*0.72) add[i]=1; } }   // ≥72% of its neighbours are in the region → interior hole/mark, not the boundary
+    for(let i=0;i<n;i++){ if(add[i]){ selected[i]=1; cnt++; } }
   }
   for(let i=n;i<selected.length;i++) selected[i]=0;
   selCount=cnt; selDirty=true; segData=null; updateSelLabel();
@@ -887,7 +1075,7 @@ function fitPlane(g,N){
 function buildSegments(){
   const n=scene.n,p=scene.positions, idxs=[];
   for(let i=0;i<n;i++) if(selected[i]) idxs.push(i);
-  const facetSplit=$('facetsplit').checked;
+  const facetSplit=(($('projection')&&$('projection').value)||'facet')!=='single';   // per-facet for both Per-facet & Triplanar; one plane for Single
   const C=0.07, cellOf=new Map(), keys=[], cell=new Int32Array(idxs.length);
   const kf=(x,y,z)=>x+','+y+','+z;
   for(let k=0;k<idxs.length;k++){ const i=idxs[k];
@@ -965,12 +1153,35 @@ function buildSegments(){
   segData={idxs:Int32Array.from(idxs), comp, fits:groups.map((g,c)=>fitPlane(g,facetN[c])), ncomp:K, localL, surfMeanL, panoUbase, panoV, origL, origCh, facetMeanOrigL};
 }
 const fract=x=>x-Math.floor(x);
+/* Per-splat surface normal from a neighbour-PCA fit (smallest eigenvector) over a list of splat indices.
+   Same estimate the Cab-V2 triplanar uses → the material can follow whichever way each splat faces. */
+function surfaceNormals(scn, idx){
+  const p=scn.positions, m=idx.length, out=new Float32Array(scn.n*3); if(m<4) return out;   // indexed by splat index i, so it can cache across applies
+  const fp=[]; const s=scn.scalesLog; for(let t=0;t<m;t+=3){ const i=idx[t]; fp.push(Math.exp((s[i*3]+s[i*3+1]+s[i*3+2])/3)); }
+  fp.sort((a,b)=>a-b); const gc=Math.max(0.006,(fp[fp.length>>1]||0.02)*2.2), R2=gc*gc;
+  const grid=new Map(); for(let t=0;t<m;t++){ const i=idx[t]; const k=Math.floor(p[i*3]/gc)+','+Math.floor(p[i*3+1]/gc)+','+Math.floor(p[i*3+2]/gc); let a=grid.get(k); if(!a){a=[];grid.set(k,a);} a.push(i); }
+  for(let t=0;t<m;t++){ const i=idx[t]; const x=p[i*3],y=p[i*3+1],z=p[i*3+2], gx=Math.floor(x/gc),gy=Math.floor(y/gc),gz=Math.floor(z/gc);
+    let cx=0,cy=0,cz=0,cnt=0; const nb=[];
+    for(let dz=-1;dz<=1;dz++)for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){ const a=grid.get((gx+dx)+','+(gy+dy)+','+(gz+dz)); if(!a)continue; for(let u=0;u<a.length;u++){ const j=a[u]; const ex=p[j*3]-x,ey=p[j*3+1]-y,ez=p[j*3+2]-z; if(ex*ex+ey*ey+ez*ez<=R2){ nb.push(j); cx+=p[j*3];cy+=p[j*3+1];cz+=p[j*3+2];cnt++; } } }
+    let nv;
+    if(cnt>=4){ cx/=cnt;cy/=cnt;cz/=cnt; let xx=0,xy=0,xz=0,yy=0,yz=0,zz=0; for(let q=0;q<nb.length;q++){ const j=nb[q]; const ex=p[j*3]-cx,ey=p[j*3+1]-cy,ez=p[j*3+2]-cz; xx+=ex*ex;xy+=ex*ey;xz+=ex*ez;yy+=ey*ey;yz+=ey*ez;zz+=ez*ez; }
+      const E=eigenSym3([xx/cnt,xy/cnt,xz/cnt,yy/cnt,yz/cnt,zz/cnt]); let mi=0,mn=E.evals[0]; if(E.evals[1]<mn){mn=E.evals[1];mi=1;} if(E.evals[2]<mn)mi=2; nv=E.evecs[mi]; }
+    else nv=v2SplatNormal(scn,i);
+    out[i*3]=nv[0]; out[i*3+1]=nv[1]; out[i*3+2]=nv[2];
+  }
+  return out;
+}
+let _triNCache=null,_triNSel=null,_triNScene=null;   // cache neighbour normals across applies (depend only on geometry + selection, not on the material/tile/contrast)
+function triNormalsFor(scn, sel, idxs){ if(_triNCache&&_triNSel===sel&&_triNScene===scn) return _triNCache; _triNCache=surfaceNormals(scn, idxs); _triNSel=sel; _triNScene=scn; return _triNCache; }
 function applyMaterial(reuse,skipGPU){
   if(!scene||selCount===0||!material.data) return;
   if(!segData||!reuse) buildSegments();
   const p=scene.positions, {idxs,comp,fits,localL,surfMeanL,origL,origCh,facetMeanOrigL}=segData;
   const useOrig=!!origL;   // original-splat lighting overrides panorama/neighbour
   const tile=parseInt($('tilesize').value)/100, rot=parseInt($('texrot').value)*Math.PI/180;
+  const proj=($('projection')&&$('projection').value)||'facet';   // facet | single | tri
+  const SH=4, ca0=Math.cos(rot), sa0=Math.sin(rot), rotW=(u,v)=>[u*ca0-v*sa0, u*sa0+v*ca0];   // global rotation for the triplanar world UVs
+  const triN=(proj==='tri')?triNormalsFor(scene, selected, idxs):null;      // per-splat neighbour-estimated surface normal (cached across applies)
   const grain=parseInt($('grainvar').value)/100;
   const mcell=parseInt($('mosaic').value)/100;          // 0 = continuous slab
   const contrast=parseInt($('contrast').value)/100;
@@ -1013,15 +1224,27 @@ function applyMaterial(reuse,skipGPU){
     const a=p[i*3]-f.c[0],b=p[i*3+1]-f.c[1],cc=p[i*3+2]-f.c[2];
     // surface-plane coords (metres)
     const su=a*f.U[0]+b*f.U[1]+cc*f.U[2], sv=a*f.V[0]+b*f.V[1]+cc*f.V[2];
-    let ru,rv;
-    if(mcell>0){ // mosaic: per-tile rotation + offset → laid-stone look
-      const ci=Math.floor(su/mcell), cj=Math.floor(sv/mcell);
-      const ang=fract(Math.sin((ci*127.1+cj*311.7+c*7.3))*43758.5)*Math.PI;
-      const off=fract(Math.sin((ci*269.5+cj*183.3+c*11.1))*43758.5)*7.0;
-      const lu=su-(ci+0.5)*mcell, lv=sv-(cj+0.5)*mcell, mc=Math.cos(ang), ms=Math.sin(ang);
-      ru=(lu*mc-lv*ms)+off; rv=(lu*ms+lv*mc);
-    }else{ ru=su*ca[c]-sv*sa[c]; rv=su*sa[c]+sv*ca[c]; }
-    const col=sampleBilinear(D,W,H,ru/tile,rv/tile);
+    let sampU,sampV,col;
+    if(proj==='tri'){   // TRIPLANAR: sample 3 world-axis projections (scaled by tile), blend by the splat's neighbour normal
+      const x=p[i*3],y=p[i*3+1],z=p[i*3+2];
+      let nx=triN[i*3],ny=triN[i*3+1],nz=triN[i*3+2]; const nl=Math.hypot(nx,ny,nz)||1; nx/=nl;ny/=nl;nz/=nl;
+      let wx=Math.pow(Math.abs(nx),SH),wy=Math.pow(Math.abs(ny),SH),wz=Math.pow(Math.abs(nz),SH); const ws=wx+wy+wz||1; wx/=ws;wy/=ws;wz/=ws;
+      const rX=rotW(z/tile,y/tile), rY=rotW(x/tile,z/tile), rZ=rotW(x/tile,y/tile);   // X-facing→(z,y), Y→(x,z), Z→(x,y)
+      const sX=sampleBilinear(D,W,H,rX[0],rX[1]), sY=sampleBilinear(D,W,H,rY[0],rY[1]), sZ=sampleBilinear(D,W,H,rZ[0],rZ[1]);
+      col=[wx*sX[0]+wy*sY[0]+wz*sZ[0], wx*sX[1]+wy*sY[1]+wz*sZ[1], wx*sX[2]+wy*sY[2]+wz*sZ[2]];
+      if(wx>=wy&&wx>=wz){sampU=rX[0];sampV=rX[1];} else if(wz>=wx&&wz>=wy){sampU=rZ[0];sampV=rZ[1];} else {sampU=rY[0];sampV=rY[1];}   // dominant axis → relief coords
+    } else {
+      let ru,rv;
+      if(mcell>0){ // mosaic: per-tile rotation + offset → laid-stone look
+        const ci=Math.floor(su/mcell), cj=Math.floor(sv/mcell);
+        const ang=fract(Math.sin((ci*127.1+cj*311.7+c*7.3))*43758.5)*Math.PI;
+        const off=fract(Math.sin((ci*269.5+cj*183.3+c*11.1))*43758.5)*7.0;
+        const lu=su-(ci+0.5)*mcell, lv=sv-(cj+0.5)*mcell, mc=Math.cos(ang), ms=Math.sin(ang);
+        ru=(lu*mc-lv*ms)+off; rv=(lu*ms+lv*mc);
+      }else{ ru=su*ca[c]-sv*sa[c]; rv=su*sa[c]+sv*ca[c]; }
+      sampU=ru/tile; sampV=rv/tile;
+      col=sampleBilinear(D,W,H,sampU,sampV);
+    }
     // contrast around mid → deepens blacks, pops veins (cures the washed-out look)
     let r=(col[0]-0.5)*contrast+0.5, g=(col[1]-0.5)*contrast+0.5, bl=(col[2]-0.5)*contrast+0.5;
     // shading: real shadows/highlights — from the original splat if loaded, else panorama, else neighbours
@@ -1042,11 +1265,11 @@ function applyMaterial(reuse,skipGPU){
     }
     const m=tR*bS[c]*light*pcr, mg=tG*bS[c]*light*pcg, mb=tB*bS[c]*light*pcb;
     _lf[k*3]=m;_lf[k*3+1]=mg;_lf[k*3+2]=mb;
-    const rfac=relief>0?reliefFactor(D,W,H,ru/tile,rv/tile,relief):1;   // emboss grain into the baked colour
+    const rfac=relief>0?reliefFactor(D,W,H,sampU,sampV,relief):1;   // emboss grain into the baked colour
     scene.colors[i*3]=clamp(r*m*rfac,0,1); scene.colors[i*3+1]=clamp(g*mg*rfac,0,1); scene.colors[i*3+2]=clamp(bl*mb*rfac,0,1);
     if(!skipGPU){ const row=i>>10,col2=(i&1023)<<1; texData[(row*2048+col2)*4+3]=colorWord(i); }
   }
-  segData._lf=_lf; segData._ca=ca; segData._sa=sa; segData._tile=tile; segData._contrast=contrast; segData._relief=relief; segData._mcell=mcell; segData._matD=D; segData._matW=W; segData._matH=H;   // for Detail subdivision in buildCombined
+  segData._lf=_lf; segData._ca=ca; segData._sa=sa; segData._tile=tile; segData._contrast=contrast; segData._relief=relief; segData._mcell=mcell; segData._matD=D; segData._matW=W; segData._matH=H; segData._proj=proj; segData._rot=rot; segData._triN=triN;   // for Detail subdivision in buildCombined — incl. the projection method so children re-project the SAME way after densifying
   lastApply=segData; if(!skipGPU) colorDirty=true; try{ updateCombineBtns(); }catch(e){}
 }
 $('btn-apply').onclick=()=>{ if(viewingCombined){ recombineLook(); toast('Re-applied '+(editTarget==='cab'?'cabinet':'worktop')+' look'); return; }
@@ -1087,8 +1310,8 @@ $('btn-auto').onclick=()=>{ if(viewingCombined) withChannel(editTarget,()=>autoM
 
 /* ---- saveable presets (cab / wt), persisted to localStorage ---- */
 const PRESET_DEFAULTS={
-  cab:{hueLo:'75',hueHi:'155',sat:'10',val:'24',tilesize:'63',texrot:'0',grainvar:'11',facetsplit:true,mosaic:'0',contrast:'68',shading:'18',panocolor:'21',keeplight:'101',matchlight:'100'},   /* GREEN mask = cabinets */
-  wt :{hueLo:'304',hueHi:'352',sat:'14',val:'20',tilesize:'101',texrot:'0',grainvar:'11',facetsplit:true,mosaic:'0',contrast:'66',shading:'36',panocolor:'25',keeplight:'101',matchlight:'100'}  /* PINK mask = worktops */
+  cab:{hueLo:'75',hueHi:'155',sat:'10',val:'24',tilesize:'63',texrot:'0',grainvar:'11',projection:'facet',mosaic:'0',contrast:'68',shading:'18',panocolor:'21',keeplight:'101',matchlight:'0'},   /* GREEN mask = cabinets */
+  wt :{hueLo:'304',hueHi:'352',sat:'14',val:'20',tilesize:'101',texrot:'0',grainvar:'11',projection:'facet',mosaic:'0',contrast:'66',shading:'36',panocolor:'25',keeplight:'101',matchlight:'0'}  /* PINK mask = worktops */
 };
 function loadPreset(key){ try{ const s=localStorage.getItem('pm_preset_'+key); if(s) return Object.assign({},PRESET_DEFAULTS[key],JSON.parse(s)); }catch(e){} return Object.assign({},PRESET_DEFAULTS[key]); }
 const presets={ cab:loadPreset('cab'), wt:loadPreset('wt') };
@@ -1099,7 +1322,7 @@ const NAMED_SEED={
   cab:{ 'Default': Object.assign({}, PRESET_DEFAULTS.cab) },
   wt :{ 'Default': Object.assign({}, PRESET_DEFAULTS.wt),
         // captured from the current Worktops look (the screenshot)
-        'Saved worktop look': {hueLo:'304',hueHi:'352',sat:'14',val:'20',tilesize:'295',texrot:'0',grainvar:'11',facetsplit:true,mosaic:'0',contrast:'72',shading:'58',panocolor:'13',keeplight:'129',matchlight:'100',_detail:3.1,_spread:2.36,_even:0.45,_autoplane:true} }
+        'Saved worktop look': {hueLo:'304',hueHi:'352',sat:'14',val:'20',tilesize:'295',texrot:'0',grainvar:'11',projection:'facet',mosaic:'0',contrast:'72',shading:'58',panocolor:'13',keeplight:'129',matchlight:'100',_detail:3.1,_spread:2.36,_even:0.45,_autoplane:true} }
 };
 function loadNamed(key){ try{ const s=localStorage.getItem('pm_named_'+key); if(s){ const o=JSON.parse(s); if(o&&typeof o==='object'&&Object.keys(o).length) return o; } }catch(e){}
   return JSON.parse(JSON.stringify(NAMED_SEED[key])); }
@@ -1171,7 +1394,7 @@ let sliderTimer=null;
 for(const id of ['tilesize','texrot','grainvar','mosaic','contrast','relief','shading','panocolor','keeplight','panoyaw','matchlight']){
   $(id).addEventListener('input',()=>{
     $('relief-v').textContent=+$('relief').value===0?'off':$('relief').value+'%';
-    $('tilesize-v').textContent=(parseInt($('tilesize').value)/100).toFixed(2)+' m';
+    $('tilesize-n').value=(parseInt($('tilesize').value)/100).toFixed(2);
     $('texrot-v').textContent=$('texrot').value+'°';
     $('grainvar-v').textContent=$('grainvar').value+'%';
     $('mosaic-v').textContent=+$('mosaic').value===0?'off':(parseInt($('mosaic').value)/100).toFixed(2)+' m';
@@ -1185,6 +1408,7 @@ for(const id of ['tilesize','texrot','grainvar','mosaic','contrast','relief','sh
     else if(lastApply){ clearTimeout(sliderTimer); sliderTimer=setTimeout(()=>{ applyMaterial(true); renderChannel(); },120); }
   });
 }
+$('tilesize-n').addEventListener('input',()=>{ const m=parseFloat($('tilesize-n').value); if(Number.isFinite(m)){ $('tilesize').value=clamp(Math.round(m*100),1,400); $('tilesize').dispatchEvent(new Event('input')); } });
 let detectTimer=null;
 for(const id of ['hueLo','hueHi','sat','val']){
   $(id).addEventListener('input',()=>{
@@ -1192,8 +1416,9 @@ for(const id of ['hueLo','hueHi','sat','val']){
     clearTimeout(detectTimer); detectTimer=setTimeout(()=>{ ensureBaseDisplay(); resetColors(); detectPink(); if(material.data){ lastApply=null; applyMaterial(false); } },130);
   });
 }
+$('fillgaps').addEventListener('change',()=>{ ensureBaseDisplay(); resetColors(); detectPink(); if(material.data){ lastApply=null; applyMaterial(false); } });
 // toggling facet split changes segmentation → rebuild from scratch
-$('facetsplit').addEventListener('change',()=>{ if(viewingCombined){ recombineLook(); return; } segData=null; if(scene&&material.data&&selCount>0) applyMaterial(false); });
+$('projection').addEventListener('change',()=>{ if(viewingCombined){ recombineLook(); return; } segData=null; if(scene&&material.data&&selCount>0) applyMaterial(false); });
 /* Detail (subdivide) — one control in Material look, targets the active channel (Cabinets/Worktops tab) or
    the edit target in Combined. So the Cabinets tab edits cabinet detail, the Worktops tab worktop detail. */
 const amtLbl=amt=>Math.round(amt*amt)<=1?'off':(amt.toFixed(1)+'×');
@@ -1203,7 +1428,17 @@ function syncDetailSlider(){ const k=detailTarget();
   const de=$('detail'); if(de){ de.value=Math.round((chan[k].detail||1)*10); $('detail-v').textContent=amtLbl(chan[k].detail||1); }
   const se=$('spread'); if(se){ se.value=Math.round((chan[k].spread||1.1)*100); $('spread-v').textContent=(chan[k].spread||1.1).toFixed(2); }
   const ee=$('even'); if(ee){ const ev=chan[k].even||0; ee.value=Math.round(ev*100); $('even-v').textContent=ev===0?'off':Math.round(ev*100)+'%'; }
-  const ap=$('autoplane'); if(ap) ap.checked=(chan[k].autoplane!==false); }
+  const ap=$('autoplane'); if(ap) ap.checked=(chan[k].autoplane!==false);
+  const vo=$('vonly'); if(vo) vo.checked=!!chan[k].vonly;
+  const nov=$('noverhang'); if(nov) nov.checked=!!chan[k].noOverhang;
+  const bt=$('between'); if(bt) bt.checked=!!chan[k].between;
+  const br=$('betweenrad'); if(br){ const v=Math.round((chan[k].betweenRadius||0.03)*10000)/100; br.value=v; $('betweenrad-v').textContent=v+' cm'; }
+  const sb=$('sparseboost'); if(sb){ const v=chan[k].sparseBoost||0; sb.value=v; const sn=$('sparseboost-n'); if(sn)sn.value=Math.round(v*100)/100; }
+  const dt=$('densethr'); if(dt){ const v=chan[k].denseThresh||14; dt.value=v; $('densethr-v').textContent=v; }
+  const fl=chan[k].flatten||{on:false,radius:0.04,intensity:0.5};
+  const fo=$('flat-on'); if(fo) fo.checked=!!fl.on;
+  const fr=$('flat-rad'); if(fr) fr.value=Math.round((fl.radius||0.04)*1000); const frn=$('flat-rad-n'); if(frn) frn.value=(fl.radius||0.04).toFixed(3);
+  const fi=$('flat-int'); if(fi) fi.value=Math.round((fl.intensity!=null?fl.intensity:0.5)*100); const fin=$('flat-int-n'); if(fin) fin.value=(fl.intensity!=null?fl.intensity:0.5).toFixed(2); }
 function detailLive(){ const k=detailTarget(); clearTimeout(detailTimer); detailTimer=setTimeout(()=>{
   if((chan[k].detail||1)>1.2 && !chan[k].lastApply){ toast('Apply a '+(k==='cab'?'cabinet':'worktop')+' material first — subdivide needs one to sample',true); return; }
   if(viewingCombined){ setEditTarget(k); showCombined(); } else { renderChannel(); }   // preview the subdivision right where you are
@@ -1212,16 +1447,64 @@ $('detail').addEventListener('input',()=>{ const k=detailTarget(), amt=(parseInt
 $('spread').addEventListener('input',()=>{ const k=detailTarget(), sp=(parseInt($('spread').value)||110)/100; chan[k].spread=sp; $('spread-v').textContent=sp.toFixed(2); detailLive(); });
 $('even').addEventListener('input',()=>{ const k=detailTarget(), ev=(parseInt($('even').value)||0)/100; chan[k].even=ev; $('even-v').textContent=ev===0?'off':Math.round(ev*100)+'%'; detailLive(); });
 $('autoplane').addEventListener('change',()=>{ const k=detailTarget(); chan[k].autoplane=$('autoplane').checked; detailLive(); });
+$('vonly').addEventListener('change',()=>{ const k=detailTarget(); chan[k].vonly=$('vonly').checked; detailLive(); });
+$('noverhang').addEventListener('change',()=>{ const k=detailTarget(); chan[k].noOverhang=$('noverhang').checked; detailLive(); });
+$('between').addEventListener('change',()=>{ const k=detailTarget(); chan[k].between=$('between').checked; detailLive(); });
+$('betweenrad').addEventListener('input',()=>{ const k=detailTarget(), v=parseFloat($('betweenrad').value)||3; chan[k].betweenRadius=v/100; $('betweenrad-v').textContent=v+' cm'; detailLive(); });
+function setSparseBoost(v){ if(!Number.isFinite(v))return; v=clamp(v,0,6); const k=detailTarget(); chan[k].sparseBoost=v; $('sparseboost').value=v; const sn=$('sparseboost-n'); if(sn)sn.value=Math.round(v*100)/100; detailLive(); }
+$('sparseboost').addEventListener('input',()=>setSparseBoost(+$('sparseboost').value));
+$('sparseboost-n').addEventListener('input',()=>setSparseBoost(+$('sparseboost-n').value));
+$('densethr').addEventListener('input',()=>{ const k=detailTarget(), v=parseInt($('densethr').value)||1; chan[k].denseThresh=v; $('densethr-v').textContent=v; detailLive(); });
+
+/* ---- Flatten: horizontal Laplacian smoothing of the selected splats (Y locked) ---- */
+let flattenTimer=null;
+function flParams(k){ const c=chan[k]; if(!c.flatten) c.flatten={on:false,radius:0.04,intensity:0.5}; return c.flatten; }
+// pull each selected splat toward the average X/Z of its neighbours within `radius`; never change Y
+function smoothSelectedXZ(base, sel, n, radius, intensity){
+  const out=base.slice();
+  if(!sel||!(intensity>0)||!(radius>0)) return out;
+  const cell=radius, grid=new Map();
+  for(let i=0;i<n;i++){ if(!sel[i]) continue; const k=Math.floor(base[i*3]/cell)+','+Math.floor(base[i*3+1]/cell)+','+Math.floor(base[i*3+2]/cell); let a=grid.get(k); if(!a){ a=[]; grid.set(k,a); } a.push(i); }
+  const r2=radius*radius;
+  for(let i=0;i<n;i++){ if(!sel[i]) continue;
+    const xi=base[i*3],yi=base[i*3+1],zi=base[i*3+2], gx=Math.floor(xi/cell),gy=Math.floor(yi/cell),gz=Math.floor(zi/cell);
+    let sx=0,sz=0,cnt=0;
+    for(let dz=-1;dz<=1;dz++)for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){ const a=grid.get((gx+dx)+','+(gy+dy)+','+(gz+dz)); if(!a) continue;
+      for(let t=0;t<a.length;t++){ const j=a[t], ex=base[j*3]-xi, ey=base[j*3+1]-yi, ez=base[j*3+2]-zi; if(ex*ex+ey*ey+ez*ez<=r2){ sx+=base[j*3]; sz+=base[j*3+2]; cnt++; } } }
+    if(cnt>0){ out[i*3]=xi+(sx/cnt-xi)*intensity; out[i*3+2]=zi+(sz/cnt-zi)*intensity; }   // out[i*3+1] (Y) left untouched
+  }
+  return out;
+}
+function applyFlattenTo(c){
+  if(!c||!c.scene) return;
+  if(c._baseFor!==c.scene){ c.basePos=c.scene.positions.slice(); c._baseFor=c.scene; }   // snapshot un-flattened positions for this scene
+  const fp=c.flatten||{on:false};
+  c.scene.positions = fp.on ? smoothSelectedXZ(c.basePos,c.selected,c.scene.n,fp.radius||0.04,(fp.intensity!=null?fp.intensity:0.5)) : c.basePos.slice();
+}
+function flattenLive(){ const k=detailTarget(); clearTimeout(flattenTimer); flattenTimer=setTimeout(()=>{
+  if(!viewingCombined) saveActive();           // sync live globals into chan[active] before mutating positions
+  applyFlattenTo(chan[k]);
+  if(viewingCombined){ setEditTarget(k); showCombined(); } else { loadChanInto(chan[active]); renderChannel(); }   // loadChanInto rebuilds GPU + restores selection
+  scheduleCopySave();
+},250); }
+$('flat-on').addEventListener('change',()=>{ const k=detailTarget(); flParams(k).on=$('flat-on').checked; flattenLive(); });
+$('flat-rad').addEventListener('input',()=>{ const k=detailTarget(), r=(parseInt($('flat-rad').value)||40)/1000; flParams(k).radius=r; $('flat-rad-n').value=r.toFixed(3); flattenLive(); });
+$('flat-rad-n').addEventListener('input',()=>{ const v=parseFloat($('flat-rad-n').value); if(Number.isFinite(v)){ const k=detailTarget(); flParams(k).radius=v; $('flat-rad').value=clamp(Math.round(v*1000),5,500); flattenLive(); } });
+$('flat-int').addEventListener('input',()=>{ const k=detailTarget(), it=(parseInt($('flat-int').value)||0)/100; flParams(k).intensity=it; $('flat-int-n').value=it.toFixed(2); flattenLive(); });
+$('flat-int-n').addEventListener('input',()=>{ const v=parseFloat($('flat-int-n').value); if(Number.isFinite(v)){ const k=detailTarget(); flParams(k).intensity=v; $('flat-int').value=clamp(Math.round(v*100),0,100); flattenLive(); } });
 
 /* ---- file load / export ---- */
 async function loadFile(file){
   try{
     toast('Loading '+file.name+'…');
-    if(!file.name.toLowerCase().endsWith('.spz')) throw new Error('Use a .spz file');
-    const s=parseSPZ(await gunzip(file));
+    const nm=file.name.toLowerCase();
+    let s;
+    if(nm.endsWith('.ply')) s=parsePLY(await file.arrayBuffer());        // 3DGS .ply (binary_little_endian)
+    else if(nm.endsWith('.spz')) s=parseSPZ(await gunzip(file));         // Niantic .spz (gzipped)
+    else throw new Error('Use a .spz or .ply file');
     scene=s; originalColors=s.colors.slice(); lastApply=null;
     computeSceneLight();
-    sceneName=file.name; baseName=file.name.replace(/\.spz$/i,'');
+    sceneName=file.name; baseName=file.name.replace(/\.(spz|ply)$/i,''); sessionMaskName=file.name;
     buildGPUData();
     let cx=0,cy=0,cz=0,m=0;
     for(let i=0;i<s.n;i+=7){ cx+=s.positions[i*3];cy+=s.positions[i*3+1];cz+=s.positions[i*3+2];m++; }
@@ -1296,7 +1579,7 @@ $('btn-spz-orig').onclick=async()=>{
 };
 
 /* ===================== two-channel (Cabinets / Worktops) editor ===================== */
-const SETTING_IDS=['hueLo','hueHi','sat','val','tilesize','texrot','grainvar','facetsplit','mosaic','contrast','relief','shading','panocolor','keeplight','matchlight'];
+const SETTING_IDS=['hueLo','hueHi','sat','val','fillgaps','tilesize','texrot','grainvar','projection','mosaic','contrast','relief','shading','panocolor','keeplight','matchlight'];
 function readSettings(){ const o={}; for(const id of SETTING_IDS){ const e=$(id); o[id]=e.type==='checkbox'?e.checked:e.value; } return o; }
 function lblFor(id,v){ switch(id){
   case 'tilesize': return (v/100).toFixed(2)+' m';
@@ -1306,9 +1589,11 @@ function lblFor(id,v){ switch(id){
   case 'contrast': return (v/100).toFixed(2)+'×';
   case 'sat': case 'val': return (v/100).toFixed(2);
   default: return null; } }
-function writeSettings(o){ for(const id of SETTING_IDS){ if(!(id in o))continue; const e=$(id);
-  if(e.type==='checkbox') e.checked=o[id]; else { e.value=o[id]; const l=$(id+'-v'),t=lblFor(id,o[id]); if(l&&t!=null)l.textContent=t; } } }
-function newChan(name,settings){ return {name,settings:Object.assign({},settings),scene:null,originalColors:null,selected:null,selCount:0,segData:null,lastApply:null,detail:1,spread:1.1,even:0,autoplane:true,
+function writeSettings(o){ if(o&&o.projection===undefined&&o.facetsplit!==undefined){ o=Object.assign({},o,{projection:o.facetsplit?'facet':'single'}); }   // back-compat: old facetsplit checkbox → Projection dropdown
+  for(const id of SETTING_IDS){ if(!(id in o))continue; const e=$(id);
+  if(e.type==='checkbox') e.checked=o[id]; else { e.value=o[id]; const l=$(id+'-v'),t=lblFor(id,o[id]); if(l&&t!=null)l.textContent=t; } }
+  if('tilesize' in o){ const n=$('tilesize-n'); if(n) n.value=(parseInt(o.tilesize)/100).toFixed(2); } }   // keep the editable Tile size field in sync on preset/channel load
+function newChan(name,settings){ return {name,settings:Object.assign({},settings),scene:null,originalColors:null,selected:null,selCount:0,segData:null,lastApply:null,detail:1,spread:1.1,even:0,autoplane:true,vonly:false,noOverhang:false,between:false,sparseBoost:0,denseThresh:14,betweenRadius:0.03,flatten:{on:false,radius:0.04,intensity:0.5},basePos:null,_baseFor:null,
   material:{img:null,data:null,w:0,h:0,name:'no material',meanLum:0.5}, orig:{grid:null,cell:0.08,name:'',scene:null}, sceneName:name,baseName:name}; }
 const chan={cab:newChan('Cabinets',presets.cab), wt:newChan('Worktops',presets.wt)};
 let active='cab', viewingCombined=false, editTarget='cab', chPreview=false;
@@ -1317,17 +1602,18 @@ function clearChanMaterial(key){ const c=chan[key]; if(c.scene&&c.originalColors
   c.material=Object.assign({},NO_MAT); c.matSel='none'; c.lastApply=null; c.segData=null; }
 /* "None" swatch in the Combined tab — drop a region's material, show it as the bare mask, re-merge */
 function combinedClearMat(key){ setEditTarget(key); if(!chan[key].scene) return; clearChanMaterial(key); try{renderGallery();}catch(e){} showCombined(); scheduleCopySave(); }
-const LOOK_KEYS=['tilesize','texrot','grainvar','facetsplit','mosaic','contrast','relief','shading','panocolor','keeplight','panoyaw','matchlight'];
+const LOOK_KEYS=['tilesize','texrot','grainvar','projection','mosaic','contrast','relief','shading','panocolor','keeplight','panoyaw','matchlight'];
 function setEditTarget(k){ editTarget=k; const e=$('edittarget'); if(e) e.textContent=(k==='cab'?'Cabinets':'Worktops'); try{ syncDetailSlider(); }catch(e){} try{ refreshPresetSelect(); }catch(e){} }
 /* run fn() with globals pointing at chan[key] (out of combined view), then rebuild the combined kitchen */
 function withChannel(key,fn){ setEditTarget(key); viewingCombined=false; active=key; loadChanInto(chan[key]); try{ fn&&fn(); }catch(e){ console.error(e); } showCombined(); scheduleCopySave(); }
 /* swap a region's material from the Combined tab — paints chan[key], then re-merges */
 async function combinedApplyMat(key,name){
+  console.log('[swap]',key,'→ apply "'+name+'"');
   setEditTarget(key);
-  const c=chan[key]; if(!c.scene){ toast('Load the splat first',true); return; }
+  const c=chan[key]; if(!c.scene){ console.warn('[swap]',key,'ABORT: channel has no scene'); toast('Load the splat first',true); return; }
   let img;
   try{ img=await loadImg(MAT_FOLDER[key]+encodeURIComponent(name)); }
-  catch(e){ console.error(e); toast('Could not load '+name,true); return; }
+  catch(e){ console.error(e); console.warn('[swap]',key,'ABORT: could not load',MAT_FOLDER[key]+name); toast('Could not load '+name,true); return; }
   // Paint the new material onto THIS channel only, WITHOUT touching the on-screen merge — the other
   // region keeps its material (no flash back to the pink/green mask). Then rebuild the merge in a single
   // atomic GPU upload, so the view goes straight from old material → new material.
@@ -1336,7 +1622,9 @@ async function combinedApplyMat(key,name){
   segData=c.segData; lastApply=c.lastApply; material=c.material; orig=c.orig;
   writeSettings(c.settings);
   setMaterial(img,name); c.matSel=name;          // mutates c.material in place (global material === c.material here)
+  console.log('[swap]',key,'selCount=',selCount,'matData=',!!material.data,'segData=',!!segData);
   if(selCount>0) applyMaterial(true,true);        // reuse geometry, skipGPU → only c.scene.colors changes, screen untouched
+  else console.warn('[swap]',key,'ABORT: selCount=0 → material NOT painted');
   c.segData=segData; c.lastApply=lastApply;
   scene=G.scene; originalColors=G.originalColors; selected=G.selected; selCount=G.selCount;
   segData=G.segData; lastApply=G.lastApply; material=G.material; orig=G.orig;
@@ -1365,10 +1653,12 @@ function loadChanInto(c){
   drawMatChip(); $('matname').textContent=material.name; $('matname3').textContent=orig.name||'none';
   updateSelLabel();
 }
-function setTab(t){ for(const k of ['cab','wt','combined','cap']){ const b=$('tab-'+k); if(b) b.classList.toggle('active',k===t); }
+function setTab(t){ for(const k of ['cab','wt','combined','cap','v2']){ const b=$('tab-'+k); if(b) b.classList.toggle('active',k===t); }
   document.querySelectorAll('[data-vis="cw"]').forEach(e=>e.style.display=(t==='cab'||t==='wt')?'':'none');
   document.querySelectorAll('[data-vis="comb"]').forEach(e=>e.style.display=(t==='combined')?'':'none');
   document.querySelectorAll('[data-vis="cap"]').forEach(e=>e.style.display=(t==='cap')?'':'none');
+  document.querySelectorAll('[data-vis="v2"]').forEach(e=>e.style.display=(t==='v2')?'':'none');
+  document.querySelectorAll('[data-hide-cap]').forEach(e=>e.style.display=(t==='cap'||t==='v2')?'none':'');   // 360 / Cabinet-V2 tabs: hide the standard material-editing sections
   document.querySelectorAll('[data-vis="setup"]').forEach(e=>e.style.display=(t==='cab')?'':'none');
   try{ refreshPresetSelect(); }catch(e){}   // show the presets for whichever channel this tab adjusts
 }
@@ -1415,24 +1705,41 @@ function parsePLY(buf){
   }
   return {n,shDegree:0,flags:0,positions,colors,scalesLog,quats,alphasU8,shBytes:null};
 }
+function setupCaptureScene(buf, name){
+  const s=parsePLY(buf);
+  capScene=s; captureMode=true; viewingCombined=false;
+  scene=s; originalColors=s.colors.slice(); selected=new Uint8Array(s.n); selCount=0; segData=null; lastApply=null; material=Object.assign({},NO_MAT);
+  buildGPUData();
+  let cx=0,cy=0,cz=0,m=0; for(let i=0;i<s.n;i+=7){ cx+=s.positions[i*3];cy+=s.positions[i*3+1];cz+=s.positions[i*3+2];m++; } cx/=m;cy/=m;cz/=m;
+  const d=[]; for(let i=0;i<s.n;i+=23) d.push(Math.hypot(s.positions[i*3]-cx,s.positions[i*3+1]-cy,s.positions[i*3+2]-cz));
+  d.sort((a,b)=>a-b); const ext=d[Math.floor(d.length*0.7)]||3;
+  cam.target=[cx,cy,cz]; cam.radius=clamp(ext*0.9,0.8,30); cam.theta=0.6; cam.phi=1.05; pickKey='';
+  $('cap-status').textContent=name+' · '+s.n.toLocaleString()+' splats';
+  $('stat-pts').textContent=s.n.toLocaleString(); $('dropzone').classList.add('hidden');
+  { const sc=$('startchooser'); if(sc) sc.style.display='none'; const ls=$('loadsplash'); if(ls) ls.classList.add('hidden'); }   // dismiss the start chooser / load splash if still up
+  $('cap-x').value=cx.toFixed(2); $('cap-y').value=cy.toFixed(2); $('cap-z').value=cz.toFixed(2);
+  toast('Loaded '+s.n.toLocaleString()+' splats from '+name);
+  return s;
+}
 async function loadPLYFile(file){
   if(!/\.ply$/i.test(file.name)){ toast('Choose a .ply file',true); return; }
   try{
     $('cap-status').textContent='Reading '+file.name+' ('+(file.size/1048576).toFixed(0)+' MB)…';
     let buf=await file.arrayBuffer();
-    const s=parsePLY(buf); buf=null;
-    capScene=s; captureMode=true; viewingCombined=false;
-    scene=s; originalColors=s.colors.slice(); selected=new Uint8Array(s.n); selCount=0; segData=null; lastApply=null; material=Object.assign({},NO_MAT);
-    buildGPUData();
-    let cx=0,cy=0,cz=0,m=0; for(let i=0;i<s.n;i+=7){ cx+=s.positions[i*3];cy+=s.positions[i*3+1];cz+=s.positions[i*3+2];m++; } cx/=m;cy/=m;cz/=m;
-    const d=[]; for(let i=0;i<s.n;i+=23) d.push(Math.hypot(s.positions[i*3]-cx,s.positions[i*3+1]-cy,s.positions[i*3+2]-cz));
-    d.sort((a,b)=>a-b); const ext=d[Math.floor(d.length*0.7)]||3;
-    cam.target=[cx,cy,cz]; cam.radius=clamp(ext*0.9,0.8,30); cam.theta=0.6; cam.phi=1.05; pickKey='';
-    $('cap-status').textContent=file.name+' · '+s.n.toLocaleString()+' splats';
-    $('stat-pts').textContent=s.n.toLocaleString(); $('dropzone').classList.add('hidden');
-    $('cap-x').value=cx.toFixed(2); $('cap-y').value=cy.toFixed(2); $('cap-z').value=cz.toFixed(2);
-    toast('Loaded '+s.n.toLocaleString()+' splats from '+file.name);
+    setupCaptureScene(buf,file.name); buf=null;
   }catch(e){ console.error(e); $('cap-status').textContent='Load failed: '+e.message; toast('PLY load failed: '+e.message,true); }
+}
+/* 360 tab default: auto-load this splat the first time the tab is opened (fetched relative to the page) */
+const DEFAULT_PLY='./Splats/YinanOriginalHighQuality.ply';   // relative to HTML_Editor/ — never an absolute or file:// path
+let defaultPlyTried=false;
+async function loadDefaultPLY(){
+  if(defaultPlyTried||capScene) return; defaultPlyTried=true;
+  try{
+    $('cap-status').textContent='Loading default splat…';
+    const resp=await fetch(DEFAULT_PLY); if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const buf=await resp.arrayBuffer();
+    setupCaptureScene(buf, DEFAULT_PLY.split('/').pop());
+  }catch(e){ console.error(e); defaultPlyTried=false; $('cap-status').textContent='Default splat not loaded ('+e.message+') — use “Upload original .ply splat…”'; }
 }
 function enterCapture(){
   exitChannelPreview();
@@ -1440,6 +1747,7 @@ function enterCapture(){
   viewingCombined=false; captureMode=true;
   if(capScene){ scene=capScene; originalColors=capScene.colors.slice(); selected=new Uint8Array(capScene.n); selCount=0; segData=null; lastApply=null; buildGPUData(); $('stat-pts').textContent=capScene.n.toLocaleString(); }
   setTab('cap');
+  if(!capScene) loadDefaultPLY();   // first open of the 360 tab → auto-load the default splat
 }
 $('tab-cap').onclick=enterCapture;
 $('btn-ply').onclick=()=>$('plyinput').click();
@@ -1458,7 +1766,11 @@ function buildCombinedCore(){
     for(let i=0;i<A.scene.n;i+=step){ d+=Math.abs(ap[i*3]-bp2[i*3])+Math.abs(ap[i*3+1]-bp2[i*3+1])+Math.abs(ap[i*3+2]-bp2[i*3+2]); ns++; } same=(d/ns)<0.1; }
   if(same){
     const kc=detailFactor('cab'), kw=detailFactor('wt');
-    if(kc>1||kw>1) return buildCombinedDetailed(A,B,kc,kw);   // subdivide painted splats for extra material detail
+    const sparseCab=(chan.cab.sparseBoost>0)&&detailReady('cab'), sparseWt=(chan.wt.sparseBoost>0)&&detailReady('wt');   // adaptive subdivide (needs a material) → same no-overhang children as a plain Subdivide
+    // Subdivide path = uniform Subdivide amount + adaptive Sparse boost; children clamped to each splat's footprint (no overhang).
+    // Skipped if "Add splats between" is ticked — that midpoint method runs below instead.
+    if(!chan.cab.between&&!chan.wt.between&&(kc>1||kw>1||sparseCab||sparseWt)) return buildCombinedDetailed(A,B,kc,kw);
+    const betweenCab=!!chan.cab.between||(chan.cab.sparseBoost>0&&!sparseCab), betweenWt=!!chan.wt.between||(chan.wt.sparseBoost>0&&!sparseWt);   // midpoint fill, or a Sparse-boost geometry fallback when no material is applied yet
     const n=A.scene.n, oc=A.originalColors, asel=A.selected, bsel0=B.selected, ac=A.scene.colors, bc=B.scene.colors;
     const out={n,shDegree:0,flags:A.scene.flags|0,positions:A.scene.positions,colors:new Float32Array(n*3),scalesLog:A.scene.scalesLog,quats:A.scene.quats,alphasU8:A.scene.alphasU8,shBytes:null};
     for(let i=0;i<n;i++){ let s,si=i*3;
@@ -1466,21 +1778,38 @@ function buildCombinedCore(){
       else if(bsel0&&bsel0[i]) s=bc;     // worktop (pink) region → worktop material
       else s=oc;                          // everything else → real surface (mask's own colour)
       out.colors[si]=s[si]; out.colors[si+1]=s[si+1]; out.colors[si+2]=s[si+2]; }
+    if(betweenCab||betweenWt){            // insert small splats between neighbouring painted splats (keeps originals, no enlargement)
+      const mask=new Uint8Array(n);
+      for(let i=0;i<n;i++){ if((betweenCab&&asel&&asel[i])||(betweenWt&&bsel0&&bsel0[i])) mask[i]=1; }
+      const ipe=Math.max(betweenCab?Math.round(parseFloat(chan.cab.detail||1)||1)-1:0, betweenWt?Math.round(parseFloat(chan.wt.detail||1)||1)-1:0);
+      const rad=Math.max(betweenCab?(chan.cab.betweenRadius||0.04):0, betweenWt?(chan.wt.betweenRadius||0.04):0);
+      const boost=Math.max(betweenCab?(chan.cab.sparseBoost||0):0, betweenWt?(chan.wt.sparseBoost||0):0), thresh=betweenCab?(chan.cab.denseThresh||14):(chan.wt.denseThresh||14);
+      if((ipe>=1||boost>=1)&&rad>0) return densifyBetween(out,mask,ipe,rad,boost,thresh);
+    }
     return out;
   }
+  const betweenCab=!!(chan.cab.between||chan.cab.sparseBoost>0), betweenWt=!!(chan.wt.between||chan.wt.sparseBoost>0);   // material optional
+  const asel2=A.selected;
   const GC=0.06, occ=new Set(), bp=B.scene.positions, bsel=B.selected; let nB=0;
   for(let i=0;i<B.scene.n;i++){ if(bsel&&bsel[i]){ occ.add(Math.floor(bp[i*3]/GC)+','+Math.floor(bp[i*3+1]/GC)+','+Math.floor(bp[i*3+2]/GC)); nB++; } }
   const ap=A.scene.positions, keepA=new Uint8Array(A.scene.n); let nA=0;
   for(let i=0;i<A.scene.n;i++){ if(!occ.has(Math.floor(ap[i*3]/GC)+','+Math.floor(ap[i*3+1]/GC)+','+Math.floor(ap[i*3+2]/GC))){ keepA[i]=1; nA++; } }
   const N=nA+nB;
   const out={n:N,shDegree:0,flags:A.scene.flags|0,positions:new Float32Array(N*3),colors:new Float32Array(N*3),scalesLog:new Float32Array(N*3),quats:new Float32Array(N*4),alphasU8:new Uint8Array(N),shBytes:null};
-  let k=0; const cp=(s,si)=>{ out.positions[k*3]=s.positions[si*3];out.positions[k*3+1]=s.positions[si*3+1];out.positions[k*3+2]=s.positions[si*3+2];
+  const dmask=(betweenCab||betweenWt)?new Uint8Array(N):null;   // which combined splats are painted → eligible for sparse densify
+  let k=0; const cp=(s,si,paint)=>{ out.positions[k*3]=s.positions[si*3];out.positions[k*3+1]=s.positions[si*3+1];out.positions[k*3+2]=s.positions[si*3+2];
     out.colors[k*3]=s.colors[si*3];out.colors[k*3+1]=s.colors[si*3+1];out.colors[k*3+2]=s.colors[si*3+2];
     out.scalesLog[k*3]=s.scalesLog[si*3];out.scalesLog[k*3+1]=s.scalesLog[si*3+1];out.scalesLog[k*3+2]=s.scalesLog[si*3+2];
     out.quats[k*4]=s.quats[si*4];out.quats[k*4+1]=s.quats[si*4+1];out.quats[k*4+2]=s.quats[si*4+2];out.quats[k*4+3]=s.quats[si*4+3];
-    out.alphasU8[k]=s.alphasU8[si]; k++; };
-  for(let i=0;i<A.scene.n;i++) if(keepA[i]) cp(A.scene,i);
-  for(let i=0;i<B.scene.n;i++) if(bsel&&bsel[i]) cp(B.scene,i);
+    out.alphasU8[k]=s.alphasU8[si]; if(dmask&&paint) dmask[k]=1; k++; };
+  for(let i=0;i<A.scene.n;i++) if(keepA[i]) cp(A.scene,i, betweenCab&&asel2&&asel2[i]);
+  for(let i=0;i<B.scene.n;i++) if(bsel&&bsel[i]) cp(B.scene,i, betweenWt);
+  if(dmask){   // sparse-boost / add-between also works when cabinets & worktops are different splat files
+    const ipe=Math.max(betweenCab?Math.round(parseFloat(chan.cab.detail||1)||1)-1:0, betweenWt?Math.round(parseFloat(chan.wt.detail||1)||1)-1:0);
+    const rad=Math.max(betweenCab?(chan.cab.betweenRadius||0.04):0, betweenWt?(chan.wt.betweenRadius||0.04):0);
+    const boost=Math.max(betweenCab?(chan.cab.sparseBoost||0):0, betweenWt?(chan.wt.sparseBoost||0):0), thresh=betweenCab?(chan.cab.denseThresh||14):(chan.wt.denseThresh||14);
+    if((ipe>=1||boost>=1)&&rad>0) return densifyBetween(out,dmask,ipe,rad,boost,thresh);
+  }
   return out;
 }
 /* Detail level for a channel (1 = off). Only when a material is applied, segData has the stored
@@ -1489,6 +1818,26 @@ function detailFactor(key){ const c=chan[key]; if(!c||!c.scene) return 1;
   const d=parseFloat(c.detail||1)||1, sd=c.segData;          // d = floating subdivide amount (1–4)
   if(Math.round(d*d)<=1) return 1;                            // rounds to ≤1 child → no subdivision
   return (c.lastApply && sd && sd._lf && sd._matD && sd._mcell===0) ? d : 1; }
+/* can this channel be subdivided into material-sampling children? (needs an applied material → segData) */
+function detailReady(key){ const c=chan[key], sd=c&&c.segData; return !!(c&&c.lastApply&&sd&&sd._lf&&sd._matD&&sd._mcell===0); }
+/* per-splat sparseness over a channel's painted region: 0 = dense, 1 = very sparse, relative to the region's OWN
+   median neighbour count (so one setting works at any radius/scene). Drives the adaptive Sparse-boost subdivision. */
+function sparseFactors(c, radM, thresh){
+  const sc=c.scene, mask=c.selected, n=sc.n, p=sc.positions, sl=sc.scalesLog, sf=new Float32Array(n);
+  if(!mask) return sf;
+  let medFoot=0.02; { const fp=[]; const stp=Math.max(1,(n/4000)|0); for(let i=0;i<n;i+=stp){ if(!mask[i])continue; fp.push(Math.exp((sl[i*3]+sl[i*3+1]+sl[i*3+2])/3)); } if(fp.length){ fp.sort((a,b)=>a-b); medFoot=fp[fp.length>>1]||medFoot; } }
+  const radEff=Math.min(radM||0.03, Math.max(medFoot*8,0.006)), cell=radEff, r2=radEff*radEff, SCAN=140, grid=new Map();
+  for(let i=0;i<n;i++){ if(!mask[i])continue; const k=Math.floor(p[i*3]/cell)+','+Math.floor(p[i*3+1]/cell)+','+Math.floor(p[i*3+2]/cell); let a=grid.get(k); if(!a){a=[];grid.set(k,a);} a.push(i); }
+  const cnt=new Int32Array(n), nn=new Float32Array(n);   // neighbour count + nearest-neighbour distance (gap detection)
+  for(let i=0;i<n;i++){ if(!mask[i])continue; const xi=p[i*3],yi=p[i*3+1],zi=p[i*3+2],gx=Math.floor(xi/cell),gy=Math.floor(yi/cell),gz=Math.floor(zi/cell); let chk=0,cc=0,best=r2*4;
+    scan: for(let dz=-1;dz<=1;dz++)for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){ const a=grid.get((gx+dx)+','+(gy+dy)+','+(gz+dz)); if(!a)continue;
+      for(let t=0;t<a.length;t++){ if(chk++>SCAN)break scan; const j=a[t]; if(j===i)continue; const ex=p[j*3]-xi,ey=p[j*3+1]-yi,ez=p[j*3+2]-zi; const dd=ex*ex+ey*ey+ez*ez; if(dd<=r2)cc++; if(dd<best)best=dd; } } cnt[i]=cc; nn[i]=Math.sqrt(best); }
+  let medCnt=8; { const cs=[]; for(let i=0;i<n;i++) if(mask[i]) cs.push(cnt[i]); if(cs.length){ cs.sort((a,b)=>a-b); medCnt=cs[cs.length>>1]||medCnt; } }
+  let medNN=radEff*0.3; { const ds=[]; for(let i=0;i<n;i++) if(mask[i]&&nn[i]<radEff*1.9) ds.push(nn[i]); if(ds.length){ ds.sort((a,b)=>a-b); medNN=ds[ds.length>>1]||medNN; } }
+  const target=Math.max(1, medCnt*((thresh||14)/14)), mnn=Math.max(medNN,1e-4);
+  for(let i=0;i<n;i++){ if(!mask[i])continue; const scnt=clamp((target-cnt[i])/target,0,1), sgap=clamp(nn[i]/mnn-1,0,1); sf[i]=Math.max(scnt,sgap); }   // sparse = fewer neighbours than target OR wider-than-typical spacing (gap) → fires on gaps like the channel preview
+  return sf;
+}
 /* in-plane gaussian sigma of splat i along facet axes fU,fV (how big its footprint is on the surface) */
 function sigUV(scn,i,fU,fV){
   const q=scn.quats, sl=scn.scalesLog, qw=q[i*4],qx=q[i*4+1],qy=q[i*4+2],qz=q[i*4+3];
@@ -1508,14 +1857,33 @@ function meanSigOf(c){ const sd=c.segData, ix=sd.idxs; let su=0,sv=0;
    its own offset → real added resolution. Cabinets and worktops can each have their own k. */
 function buildCombinedDetailed(A,B,kc,kw){
   const n=A.scene.n, oc=A.originalColors, asel=A.selected, bsel0=B.selected;
-  const ncC=Math.max(1,Math.round(kc*kc)), ncW=Math.max(1,Math.round(kw*kw));   // children per painted splat (amount²)
+  const ncC=Math.max(1,Math.round(kc*kc)), ncW=Math.max(1,Math.round(kw*kw));   // base children per painted splat (amount²)
   const spC=A.spread||1.1, spW=B.spread||1.1;                                    // how far the children fan out
   const evC=A.even||0, evW=B.even||0;                                            // 0 = parent-relative spacing, 1 = uniform
-  const msC=(kc>1&&evC>0)?meanSigOf(A):null, msW=(kw>1&&evW>0)?meanSigOf(B):null;
-  let N=0; for(let i=0;i<n;i++){ if(asel&&asel[i]) N+=(kc>1?ncC:1); else if(bsel0&&bsel0[i]) N+=(kw>1?ncW:1); else N++; }
+  // Adaptive Sparse boost: add extra grid rows per splat where the painted region is sparse — SAME children + no-overhang
+  // method as a plain Subdivide, just denser in the thin areas. Needs an applied material (segData) to sample colour.
+  const boostC=(A.sparseBoost>0&&A.segData)?A.sparseBoost:0, boostW=(B.sparseBoost>0&&B.segData)?B.sparseBoost:0;
+  const sfC=boostC?sparseFactors(A,(A.betweenRadius||0.03),(A.denseThresh||14)):null;
+  const sfW=boostW?sparseFactors(B,(B.betweenRadius||0.03),(B.denseThresh||14)):null;
+  const baseSideC=Math.max(1,Math.ceil(Math.sqrt(ncC))), baseSideW=Math.max(1,Math.ceil(Math.sqrt(ncW)));
+  const subC=(kc>1||boostC>0), subW=(kw>1||boostW>0);                            // is this channel subdivided at all?
+  const sideC=new Uint16Array(subC?n:1), sideW=new Uint16Array(subW?n:1);        // per-splat grid side (base + sparse extra)
+  // dithered: a FRACTIONAL extra (e.g. boost 0.45) adds a whole row to that proportion of splats, so floating Sparse boost actually densifies
+  const dith=(e,i)=>{ const fi=Math.floor(e); return fi + (((e-fi)>fract(Math.sin(i*12.9898+1.0)*43758.5453))?1:0); };
+  if(subC) for(let i=0;i<n;i++){ if(asel&&asel[i]){ let s=baseSideC; if(sfC) s+=dith(boostC*sfC[i],i); sideC[i]=s; } }
+  if(subW) for(let i=0;i<n;i++){ if(bsel0&&bsel0[i]){ let s=baseSideW; if(sfW) s+=dith(boostW*sfW[i],i); sideW[i]=s; } }
+  const childC=i=>(subC&&sideC[i]>1)?sideC[i]*sideC[i]:1, childW=i=>(subW&&sideW[i]>1)?sideW[i]*sideW[i]:1;
+  let N=0; for(let i=0;i<n;i++){ if(asel&&asel[i]) N+=childC(i); else if(bsel0&&bsel0[i]) N+=childW(i); else N++; }
+  const MAXN=8000000;
+  if(N>MAXN){ const f=Math.sqrt(MAXN/N);                                         // too many → shrink the EXTRA rows so memory stays bounded
+    if(subC) for(let i=0;i<n;i++){ if(asel&&asel[i]&&sideC[i]>baseSideC) sideC[i]=baseSideC+Math.floor((sideC[i]-baseSideC)*f); }
+    if(subW) for(let i=0;i<n;i++){ if(bsel0&&bsel0[i]&&sideW[i]>baseSideW) sideW[i]=baseSideW+Math.floor((sideW[i]-baseSideW)*f); }
+    N=0; for(let i=0;i<n;i++){ if(asel&&asel[i]) N+=childC(i); else if(bsel0&&bsel0[i]) N+=childW(i); else N++; }
+  }
+  const msC=(subC&&evC>0)?meanSigOf(A):null, msW=(subW&&evW>0)?meanSigOf(B):null;
   const out={n:N,shDegree:0,flags:A.scene.flags|0,positions:new Float32Array(N*3),colors:new Float32Array(N*3),scalesLog:new Float32Array(N*3),quats:new Float32Array(N*4),alphasU8:new Uint8Array(N),shBytes:null};
   const mk=c=>{ const inv=new Int32Array(n).fill(-1), ix=c.segData.idxs; for(let k=0;k<ix.length;k++) inv[ix[k]]=k; return inv; };
-  const invA=kc>1?mk(A):null, invB=kw>1?mk(B):null;
+  const invA=subC?mk(A):null, invB=subW?mk(B):null;
   let w=0;
   const copyParent=(scn,i,srcColors)=>{ const cw=w*3;
     out.positions[cw]=scn.positions[i*3];out.positions[cw+1]=scn.positions[i*3+1];out.positions[cw+2]=scn.positions[i*3+2];
@@ -1523,7 +1891,7 @@ function buildCombinedDetailed(A,B,kc,kw){
     out.scalesLog[cw]=scn.scalesLog[i*3];out.scalesLog[cw+1]=scn.scalesLog[i*3+1];out.scalesLog[cw+2]=scn.scalesLog[i*3+2];
     out.quats[w*4]=scn.quats[i*4];out.quats[w*4+1]=scn.quats[i*4+1];out.quats[w*4+2]=scn.quats[i*4+2];out.quats[w*4+3]=scn.quats[i*4+3];
     out.alphasU8[w]=scn.alphasU8[i]; w++; };
-  const childrenOf=(c,inv,i,nChildren,spreadF,autoplane,even,meanSig)=>{   // autoplane → flatten horizontal facets (surfaces) to world-H, keep vertical facets on their face; even→uniform spacing
+  const childrenOf=(c,inv,i,nChildren,spreadF,autoplane,even,meanSig,vonly,noOverhang,sizeDiv)=>{   // autoplane → flatten horizontal facets; vonly→stack children up/down only; noOverhang→clamp children inside the splat footprint (no perimeter overhang); sizeDiv → child size = parent/sizeDiv (keep base size while spreading to fill a gap)
     const ki=inv[i]; if(ki<0){ copyParent(c.scene,i,c.scene.colors); return; }
     const sd=c.segData, f=sd.fits[sd.comp[ki]], ca=sd._ca[sd.comp[ki]], sa=sd._sa[sd.comp[ki]];
     const lfm=sd._lf[ki*3], lfg=sd._lf[ki*3+1], lfb=sd._lf[ki*3+2];
@@ -1535,25 +1903,42 @@ function buildCombinedDetailed(A,B,kc,kw){
     const sg=sigUV(c.scene,i,f.U,f.V); let sigU=sg[0], sigV=sg[1];
     if(even>0&&meanSig){ sigU+=even*(meanSig[0]-sigU); sigV+=even*(meanSig[1]-sigV); }   // pull toward the region's mean → even spacing
     const side=Math.max(1,Math.ceil(Math.sqrt(nChildren)));
-    const lnk=0.5*Math.log(nChildren), nsl0=sl[i*3]-lnk,nsl1=sl[i*3+1]-lnk,nsl2=sl[i*3+2]-lnk, alpha=al[i];
-    for(let idx=0;idx<nChildren;idx++){ const gi=idx%side, gj=(idx/side)|0;
-      const offU=((gi-(side-1)*0.5)/side)*(2*sigU*spreadF), offV=((gj-(side-1)*0.5)/side)*(2*sigV*spreadF);
-      const csu=su+offU, csv=sv+offV, cru=csu*ca-csv*sa, crv=csu*sa+csv*ca;
-      const col=sampleBilinear(D,W,H,cru/tile,crv/tile), cw=w*3;
-      const rfac=relief>0?reliefFactor(D,W,H,cru/tile,crv/tile,relief):1;
+    let wu=f.U[1],wv=f.V[1]; { const wl=Math.hypot(wu,wv); if(wl>1e-4){ wu/=wl; wv/=wl; } } const sigW=Math.abs(wu)*sigU+Math.abs(wv)*sigV;   // world-up projected into the facet (U,V) → vertical spread axis
+    const lnk=Math.log(Math.max(1,sizeDiv||side)), nsl0=sl[i*3]-lnk,nsl1=sl[i*3+1]-lnk,nsl2=sl[i*3+2]-lnk, alpha=al[i];
+    const isTri = sd._proj==='tri' && sd._triN;   // re-project the SAME way the base did, but at each child's final position (i.e. AFTER subdivision + sparse)
+    let twx=0,twy=0,twz=0,trc=1,trs=0;
+    if(isTri){ const tn=sd._triN; let nx=tn[i*3],ny=tn[i*3+1],nz=tn[i*3+2]; const nl=Math.hypot(nx,ny,nz)||1; nx/=nl;ny/=nl;nz/=nl;
+      twx=Math.pow(Math.abs(nx),4); twy=Math.pow(Math.abs(ny),4); twz=Math.pow(Math.abs(nz),4); const ws=twx+twy+twz||1; twx/=ws;twy/=ws;twz/=ws;
+      const rr=sd._rot||0; trc=Math.cos(rr); trs=Math.sin(rr); }
+    for(let idx=0;idx<nChildren;idx++){ let offU,offV;
+      if(vonly){ const t=(idx-(nChildren-1)*0.5)/nChildren, o=t*2*sigW*spreadF; offU=o*wu; offV=o*wv; }
+      else { const gi=idx%side, gj=(idx/side)|0; offU=((gi-(side-1)*0.5)/side)*(2*sigU*spreadF); offV=((gj-(side-1)*0.5)/side)*(2*sigV*spreadF); }
+      if(noOverhang){ offU=clamp(offU,-sigU,sigU); offV=clamp(offV,-sigV,sigV); }   // keep child inside the parent splat → no overhang past the region edge
+      let ox=f.U[0]*offU+f.V[0]*offV, oy=f.U[1]*offU+f.V[1]*offV, oz=f.U[2]*offU+f.V[2]*offV;
+      if(autoplane && Math.abs(f.N[1])>0.5) oy=0;   // horizontal facet (surface) → keep the subdivision flat; vertical facets spread on their face
+      const cx=px+ox, cy=py+oy, cz=pz+oz, cw=w*3;   // child's FINAL world position
+      let col, ru2, rv2;
+      if(isTri){   // triplanar at the child's final position, blended by the parent's neighbour normal
+        const ux=cx/tile, uy=cy/tile, uz=cz/tile;
+        const rXu=uz*trc-uy*trs, rXv=uz*trs+uy*trc, rYu=ux*trc-uz*trs, rYv=ux*trs+uz*trc, rZu=ux*trc-uy*trs, rZv=ux*trs+uy*trc;
+        const sX=sampleBilinear(D,W,H,rXu,rXv), sY=sampleBilinear(D,W,H,rYu,rYv), sZ=sampleBilinear(D,W,H,rZu,rZv);
+        col=[twx*sX[0]+twy*sY[0]+twz*sZ[0], twx*sX[1]+twy*sY[1]+twz*sZ[1], twx*sX[2]+twy*sY[2]+twz*sZ[2]];
+        if(twx>=twy&&twx>=twz){ru2=rXu;rv2=rXv;} else if(twz>=twx&&twz>=twy){ru2=rZu;rv2=rZv;} else {ru2=rYu;rv2=rYv;}
+      } else { const csu=su+offU, csv=sv+offV, cru=csu*ca-csv*sa, crv=csu*sa+csv*ca; ru2=cru/tile; rv2=crv/tile; col=sampleBilinear(D,W,H,ru2,rv2); }
+      const rfac=relief>0?reliefFactor(D,W,H,ru2,rv2,relief):1;
       out.colors[cw]=clamp(((col[0]-0.5)*contrast+0.5)*lfm*rfac,0,1);
       out.colors[cw+1]=clamp(((col[1]-0.5)*contrast+0.5)*lfg*rfac,0,1);
       out.colors[cw+2]=clamp(((col[2]-0.5)*contrast+0.5)*lfb*rfac,0,1);
-      let ox=f.U[0]*offU+f.V[0]*offV, oy=f.U[1]*offU+f.V[1]*offV, oz=f.U[2]*offU+f.V[2]*offV;
-      if(autoplane && Math.abs(f.N[1])>0.5) oy=0;   // horizontal facet (surface) → keep the subdivision flat; vertical facets spread on their face
-      out.positions[cw]=px+ox; out.positions[cw+1]=py+oy; out.positions[cw+2]=pz+oz;
+      out.positions[cw]=cx; out.positions[cw+1]=cy; out.positions[cw+2]=cz;
       out.scalesLog[cw]=nsl0; out.scalesLog[cw+1]=nsl1; out.scalesLog[cw+2]=nsl2;
       out.quats[w*4]=qw; out.quats[w*4+1]=qx; out.quats[w*4+2]=qy; out.quats[w*4+3]=qz; out.alphasU8[w]=alpha; w++;
     }
   };
   for(let i=0;i<n;i++){
-    if(asel&&asel[i]){ if(kc>1) childrenOf(A,invA,i,ncC,spC,A.autoplane!==false,evC,msC); else copyParent(A.scene,i,A.scene.colors); }
-    else if(bsel0&&bsel0[i]){ if(kw>1) childrenOf(B,invB,i,ncW,spW,B.autoplane!==false,evW,msW); else copyParent(B.scene,i,B.scene.colors); }
+    if(asel&&asel[i]){ if(subC&&sideC[i]>1){ const sp=sideC[i]>baseSideC;   // sp = a sparse splat: SPREAD its (subdivided) children across the gap at base density, instead of packing them in-footprint
+        childrenOf(A,invA,i,childC(i), sp?spC*(sideC[i]/baseSideC):spC, A.autoplane!==false,evC,msC,A.vonly===true, sp?false:(A.noOverhang===true), baseSideC); } else copyParent(A.scene,i,A.scene.colors); }
+    else if(bsel0&&bsel0[i]){ if(subW&&sideW[i]>1){ const sp=sideW[i]>baseSideW;
+        childrenOf(B,invB,i,childW(i), sp?spW*(sideW[i]/baseSideW):spW, B.autoplane!==false,evW,msW,B.vonly===true, sp?false:(B.noOverhang===true), baseSideW); } else copyParent(B.scene,i,B.scene.colors); }
     else copyParent(A.scene,i,oc);
   }
   return out;
@@ -1563,7 +1948,7 @@ function buildCombinedDetailed(A,B,kc,kw){
 function buildChannelDetailed(key){
   const c=chan[key], scn=c.scene, sel=c.selected, sd=c.segData, n=scn.n;
   const amt=parseFloat(c.detail||1)||1, nc=Math.max(1,Math.round(amt*amt));
-  const spreadF=c.spread||1.1, even=c.even||0, autoplane=(c.autoplane!==false), meanSig=even>0?meanSigOf(c):null;
+  const spreadF=c.spread||1.1, even=c.even||0, autoplane=(c.autoplane!==false), vonly=!!c.vonly, noOverhang=!!c.noOverhang, meanSig=even>0?meanSigOf(c):null;
   let N=0; for(let i=0;i<n;i++) N+=(sel&&sel[i])?nc:1;
   const out={n:N,shDegree:0,flags:scn.flags|0,positions:new Float32Array(N*3),colors:new Float32Array(N*3),scalesLog:new Float32Array(N*3),quats:new Float32Array(N*4),alphasU8:new Uint8Array(N),shBytes:null};
   const inv=new Int32Array(n).fill(-1), ix=sd.idxs; for(let k=0;k<ix.length;k++) inv[ix[k]]=k;
@@ -1585,8 +1970,11 @@ function buildChannelDetailed(key){
     if(even>0&&meanSig){ sigU+=even*(meanSig[0]-sigU); sigV+=even*(meanSig[1]-sigV); }
     const qw=q[i*4],qx=q[i*4+1],qy=q[i*4+2],qz=q[i*4+3];
     const side=Math.max(1,Math.ceil(Math.sqrt(nc))), lnk=0.5*Math.log(nc), nsl0=sl[i*3]-lnk,nsl1=sl[i*3+1]-lnk,nsl2=sl[i*3+2]-lnk, alpha=al[i];
-    for(let idx=0;idx<nc;idx++){ const gi=idx%side, gj=(idx/side)|0;
-      const offU=((gi-(side-1)*0.5)/side)*(2*sigU*spreadF), offV=((gj-(side-1)*0.5)/side)*(2*sigV*spreadF);
+    let wu=f.U[1],wv=f.V[1]; { const wl=Math.hypot(wu,wv); if(wl>1e-4){ wu/=wl; wv/=wl; } } const sigW=Math.abs(wu)*sigU+Math.abs(wv)*sigV;
+    for(let idx=0;idx<nc;idx++){ let offU,offV;
+      if(vonly){ const t=(idx-(nc-1)*0.5)/nc, o=t*2*sigW*spreadF; offU=o*wu; offV=o*wv; }
+      else { const gi=idx%side, gj=(idx/side)|0; offU=((gi-(side-1)*0.5)/side)*(2*sigU*spreadF); offV=((gj-(side-1)*0.5)/side)*(2*sigV*spreadF); }
+      if(noOverhang){ offU=clamp(offU,-sigU,sigU); offV=clamp(offV,-sigV,sigV); }
       const csu=su+offU, csv=sv+offV, cru=csu*ca-csv*sa, crv=csu*sa+csv*ca;
       const col=sampleBilinear(D,W,H,cru/tile,crv/tile), cw=w*3, rfac=relief>0?reliefFactor(D,W,H,cru/tile,crv/tile,relief):1;
       out.colors[cw]=clamp(((col[0]-0.5)*contrast+0.5)*lfm*rfac,0,1); out.colors[cw+1]=clamp(((col[1]-0.5)*contrast+0.5)*lfg*rfac,0,1); out.colors[cw+2]=clamp(((col[2]-0.5)*contrast+0.5)*lfb*rfac,0,1);
@@ -1599,12 +1987,80 @@ function buildChannelDetailed(key){
   return out;
 }
 
+/* ===== "Add splats between": keep all splats, insert small ones at midpoints between neighbouring selected
+   splats (sized like the neighbours, colour/scale interpolated). Densifies gaps without enlarging anything. =====
+   src = a scene-like {n,positions,colors,scalesLog,quats,alphasU8,flags}; mask = which splats to densify;
+   ipe = inserts per neighbour-pair; radius = neighbour distance. */
+function densifyBetween(src, mask, ipe, radius, boost, thresh){
+  const n=src.n, p=src.positions, col=src.colors, sl=src.scalesLog, q=src.quats, al=src.alphasU8;
+  boost=Math.max(0,Math.round(boost||0)); thresh=Math.max(1,thresh||14); ipe=Math.max(0,ipe|0);
+  if(!mask||!(radius>0)||(ipe<1&&boost<1)) return src;
+  // estimate splat spacing → cap the working radius, neighbours scanned, edges and total inserts so a big radius
+  // in a dense scene can't explode the count (which would crash on allocation)
+  let medFoot=0.02; { const fp=[]; const stp=Math.max(1,(n/4000)|0); for(let i=0;i<n;i+=stp){ if(!mask[i])continue; fp.push(Math.exp((sl[i*3]+sl[i*3+1]+sl[i*3+2])/3)); } fp.sort((a,b)=>a-b); medFoot=fp[fp.length>>1]||0.02; }
+  const radEff=Math.min(radius, Math.max(medFoot*8, 0.012)), EDGE_CAP=16, SCAN_CAP=110, MAXINS=3000000;
+  const cell=radEff, grid=new Map();
+  for(let i=0;i<n;i++){ if(!mask[i]) continue; const k=Math.floor(p[i*3]/cell)+','+Math.floor(p[i*3+1]/cell)+','+Math.floor(p[i*3+2]/cell); let a=grid.get(k); if(!a){ a=[]; grid.set(k,a); } a.push(i); }
+  const r2=radEff*radEff, ei=[], ej=[], cnt=new Int32Array(n);   // cnt = how many neighbours each masked splat has (its local density)
+  for(let i=0;i<n;i++){ if(!mask[i]) continue; const xi=p[i*3],yi=p[i*3+1],zi=p[i*3+2], gx=Math.floor(xi/cell),gy=Math.floor(yi/cell),gz=Math.floor(zi/cell); let ke=0,chk=0;
+    scan: for(let dz=-1;dz<=1;dz++)for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){ const a=grid.get((gx+dx)+','+(gy+dy)+','+(gz+dz)); if(!a) continue;
+      for(let t=0;t<a.length;t++){ if(chk++>SCAN_CAP) break scan; const j=a[t]; if(j===i) continue; const ex=p[j*3]-xi,ey=p[j*3+1]-yi,ez=p[j*3+2]-zi; if(ex*ex+ey*ey+ez*ez<=r2){ cnt[i]++; if(j>i&&ke<EDGE_CAP){ ei.push(i); ej.push(j); ke++; } } } }
+  }
+  // typical gap (median edge length) → "sparse" = gaps longer than usual, so it works regardless of radius/threshold
+  let medD=radius*0.35; if(ei.length){ const ds=[]; const stp=Math.max(1,(ei.length/2000)|0); for(let e=0;e<ei.length;e+=stp){ const i=ei[e],j=ej[e]; ds.push(Math.hypot(p[j*3]-p[i*3],p[j*3+1]-p[i*3+1],p[j*3+2]-p[i*3+2])); } ds.sort((a,b)=>a-b); medD=ds[ds.length>>1]||medD; }
+  // "Dense threshold" is relative to THIS region's own typical neighbour count, so the same setting works at any
+  // radius/scene: target density = median count scaled by (thresh/14). thresh=14 → fill toward the median; higher → fill denser.
+  let medCnt=8; { const cs=[]; for(let i=0;i<n;i++) if(mask[i]) cs.push(cnt[i]); if(cs.length){ cs.sort((a,b)=>a-b); medCnt=cs[cs.length>>1]||medCnt; } }
+  const target=Math.max(1, medCnt*(thresh/14));
+  // per-edge insert count: more inserts on long (sparse) gaps OR where a splat is below the target density
+  const eipe=new Int32Array(ei.length); let total=0;
+  for(let e=0;e<ei.length;e++){ const i=ei[e],j=ej[e]; const dd=Math.hypot(p[j*3]-p[i*3],p[j*3+1]-p[i*3+1],p[j*3+2]-p[i*3+2]);
+    const sfCount=Math.max(clamp((target-cnt[i])/target,0,1), clamp((target-cnt[j])/target,0,1)), sfGap=clamp(dd/medD-1,0,1);
+    const ip=Math.max(0, ipe+Math.round(boost*Math.max(sfCount,sfGap))); eipe[e]=ip; total+=ip; }
+  if(total>MAXINS){ const f=MAXINS/total; total=0; for(let e=0;e<eipe.length;e++){ eipe[e]=Math.floor(eipe[e]*f); total+=eipe[e]; } }   // hard cap: never blow up memory
+  const N=n+total;
+  const out={n:N,shDegree:0,flags:src.flags|0,positions:new Float32Array(N*3),colors:new Float32Array(N*3),scalesLog:new Float32Array(N*3),quats:new Float32Array(N*4),alphasU8:new Uint8Array(N),shBytes:null};
+  out.positions.set(p,0); out.colors.set(col,0); out.scalesLog.set(sl,0); out.quats.set(q,0); out.alphasU8.set(al,0);   // keep every original
+  let w=n;
+  for(let e=0;e<ei.length;e++){ const ip=eipe[e]; if(ip<1) continue; const i=ei[e], j=ej[e], i3=i*3,j3=j*3,i4=i*4,j4=j*4;
+    for(let s=1;s<=ip;s++){ const t=s/(ip+1), w3=w*3, w4=w*4;
+      out.positions[w3]=p[i3]+(p[j3]-p[i3])*t; out.positions[w3+1]=p[i3+1]+(p[j3+1]-p[i3+1])*t; out.positions[w3+2]=p[i3+2]+(p[j3+2]-p[i3+2])*t;
+      out.colors[w3]=col[i3]+(col[j3]-col[i3])*t; out.colors[w3+1]=col[i3+1]+(col[j3+1]-col[i3+1])*t; out.colors[w3+2]=col[i3+2]+(col[j3+2]-col[i3+2])*t;
+      out.scalesLog[w3]=sl[i3]+(sl[j3]-sl[i3])*t; out.scalesLog[w3+1]=sl[i3+1]+(sl[j3+1]-sl[i3+1])*t; out.scalesLog[w3+2]=sl[i3+2]+(sl[j3+2]-sl[i3+2])*t;   // log-scale lerp ≈ geometric mean → insert matches neighbours, never bigger
+      out.quats[w4]=q[i4]; out.quats[w4+1]=q[i4+1]; out.quats[w4+2]=q[i4+2]; out.quats[w4+3]=q[i4+3];
+      out.alphasU8[w]=(al[i]+al[j])>>1; w++;
+    }
+  }
+  return out;
+}
 /* ===== floater removal: drop isolated splats from the combined output (view + export + live Unity copy) =====
    Voxelize at `cell` m, count solid splats per voxel, and for each splat sum its 3×3×3 (27-cell)
    neighbourhood. A splat is a floater (removed) when that neighbourhood holds < `Density cutoff` splats.
    Wraps buildCombinedCore so every consumer (showCombined / download / saveCopyNow) gets the filtered scene. */
 let floaterKeepCache=null, floaterSig='';
-function buildCombined(){ return applyFloaterFilter(buildCombinedCore()); }
+function buildCombined(){ return applyCropFilter(applyFloaterFilter(buildCombinedCore())); }
+// Hard-cut the export to exactly what the crop boxes show: a splat survives if it's inside any keep-box
+// (or there are no keep-boxes) AND not inside any hide-box. Mirrors the vertex-shader test so the saved
+// .spz contains only the visible splats. View-only when crop is off → returns the scene unchanged.
+function applyCropFilter(out){
+  if(!out) return out;
+  const cb=$('crop-on'); if(!cb||!cb.checked) return out;
+  if(typeof cropBoxes==='undefined'||!cropBoxes.length) return out;
+  const boxes=cropBoxes.slice(0,8).filter(b=>b&&b.pos&&b.scale).map(b=>{
+    const R=eulerMat3(b.rot||[0,0,0]);
+    return {R, c:b.pos, hx:Math.abs(b.scale[0])/2, hy:Math.abs(b.scale[1])/2, hz:Math.abs(b.scale[2])/2, keep:(b.mode!=='cut')}; });
+  if(!boxes.length) return out;
+  const hasKeep=boxes.some(b=>b.keep);
+  const p=out.positions, n=out.n, keep=new Uint8Array(n);
+  const inside=(b,dx,dy,dz)=>{   // world delta → box-local via Rᵀ·d (R row-major), then |local| ≤ half
+    const lx=b.R[0]*dx+b.R[3]*dy+b.R[6]*dz, ly=b.R[1]*dx+b.R[4]*dy+b.R[7]*dz, lz=b.R[2]*dx+b.R[5]*dy+b.R[8]*dz;
+    return Math.abs(lx)<=b.hx && Math.abs(ly)<=b.hy && Math.abs(lz)<=b.hz; };
+  for(let i=0;i<n;i++){ const x=p[i*3],y=p[i*3+1],z=p[i*3+2]; let inKeep=!hasKeep, inCut=false;
+    for(let bi=0;bi<boxes.length;bi++){ const b=boxes[bi]; if(!inside(b,x-b.c[0],y-b.c[1],z-b.c[2])) continue;
+      if(b.keep) inKeep=true; else { inCut=true; break; } }
+    keep[i]=(inKeep&&!inCut)?1:0; }
+  return compactScene(out,keep);
+}
 function applyFloaterFilter(out){
   const cb=$('floater-on');
   if(!out || !cb || !cb.checked) return out;                       // disabled → zero cost
@@ -1656,8 +2112,20 @@ function channelWantsPreview(){ if(viewingCombined) return false; const c=chan[a
 function exitChannelPreview(){ if(chPreview){ chPreview=false; const c=chan[active]; if(c&&c.selected) selected=c.selected; } }  // restore base selection ref before any save
 function renderChannel(){   // refresh the channel-tab display: densified preview when wanted, else base
   if(viewingCombined) return;
+  const c=chan[active];
+  // Material applied → preview EXACTLY what this channel becomes in the Combined view: same grid subdivide + sparse + spread
+  // (built with the very same function, second channel empty). So the Cabinets/Worktops view never diverges from Combined.
+  if(c&&c.scene&&c.selected&&!c.between&&detailReady(active)&&(detailFactor(active)>1||c.sparseBoost>0)){
+    const Dp=buildCombinedDetailed(c,{scene:c.scene,selected:new Uint8Array(c.scene.n)},detailFactor(active),1);
+    chPreview=true; buildGPUData(Dp); colorDirty=false; selDirty=false; $('stat-pts').textContent=Dp.n.toLocaleString(); return;
+  }
+  if(c&&(c.between||c.sparseBoost>0)&&c.scene&&c.selected){   // "Add splats between", or sparse without a material yet → midpoint fill
+    const ipe=Math.round(parseFloat(c.detail||1)||1)-1, boost=c.sparseBoost||0, thresh=c.denseThresh||14;
+    if(ipe>=1||boost>=1){ const Dp=densifyBetween(c.scene,c.selected,ipe,(c.betweenRadius||0.04), boost, thresh);
+      chPreview=true; buildGPUData(Dp); colorDirty=false; selDirty=false; $('stat-pts').textContent=Dp.n.toLocaleString(); return; }
+  }
   if(channelWantsPreview()){ const Dp=buildChannelDetailed(active); chPreview=true; buildGPUData(Dp); colorDirty=false; selDirty=false; $('stat-pts').textContent=Dp.n.toLocaleString(); }
-  else if(chPreview){ chPreview=false; buildGPUData(); const c=chan[active]; if(c&&c.selected){ selected=c.selected; selDirty=true; } $('stat-pts').textContent=scene?scene.n.toLocaleString():'–'; }
+  else if(chPreview){ chPreview=false; buildGPUData(); const c2=chan[active]; if(c2&&c2.selected){ selected=c2.selected; selDirty=true; } $('stat-pts').textContent=scene?scene.n.toLocaleString():'–'; }
 }
 function ensureBaseDisplay(){   // before a base edit (detect) that needs the base-sized texData + real selection
   if(chPreview){ chPreview=false; buildGPUData(); const c=chan[active]; if(c&&c.selected){ selected=c.selected; selDirty=true; } }
@@ -1710,6 +2178,21 @@ async function saveCopyNow(){
   finally{ copySaving=false; if(copyDirty){ copyDirty=false; scheduleCopySave(); } }   // a change arrived during the save → save again
 }
 function scheduleCopySave(){ if(!autoCopyOn||!copyHandle) return; clearTimeout(copySaveTimer); acStatus('● '+copyHandle.name+' — saving on change…'); copySaveTimer=setTimeout(saveCopyNow,700); }
+/* AUTO-SAVE the whole session (file + browser) whenever anything changes — values are always persisted, no need to click
+   Save. A change-detected poll (every 2.5 s) catches every control regardless of which listener fired. */
+let lastSessJson='';
+setInterval(()=>{ try{
+  if(typeof camSaveEnabled==='undefined'||!camSaveEnabled) return;   // not until a mask is fully loaded
+  const cb=$('autosave-on'); if(cb&&!cb.checked) return;
+  if(!chan.cab.scene) return;
+  if(!viewingCombined) saveActive();                                  // flush the active channel's DOM settings into chan[*]
+  const js=JSON.stringify(buildSession());
+  if(js===lastSessJson) return;                                       // nothing changed → no write
+  lastSessJson=js;
+  try{ localStorage.setItem(SESSION_KEY, js); }catch(e){}
+  fetch('/api/session',{method:'POST',headers:{'Content-Type':'application/json'},body:js})
+    .then(r=>r.json()).then(j=>{ const st=$('save-status'); if(st&&j&&j.ok){ const d=new Date(); st.textContent='Auto-saved ✓ '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0'); } }).catch(()=>{});
+}catch(e){} }, 2500);
 function updateAcUI(){ const b=$('btn-autocopy-loc'); if(b) b.textContent = copyHandle ? ('Change location ('+copyHandle.name+')…') : 'Choose file…'; }
 
 // ---- persist the picked file handle across reloads (IndexedDB) so auto-save resumes without re-picking ----
@@ -1915,11 +2398,100 @@ function renderCombos(){ const g=$('combo-btns'); if(!g) return; g.innerHTML='';
     b.onclick=()=>applyCombo(c); g.appendChild(b); }); }
 renderCombos();
 
+/* ---- batch pre-render: bake every cabinet combo to its own .spz in a chosen folder ----
+   Reads ./prerender_combos.json (array of {key,cab,wt}) if present — this is exported from Unity's
+   cabinet ProductData so the filenames match what Unity asks for. If that file is missing, it falls
+   back to every cabinet material (from /api/materials) with the worktop left unchanged.
+   Each entry: apply the material(s) → build+bake+encode the combined kitchen → write <key>.spz.
+   Existing live auto-save is untouched; this just writes extra files. */
+const prStatus=t=>{ const e=$('prerender-status'); if(e) e.textContent=t; };
+const safeName=s=>String(s||'').replace(/\.[^.]+$/,'').replace(/[^a-zA-Z0-9._-]+/g,'_');
+
+async function loadPrerenderCombos(){
+  try{ const r=await fetch('./prerender_combos.json',{cache:'no-store'});
+    if(r.ok){ const j=await r.json(); if(Array.isArray(j)&&j.length) return j.map(c=>({
+      key:c.key||safeName(c.cab)+(c.wt?'__'+safeName(c.wt):''), cab:c.cab||null, wt:c.wt||null })); }
+  }catch(e){}
+  // Fallback: all cabinet materials, worktop unchanged.
+  try{ const r=await fetch('./api/materials',{cache:'no-store'}); const m=await r.json();
+    return (m.cab||[]).map(cab=>({key:safeName(cab), cab, wt:null})); }catch(e){ return []; }
+}
+
+let prerenderBusy=false;
+async function prerenderAllCabinets(){
+  if(prerenderBusy) return;
+  if(!chan.cab.scene){ toast('Load a mask/splat first.',true); return; }
+  let combos=await loadPrerenderCombos();
+  if(!combos.length){ toast('No combos found to pre-render.',true); return; }
+  const maxN=Math.max(0,parseInt(($('prerender-max')||{}).value)||0);
+  if(maxN>0) combos=combos.slice(0,maxN);   // 0 = all
+
+  const viaServer = $('prerender-server') && $('prerender-server').checked;
+
+  // Two save paths: POST each blob to the editor server (writes into Prerendered Cabinets/, no picker),
+  // or write into a folder the user picks (needs Chrome/Edge File System Access).
+  let dir=null;
+  if(!viaServer){
+    if(!window.showDirectoryPicker){ toast('This browser can’t pick a folder — tick “via server” or use Chrome/Edge.',true); return; }
+    try{ dir=await window.showDirectoryPicker({id:'prerenderedCabinets',mode:'readwrite'}); }
+    catch(e){ if(e.name!=='AbortError') toast('Folder pick failed: '+e.message,true); return; }
+  }
+
+  prerenderBusy=true; comboBusy=true;   // block live remote swaps while batching
+  const btn=$('btn-prerender'); if(btn) btn.disabled=true;
+  let done=0, failed=0;
+  try{
+    for(let i=0;i<combos.length;i++){
+      const c=combos[i];
+      prStatus(`(${i+1}/${combos.length}) ${c.key} …`);
+      try{
+        if(c.cab) await combinedApplyMat('cab', c.cab);   // sequential — combinedApplyMat juggles globals
+        if(c.wt)  await combinedApplyMat('wt',  c.wt);
+        const out=buildCombined(); if(!out) throw new Error('buildCombined returned null');
+        bakeViewLighting(out);                             // match what Unity's live copy bakes
+        const blob=await gzip(encodeSPZ(out));
+        if(viaServer){
+          const r=await fetch('./api/save_prerender?key='+encodeURIComponent(c.key),{method:'POST',body:blob});
+          const j=await r.json(); if(!j||!j.ok) throw new Error(j&&j.error||'server save failed');
+        } else {
+          const fh=await dir.getFileHandle(c.key+'.spz',{create:true});
+          const w=await fh.createWritable(); await w.write(blob); await w.close();
+        }
+        done++;
+      }catch(e){ console.error('prerender failed for',c.key,e); failed++; }
+      await new Promise(r=>setTimeout(r,30));              // yield so the UI/toast can paint
+    }
+    const where=viaServer?'Prerendered Cabinets':(dir&&dir.name);
+    prStatus(`✓ ${done} written${failed?(' · '+failed+' failed'):''} → ${where}`);
+    toast(`Pre-render done: ${done} .spz written${failed?(', '+failed+' failed'):''}`);
+  }catch(e){ console.error(e); toast('Pre-render aborted: '+e.message,true); }
+  finally{ prerenderBusy=false; comboBusy=false; if(btn) btn.disabled=false; }
+}
+{ const b=$('btn-prerender'); if(b) b.onclick=prerenderAllCabinets; }
+
 /* ---- floaters: live toggle + density dial → rebuild combined view & re-save to Unity ---- */
 let floaterTimer=null;
 function floaterRebuild(){ if(viewingCombined){ try{ showCombined(); }catch(e){ console.error(e); } } scheduleCopySave(); }
 $('floater-on').addEventListener('change',floaterRebuild);
-$('floater-dens').addEventListener('input',()=>{ $('floater-dens-v').textContent=$('floater-dens').value; clearTimeout(floaterTimer); floaterTimer=setTimeout(floaterRebuild,220); });
+$('floater-dens').addEventListener('input',()=>{ $('floater-dens-v').textContent=$('floater-dens').value; clearTimeout(floaterTimer); floaterTimer=setTimeout(()=>{ floaterRebuild(); paintFloaterView(); },220); });
+
+/* visualize floaters in place: recolor splats that WOULD be removed (same density cutoff) bright yellow, without deleting them */
+function paintFloaterView(){
+  if(!scene||!texData) return;
+  const show=$('floater-show')&&$('floater-show').checked;
+  for(let i=0;i<scene.n;i++){ const base=((i>>10)*2048+((i&1023)<<1))*4;   // restore real colour first
+    const r=clamp(Math.round(scene.colors[i*3]*255),0,255),g=clamp(Math.round(scene.colors[i*3+1]*255),0,255),b=clamp(Math.round(scene.colors[i*3+2]*255),0,255);
+    texData[base+3]=(r|(g<<8)|(b<<16)|(scene.alphasU8[i]<<24))>>>0; }
+  if(show){
+    const maxD=Math.max(0,parseFloat($('floater-dens').value)||0);
+    const keep=computeFloaterKeep(scene.positions,scene.alphasU8,scene.n,0.06,maxD,0.2);
+    for(let i=0;i<scene.n;i++) if(!keep[i]){ const base=((i>>10)*2048+((i&1023)<<1))*4;
+      const a=Math.max(scene.alphasU8[i],210);   // boost so faint floaters stay visible
+      texData[base+3]=(255|(235<<8)|(0<<16)|(a<<24))>>>0; }   // yellow
+  }
+  uploadColors();
+}
+$('floater-show').addEventListener('change',paintFloaterView);
 
 /* ---- remote control API: an external app (e.g. Unity) POSTs /api/swap {cab,wt}; we poll and apply ----
    Full loop: Unity POST → this applies both materials → re-saves the linked .spz → LiveSplatLoader reloads. */
@@ -1931,14 +2503,21 @@ async function applyRemoteSwap(cab,wt){
   try{ toast('Remote swap → '+(cab?cab.replace(/\.[^.]+$/,''):'—')+' / '+(wt?wt.replace(/\.[^.]+$/,''):'—'));
     if(cab) await combinedApplyMat('cab',cab);
     if(wt)  await combinedApplyMat('wt',wt);
+    try{ await persistSession(true); }catch(e){}   // Unity called → save the session (silent) as part of the update
     return true;
   }catch(e){ console.error(e); toast('Remote swap failed: '+e.message,true); return false; }
   finally{ comboBusy=false; }
 }
+function unitySyncOn(){ const cb=$('unity-sync'); return cb && cb.checked; }
 async function pollSwap(){
+  if(!unitySyncOn()) return;   // 🎮 only follow Unity while the toggle is on
   try{ const r=await fetch('./api/command',{cache:'no-store'}); if(!r.ok) return; const c=await r.json();
     if(!c || typeof c.id!=='number') return;
-    if(lastSwapId<0){ lastSwapId=c.id; return; }                  // first poll: sync to current id, don't fire a stale command
+    if(lastSwapId<0){                                             // first poll while sync is on → ADOPT Unity's current product (incl. its Initial State)
+      if(c.cab||c.wt){ if(await applyRemoteSwap(c.cab,c.wt)) lastSwapId=c.id; }   // (retries next poll if the splat isn't loaded yet)
+      else lastSwapId=c.id;
+      return;
+    }
     if(c.id>lastSwapId){
       if(c.cab||c.wt){ if(await applyRemoteSwap(c.cab,c.wt)) lastSwapId=c.id; }   // advance only once applied
       else lastSwapId=c.id;
@@ -1946,13 +2525,21 @@ async function pollSwap(){
   }catch(e){ /* server without the API, or offline — ignore */ }
 }
 setInterval(pollSwap, 1000);
+// Flipping the toggle ON → immediately apply Unity's CURRENT product (its Initial State / latest swap), then keep following.
+if($('unity-sync')) $('unity-sync').addEventListener('change',async()=>{ if(!unitySyncOn()){ toast('Unity sync off — editing independently'); return; }
+  try{ const r=await fetch('./api/command',{cache:'no-store'}); if(!r.ok){ toast('Unity sync on (no command yet)'); return; } const c=await r.json();
+    if(c&&(c.cab||c.wt)){ toast('Unity sync on → applying current product'); if(await applyRemoteSwap(c.cab,c.wt)) lastSwapId=c.id; }
+    else { if(c&&typeof c.id==='number') lastSwapId=c.id; toast('Unity sync on — waiting for a swap'); }
+  }catch(e){ toast('Unity sync on (server has no swap API)',true); }
+});
 
 async function fetchFile(url){ let last='?';
   for(let a=0;a<7;a++){ try{ const r=await fetch(url,{cache:'no-store'}); if(r.ok){ const b=await r.blob(); return new File([b], decodeURIComponent(url.split('/').pop())); } last='HTTP '+r.status; }catch(e){ last=e.message; }
     await new Promise(r=>setTimeout(r,600)); }
   throw new Error(url.split('/').pop()+' → '+last); }
 const splash=(msg,pct)=>{ const m=$('loadsplash-msg'); if(m&&msg!=null)m.textContent=msg; const b=$('loadsplash-bar'); if(b&&pct!=null)b.style.width=pct+'%'; };
-const DEFAULTS={ cabPink:'./Splats/MaskSplat.spz', wtPink:'./Splats/MaskSplat.spz', orig:'./Splats/YinanOriginalKitchen.spz', pano:'./Panoramas/YinanKitchenOriginal.png' };
+const DEFAULTS={ cabPink:'./Splats/FinalMaskSplat.spz', wtPink:'./Splats/FinalMaskSplat.spz', orig:'./Splats/YinanOriginalKitchen.spz', pano:'./Panoramas/YinanKitchenOriginal.png' };
+const FORCE_DEFAULT_MASK=true;   // "for now": always open DEFAULTS.cabPink (highqualitykitchenmask.ply) on load, ignoring the saved session's mask. Set false to honour the saved mask again.
 /* Aim the camera so EVERY masked splat — pink worktops + lime-green cabinets — is in frame:
    target their centroid, view from the open room-interior side, elevated ~3/4, fit the whole spread. */
 function frameMaskRegions(){
@@ -1980,8 +2567,9 @@ function frameMaskRegions(){
 }
 /* load ONE mask splat into both channels (green→cabinets, pink→worktops), no materials, open Combined */
 async function loadMask(file){
-  if(!/\.spz$/i.test(file.name)){ toast('Please choose a .spz mask file',true); return; }
+  if(!/\.(spz|ply)$/i.test(file.name)){ toast('Please choose a .spz or .ply mask file',true); return; }
   try{
+    sessionMaskSrc=null;   // browsed file — not re-fetchable by URL (restore will fall back to ./Splats/<name>)
     $('dropzone').classList.add('hidden'); $('loadsplash').classList.remove('hidden'); camSaveEnabled=false; viewingCombined=false;
     splash('Loading mask (cabinets)…',15);
     active='cab'; clearChanMaterial('cab'); material=chan.cab.material; writeSettings(chan.cab.settings);
@@ -1995,6 +2583,7 @@ async function loadMask(file){
     try{ const sc=loadSavedCam(); if(sc) applySavedCam(sc); else frameMaskRegions(); }catch(e){ console.error(e); }
     camSaveEnabled=true;
     showCombined();                             // straight to Combined, mask only (materials optional)
+    applyPendingSession();                       // re-apply saved settings if a session was waiting on a manual mask load
     splash('Ready',100); setTimeout(()=>$('loadsplash').classList.add('hidden'),300);
     toast('Mask loaded — assign a material per region, or leave as None');
   }catch(e){ console.error(e); toast('Mask load failed: '+e.message,true); $('loadsplash').classList.add('hidden'); }
@@ -2002,8 +2591,109 @@ async function loadMask(file){
 // maskSrc: a File (browsed), a url string (picked from ./Splats/), or null (use the default mask).
 // The same mask feeds both channels (green→cabinets, pink→worktops). The shading splat / panorama
 // are loaded best-effort, so a chosen mask still opens even if the default shading file doesn't match.
+/* ===== Session save/restore: remember the chosen mask, both materials, the camera and every look setting,
+   so reloading the page (or me iterating in another tab — localStorage is shared per-origin) lands on the
+   exact same setup. Browsed-file masks can't be re-fetched, so we also keep the name to try ./Splats/<name>. */
+let sessionMaskSrc=null, sessionMaskName='';
+const SESSION_KEY='pm_session';
+function chanSession(k){ const c=chan[k]; return {mat:c.matSel||'none',settings:c.settings,detail:c.detail,spread:c.spread,even:c.even,autoplane:c.autoplane,vonly:c.vonly,noOverhang:c.noOverhang,between:c.between,sparseBoost:c.sparseBoost,denseThresh:c.denseThresh,betweenRadius:c.betweenRadius,flatten:c.flatten}; }
+/* global (non-per-channel) controls across every tab — Lighting & view, Crop box, Floaters, pano yaw, 360 capture — so a saved session restores ALL values, not just the channel looks */
+const GLOBAL_IDS=['exposure','lighttint','tinthue','tintamt','splatscale','aa','panoyaw','crop-on',
+  'floater-on','floater-show','floater-dens','cap-x','cap-y','cap-z'];   // crop box bounds live in cropBoxes[], saved separately
+function readGlobals(){ const o={}; for(const id of GLOBAL_IDS){ const e=$(id); if(!e)continue; o[id]=(e.type==='checkbox')?e.checked:e.value; } return o; }
+function writeGlobals(o){ if(!o)return; for(const id of GLOBAL_IDS){ if(!(id in o))continue; const e=$(id); if(!e)continue;
+    if(e.type==='checkbox') e.checked=!!o[id]; else e.value=o[id];
+    try{ e.dispatchEvent(new Event(e.type==='checkbox'?'change':'input')); }catch(ex){}   // fire the listener → updates the label + side effect (uniform / crop / floaters)
+  } }
+function buildSession(){ return {
+  mask:sessionMaskSrc, maskName:sessionMaskName, cab:chanSession('cab'), wt:chanSession('wt'),
+  cam:{t:cam.target,th:cam.theta,ph:cam.phi,r:cam.radius},
+  flips:{x:flipX,y:flipY,z:flipZ},
+  globals:readGlobals(),
+  cropBoxes:(typeof cropBoxes!=='undefined')?cropBoxes.map(b=>({mode:b.mode,pos:b.pos.slice(),rot:b.rot.slice(),scale:b.scale.slice()})):null,
+  v2:(typeof v2!=='undefined')?{cm:v2.cm,rot:v2.rot,offU:v2.offU,offV:v2.offV,light:v2.light,bright:v2.bright,contrast:v2.contrast,relief:v2.relief,sat:v2.sat,warm:v2.warm,sheen:v2.sheen,detail:v2.detail,perFace:v2.perFace,project:v2.project,prepSizeMul:v2.prepSizeMul,prepRadius:v2.prepRadius,prepSubdiv:v2.prepSubdiv,prepSparseBoost:v2.prepSparseBoost,prepDenseThresh:v2.prepDenseThresh,prepTarget:v2.prepTarget,prepEqualize:v2.prepEqualize}:null }; }
+function restoreCropBoxes(s){ if(typeof cropBoxes==='undefined') return; let bx=null;   // restore the crop-box list (or migrate older min/max sessions to pos/rot/scale)
+  const fromMnMx=(mn,mx)=>({mode:'keep', pos:[(mn[0]+mx[0])/2,(mn[1]+mx[1])/2,(mn[2]+mx[2])/2], rot:[0,0,0], scale:[mx[0]-mn[0],mx[1]-mn[1],mx[2]-mn[2]]});
+  if(s&&Array.isArray(s.cropBoxes)&&s.cropBoxes.length){ bx=s.cropBoxes.map(b=>{ if(!b)return null;
+      if(Array.isArray(b.pos)&&Array.isArray(b.scale)) return {mode:b.mode==='cut'?'cut':'keep', pos:b.pos.slice(0,3).map(Number), rot:(Array.isArray(b.rot)?b.rot.slice(0,3).map(Number):[0,0,0]), scale:b.scale.slice(0,3).map(Number)};
+      if(Array.isArray(b.mn)&&Array.isArray(b.mx)){ const o=fromMnMx(b.mn.map(Number),b.mx.map(Number)); o.mode=b.mode==='cut'?'cut':'keep'; return o; } return null; }).filter(Boolean); }
+  else if(s&&s.globals&&s.globals.cropxmin!=null){ const g=s.globals; bx=[fromMnMx([+g.cropxmin,+g.cropymin,+g.cropzmin],[+g.cropxmax,+g.cropymax,+g.cropzmax])]; }
+  if(bx&&bx.length){ cropBoxes=bx; cropSel=0; try{ selectBox(0); }catch(e){} } }
+function showSaveModal(msg){ const m=$('savemodal'); if(!m){ try{alert(msg);}catch(e){} return; } const t=$('savemodal-msg'); if(t)t.textContent=msg; m.style.display='flex'; }
+{ const ok=$('savemodal-ok'); if(ok) ok.onclick=()=>{ const m=$('savemodal'); if(m)m.style.display='none'; }; }
+// Persist the whole session (file + browser). silent=true → no popup/toast (used by Unity-triggered saves & the optional auto-save).
+function persistSession(silent){
+  try{ if(!viewingCombined) saveActive();   // flush the active channel's live settings into chan[*]
+    const sess=buildSession(), js=JSON.stringify(sess), nBox=(sess.cropBoxes||[]).length;
+    try{ localStorage.setItem(SESSION_KEY, js); }catch(e){}
+    lastSessJson=js;   // keep the change-detector in sync so the auto-save (if on) doesn't immediately re-fire
+    return fetch('/api/session',{method:'POST',headers:{'Content-Type':'application/json'},body:js})   // → editor_session.json, auto-loads next time
+      .then(r=>r.json()).then(j=>{ if(!j||!j.ok) throw new Error((j&&j.error)||'server');
+        const d=new Date(); $('save-status').textContent='Saved ✓ '+[d.getHours(),d.getMinutes(),d.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':');
+        if(!silent){ toast('Session saved'); showSaveModal('✅ Session saved → '+j.path+'\n\nStored: Cabinets & Worktops settings (incl. subdivide & sparse), materials, '+nBox+' crop box'+(nBox===1?'':'es')+', lighting, camera.\nLoads next time, including in newer versions.'); }
+        return true; })
+      .catch(e=>{ $('save-status').textContent='Saved to browser only — start editor_server.py';
+        if(!silent){ toast('Saved to browser only',true); showSaveModal('⚠️ Saved to the BROWSER only — the file server didn’t respond, so editor_session.json was not written.\n\nStart editor_server.py and Save again to persist it to the file.'); }
+        return false; });
+  }catch(e){ console.error(e); if(!silent){ toast('Save session failed: '+e.message,true); showSaveModal('❌ Save failed: '+e.message); } return Promise.resolve(false); }
+}
+function saveSession(){ return persistSession(false); }   // the 💾 Save session button
+let pendingSession=null;   // saved session whose mask we couldn't auto-fetch → applied once the user loads any mask
+function applyPendingSession(){
+  const s=pendingSession; if(!s) return; pendingSession=null;
+  try{
+    applyChanSession('cab',s.cab); applyChanSession('wt',s.wt);
+    if(s.flips){ flipX=!!s.flips.x; flipY=!!s.flips.y; flipZ=!!s.flips.z; const fx=$('flipx'),fy=$('flipy'),fz=$('flipz'); if(fx)fx.checked=flipX; if(fy)fy.checked=flipY; if(fz)fz.checked=flipZ; needSort=true; lastSortView=''; }
+    if(s.v2&&typeof v2!=='undefined'){ Object.assign(v2,s.v2); try{ syncV2Controls(); }catch(e){} }
+    if(s.cam&&Array.isArray(s.cam.t)&&[s.cam.th,s.cam.ph,s.cam.r].every(Number.isFinite)){ cam.target=[s.cam.t[0],s.cam.t[1],s.cam.t[2]]; cam.theta=s.cam.th; cam.phi=clamp(s.cam.ph,0.05,Math.PI-0.05); cam.radius=clamp(s.cam.r,0.15,200); pickKey=''; }
+    if(s.globals) writeGlobals(s.globals);   // Lighting & view, Floaters, pano yaw, 360 capture
+    restoreCropBoxes(s);
+    try{ syncDetailSlider(); }catch(e){}
+    if(viewingCombined) showCombined();
+    toast('Restored saved cabinet & worktop settings (re-pick a material to repaint)');
+  }catch(e){ console.error(e); }
+}
+function applyChanSession(k,cs){ if(!cs) return; const c=chan[k];
+  if(cs.settings) c.settings=Object.assign({},c.settings,cs.settings);
+  if(cs.detail!=null)c.detail=cs.detail; if(cs.spread!=null)c.spread=cs.spread; if(cs.even!=null)c.even=cs.even;
+  if(cs.autoplane!=null)c.autoplane=cs.autoplane; if(cs.vonly!=null)c.vonly=cs.vonly; if(cs.noOverhang!=null)c.noOverhang=cs.noOverhang; if(cs.between!=null)c.between=cs.between;
+  if(cs.sparseBoost!=null)c.sparseBoost=cs.sparseBoost; if(cs.denseThresh!=null)c.denseThresh=cs.denseThresh; if(cs.betweenRadius!=null)c.betweenRadius=cs.betweenRadius;
+  if(cs.flatten)c.flatten=Object.assign({on:false,radius:0.04,intensity:0.5},cs.flatten); }
+async function restoreSession(){
+  let s=null;
+  try{ const r=await fetch('/api/session',{cache:'no-store'}); if(r.ok){ const j=await r.json(); if(j&&j.ok&&j.session) s=j.session; } }catch(e){}   // file first (editor_server.py)
+  if(!s){ try{ s=JSON.parse(localStorage.getItem(SESSION_KEY)||'null'); }catch(e){} }                                                              // then browser fallback
+  if(FORCE_DEFAULT_MASK){   // "for now": always open the default splat. If the saved session is for a DIFFERENT mask, load it CLEAN; once the default has been tuned & saved, the session matches and restores normally.
+    const wantName=DEFAULTS.cabPink.split('/').pop();
+    if(!s || s.maskName!==wantName){ try{ hideStartChooser(); await autoload(DEFAULTS.cabPink); return true; }catch(e){ console.error(e); return false; } }
+  }
+  if(!s) return false;
+  const src = FORCE_DEFAULT_MASK ? DEFAULTS.cabPink : (s.mask || (s.maskName ? './Splats/'+encodeURIComponent(s.maskName) : null));   // FORCE_DEFAULT_MASK → always open the default splat, regardless of the saved session
+  if(!src){ pendingSession=s; return false; }             // browsed mask, no URL → settings applied after a manual load
+  try{
+    const head=await fetch(src,{method:'HEAD'}).catch(()=>null);   // is the mask actually fetchable?
+    if(!head||!head.ok){ pendingSession=s; return false; }         // not in ./Splats/ → show chooser, settings apply post-load
+    hideStartChooser();
+    await autoload(src);                                  // loads the mask into both channels, frames, opens Combined
+    applyChanSession('cab', s.cab); applyChanSession('wt', s.wt);   // restore look + subdivide/flatten before painting
+    if(s.flips){ flipX=!!s.flips.x; flipY=!!s.flips.y; flipZ=!!s.flips.z; const fx=$('flipx'),fy=$('flipy'),fz=$('flipz'); if(fx)fx.checked=flipX; if(fy)fy.checked=flipY; if(fz)fz.checked=flipZ; needSort=true; lastSortView=''; }
+    if(s.v2&&typeof v2!=='undefined'){ Object.assign(v2,s.v2); try{ syncV2Controls(); }catch(e){} }
+    const isGalleryMat=m=>m&&m!=='none'&&m!=='Cabinet V2';   // 'Cabinet V2' is a procedural bake, not a gallery image
+    if(s.cab&&isGalleryMat(s.cab.mat)) await combinedApplyMat('cab', s.cab.mat);
+    if(s.wt&&isGalleryMat(s.wt.mat)) await combinedApplyMat('wt', s.wt.mat);
+    if(s.cam&&Array.isArray(s.cam.t)&&[s.cam.th,s.cam.ph,s.cam.r].every(Number.isFinite)){ cam.target=[s.cam.t[0],s.cam.t[1],s.cam.t[2]]; cam.theta=s.cam.th; cam.phi=clamp(s.cam.ph,0.05,Math.PI-0.05); cam.radius=clamp(s.cam.r,0.15,200); pickKey=''; }
+    if(s.globals) writeGlobals(s.globals);   // Lighting & view, Floaters, pano yaw, 360 capture (after the splat is loaded so crop bounds are set)
+    restoreCropBoxes(s);                      // the crop-box list (or migrate an older single-box session)
+    showCombined();
+    toast('Session restored from saved file — mask, materials, camera & look');
+    return true;
+  }catch(e){ console.error(e); toast('Session restore failed: '+e.message+' — pick a splat',true); return false; }
+}
+$('btn-savesession').onclick=saveSession;
+
 async function autoload(maskSrc){
   try{
+    sessionMaskSrc=(maskSrc instanceof File)?null:(maskSrc||DEFAULTS.cabPink);   // remember a re-fetchable mask source
     $('dropzone').classList.add('hidden'); hideStartChooser();
     const getMask = async()=> (maskSrc instanceof File) ? maskSrc : await fetchFile(maskSrc || DEFAULTS.cabPink);
     const label = (maskSrc instanceof File) ? maskSrc.name : (maskSrc ? decodeURIComponent(maskSrc.split('/').pop()) : 'default kitchen');
@@ -2020,6 +2710,7 @@ async function autoload(maskSrc){
     try{ const sc=loadSavedCam(); if(sc) applySavedCam(sc); else frameMaskRegions(); }catch(e){ console.error(e); }   // restore last camera, else frame all regions
     camSaveEnabled=true;   // from here on, camera moves persist across sessions
     showCombined();        // open straight on the Combined tab, mask only (materials optional)
+    applyPendingSession();   // re-apply saved settings if a session was waiting on a manual mask load
     splash('Ready',100); setTimeout(()=>$('loadsplash').classList.add('hidden'),400);
     toast('Loaded '+label+' — assign a material per region, or leave as None');
   }catch(e){ console.error(e); splash('Load failed: '+e.message,100);
@@ -2054,8 +2745,219 @@ $('chooser-default').onclick=()=>{ hideStartChooser(); autoload(); };
 $('chooser-browse').onclick=()=>$('chooser-fileinput').click();
 $('chooser-fileinput').onchange=e=>{ const f=e.target.files&&e.target.files[0]; if(f){ hideStartChooser(); autoload(f); } };
 
+/* ===== Cabinet V2: single-plane planar wood projection baked onto the green cabinet region ===== */
+const v2={ data:null, w:0, h:0, name:'', cm:80, rot:0, offU:0, offV:0, light:0.6, bright:1.0, contrast:1.0, relief:0.6, sat:1.1, warm:0.3, sheen:0.35, detail:0.4, perFace:true, project:'tri', prepSizeMul:1.0, prepRadius:2.0, prepSubdiv:2, prepSparseBoost:2, prepDenseThresh:14, prepTarget:'cab', prepEqualize:false };
+function origLumAt(x,y,z){ if(!orig.grid) return -1; const GC=orig.cell,g=orig.grid;
+  const bx=Math.floor(x/GC),by=Math.floor(y/GC),bz=Math.floor(z/GC); let e=g.get(bx+','+by+','+bz),sL=0,cn=0;
+  if(e){ sL=e[0];cn=e[1]; } else { for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(let dz=-1;dz<=1;dz++){ const e2=g.get((bx+dx)+','+(by+dy)+','+(bz+dz)); if(e2){ sL+=e2[0];cn+=e2[1]; } } }
+  return cn>0?sL/cn:-1; }
+function v2SetTexture(img,name){ const cv=document.createElement('canvas'); const maxDim=8192, sc=Math.min(1,maxDim/Math.max(img.width,img.height));
+  cv.width=Math.max(1,Math.round(img.width*sc)); cv.height=Math.max(1,Math.round(img.height*sc));
+  cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+  v2.data=cv.getContext('2d').getImageData(0,0,cv.width,cv.height).data; v2.w=cv.width; v2.h=cv.height; v2.name=name;
+  $('v2-status').textContent=name+' · '+cv.width+'×'+cv.height; }
+$('v2-tex').onclick=()=>$('v2-texinput').click();
+$('v2-texinput').addEventListener('change',e=>{ const f=e.target.files&&e.target.files[0]; if(!f)return; e.target.value='';
+  const rd=new FileReader(); rd.onload=()=>{ const img=new Image(); img.onload=()=>{ v2SetTexture(img,f.name); v2Apply(); }; img.onerror=()=>toast('Could not decode image',true); img.src=rd.result; }; rd.readAsDataURL(f); });
+// surface normal of a splat = world direction of its thinnest covariance axis
+function v2SplatNormal(scn,i){ const sl=scn.scalesLog,q=scn.quats;
+  let k=0,mn=sl[i*3]; if(sl[i*3+1]<mn){mn=sl[i*3+1];k=1;} if(sl[i*3+2]<mn){k=2;}
+  const qw=q[i*4],qx=q[i*4+1],qy=q[i*4+2],qz=q[i*4+3];
+  if(k===0) return [1-2*(qy*qy+qz*qz),2*(qx*qy+qw*qz),2*(qx*qz-qw*qy)];
+  if(k===1) return [2*(qx*qy-qw*qz),1-2*(qx*qx+qz*qz),2*(qy*qz+qw*qx)];
+  return [2*(qx*qz+qw*qy),2*(qy*qz-qw*qx),1-2*(qx*qx+qy*qy)]; }
+// fit one plane to idx (PCA) and bake the wood projection onto those splats; grain kept vertical
+function v2ProjectGroup(c, idx, baseOffU, baseOffV){
+  const p=c.scene.positions, oc=c.originalColors, col=c.scene.colors, m=idx.length; if(m<4) return;
+  let cx=0,cy=0,cz=0; for(let t=0;t<m;t++){ const i=idx[t]; cx+=p[i*3];cy+=p[i*3+1];cz+=p[i*3+2]; } cx/=m;cy/=m;cz/=m;
+  let xx=0,xy=0,xz=0,yy=0,yz=0,zz=0; for(let t=0;t<m;t++){ const i=idx[t]; const dx=p[i*3]-cx,dy=p[i*3+1]-cy,dz=p[i*3+2]-cz; xx+=dx*dx;xy+=dx*dy;xz+=dx*dz;yy+=dy*dy;yz+=dy*dz;zz+=dz*dz; }
+  const E=eigenSym3([xx/m,xy/m,xz/m,yy/m,yz/m,zz/m]);
+  const ord=[0,1,2].sort((a,b)=>E.evals[b]-E.evals[a]);
+  let a1=E.evecs[ord[0]].slice(), a2=E.evecs[ord[1]].slice();
+  let uAx,vAx; if(Math.abs(a1[1])>=Math.abs(a2[1])){ vAx=a1; uAx=a2; } else { vAx=a2; uAx=a1; }   // v-axis = more vertical → grain up
+  if(vAx[1]<0){ vAx[0]=-vAx[0];vAx[1]=-vAx[1];vAx[2]=-vAx[2]; }
+  const nrm=v=>{ const l=Math.hypot(v[0],v[1],v[2])||1; v[0]/=l;v[1]/=l;v[2]/=l; }; nrm(uAx); nrm(vAx);
+  // face normal (for the baked grain sheen) and its alignment with a fixed key light
+  let fnx=uAx[1]*vAx[2]-uAx[2]*vAx[1], fny=uAx[2]*vAx[0]-uAx[0]*vAx[2], fnz=uAx[0]*vAx[1]-uAx[1]*vAx[0];
+  { const fl=Math.hypot(fnx,fny,fnz)||1; fnx/=fl;fny/=fl;fnz/=fl; }
+  const LD=[0.30,0.80,0.52], LL=Math.hypot(LD[0],LD[1],LD[2])||1; const ndotl=Math.abs(fnx*LD[0]+fny*LD[1]+fnz*LD[2])/LL;
+  const tileM=Math.max(0.02,v2.cm/100), ca=Math.cos(v2.rot*Math.PI/180), sa=Math.sin(v2.rot*Math.PI/180);
+  const light=v2.light, bright=v2.bright, contrast=v2.contrast, relief=v2.relief, sat=v2.sat, warm=v2.warm, sheen=v2.sheen, detail=v2.detail, dScale=4.7;
+  for(let t=0;t<m;t++){ const i=idx[t]; const dx=p[i*3]-cx,dy=p[i*3+1]-cy,dz=p[i*3+2]-cz;
+    const su=dx*uAx[0]+dy*uAx[1]+dz*uAx[2], sv=dx*vAx[0]+dy*vAx[1]+dz*vAx[2];
+    const ru=su*ca-sv*sa, rv=su*sa+sv*ca, tu=ru/tileM+baseOffU, tv=rv/tileM+baseOffV;
+    const rgb=sampleBilinear(v2.data,v2.w,v2.h, tu, tv);
+    const rfac=relief>0?reliefFactor(v2.data,v2.w,v2.h,tu,tv,relief):1;   // emboss grain → reads as depth even on soft splats
+    let r=(rgb[0]-0.5)*contrast+0.5, g=(rgb[1]-0.5)*contrast+0.5, b=(rgb[2]-0.5)*contrast+0.5;
+    if(detail>0){ const md=sampleBilinear(v2.data,v2.w,v2.h, tu*dScale, tv*dScale); const ml=(0.2126*md[0]+0.7152*md[1]+0.0722*md[2])-0.5, dm=1+detail*ml*1.3; r*=dm; g*=dm; b*=dm; }   // macro+micro grain
+    const Lr=0.2126*r+0.7152*g+0.0722*b; r=Lr+(r-Lr)*sat; g=Lr+(g-Lr)*sat; b=Lr+(b-Lr)*sat;   // saturation
+    r*=1+warm*0.22; b*=1-warm*0.22;                                                            // warmth
+    let lum=origLumAt(p[i*3],p[i*3+1],p[i*3+2]); if(lum<0) lum=0.2126*oc[i*3]+0.7152*oc[i*3+1]+0.0722*oc[i*3+2];
+    const f=((1-light)+light*clamp(lum*2,0,2))*bright*rfac; r*=f; g*=f; b*=f;
+    if(sheen>0){ const s=sheen*Math.max(0,rfac-1)*ndotl; r+=s; g+=s*0.95; b+=s*0.82; }          // grain ridges catch the key light (anisotropic-ish sheen)
+    col[i*3]=clamp(r,0,1); col[i*3+1]=clamp(g,0,1); col[i*3+2]=clamp(b,0,1);
+  }
+}
+// neighbour-normal triplanar: per splat, estimate the surface normal from its neighbours (PCA), then blend
+// three world-axis projections weighted by that normal — the material follows whichever way each cabinet faces,
+// continuously, at any angle. World-coordinate UVs keep it tiling across the surface (vertical = world Y on walls).
+function v2Triplanar(c, idx){
+  const p=c.scene.positions, oc=c.originalColors, col=c.scene.colors, m=idx.length; if(m<4) return;
+  const fp=[]; for(let t=0;t<m;t+=3){ const i=idx[t],s=c.scene.scalesLog; fp.push(Math.exp((s[i*3]+s[i*3+1]+s[i*3+2])/3)); }
+  fp.sort((a,b)=>a-b); const gc=Math.max(0.006,(fp[fp.length>>1]||0.02)*2.2), R2=gc*gc;   // neighbour radius ~ a couple of splats
+  const grid=new Map(); for(let t=0;t<m;t++){ const i=idx[t]; const k=Math.floor(p[i*3]/gc)+','+Math.floor(p[i*3+1]/gc)+','+Math.floor(p[i*3+2]/gc); let a=grid.get(k); if(!a){a=[];grid.set(k,a);} a.push(i); }
+  const tileM=Math.max(0.02,v2.cm/100), ca=Math.cos(v2.rot*Math.PI/180), sa=Math.sin(v2.rot*Math.PI/180);
+  const light=v2.light,bright=v2.bright,contrast=v2.contrast,relief=v2.relief,sat=v2.sat,warm=v2.warm,sheen=v2.sheen,detail=v2.detail,dScale=4.7,SH=4;
+  const LD=[0.30,0.80,0.52], LL=Math.hypot(LD[0],LD[1],LD[2])||1;
+  const rot2=(u,v)=>[u*ca-v*sa+v2.offU, u*sa+v*ca+v2.offV];
+  for(let t=0;t<m;t++){ const i=idx[t]; const x=p[i*3],y=p[i*3+1],z=p[i*3+2], gx=Math.floor(x/gc),gy=Math.floor(y/gc),gz=Math.floor(z/gc);
+    let cx2=0,cy2=0,cz2=0,cnt=0; const nb=[];
+    for(let dz=-1;dz<=1;dz++)for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){ const a=grid.get((gx+dx)+','+(gy+dy)+','+(gz+dz)); if(!a)continue; for(let u=0;u<a.length;u++){ const j=a[u]; const ex=p[j*3]-x,ey=p[j*3+1]-y,ez=p[j*3+2]-z; if(ex*ex+ey*ey+ez*ez<=R2){ nb.push(j); cx2+=p[j*3];cy2+=p[j*3+1];cz2+=p[j*3+2];cnt++; } } }
+    let nrmv;
+    if(cnt>=4){ cx2/=cnt;cy2/=cnt;cz2/=cnt; let xx=0,xy=0,xz=0,yy=0,yz=0,zz=0; for(let q=0;q<nb.length;q++){ const j=nb[q]; const ex=p[j*3]-cx2,ey=p[j*3+1]-cy2,ez=p[j*3+2]-cz2; xx+=ex*ex;xy+=ex*ey;xz+=ex*ez;yy+=ey*ey;yz+=ey*ez;zz+=ez*ez; }
+      const E=eigenSym3([xx/cnt,xy/cnt,xz/cnt,yy/cnt,yz/cnt,zz/cnt]); let mi=0,mn=E.evals[0]; if(E.evals[1]<mn){mn=E.evals[1];mi=1;} if(E.evals[2]<mn)mi=2; nrmv=E.evecs[mi]; }   // smallest eigenvector = surface normal
+    else nrmv=v2SplatNormal(c.scene,i);
+    let nx=nrmv[0],ny=nrmv[1],nz=nrmv[2]; const nl=Math.hypot(nx,ny,nz)||1; nx/=nl;ny/=nl;nz/=nl;
+    let wx=Math.pow(Math.abs(nx),SH),wy=Math.pow(Math.abs(ny),SH),wz=Math.pow(Math.abs(nz),SH); const ws=wx+wy+wz||1; wx/=ws;wy/=ws;wz/=ws;
+    const aX=rot2(z/tileM,y/tileM), sX=sampleBilinear(v2.data,v2.w,v2.h,aX[0],aX[1]);   // X-facing → (z,y)
+    const aY=rot2(x/tileM,z/tileM), sY=sampleBilinear(v2.data,v2.w,v2.h,aY[0],aY[1]);   // Y-facing → (x,z)
+    const aZ=rot2(x/tileM,y/tileM), sZ=sampleBilinear(v2.data,v2.w,v2.h,aZ[0],aZ[1]);   // Z-facing → (x,y)
+    let r=wx*sX[0]+wy*sY[0]+wz*sZ[0], g=wx*sX[1]+wy*sY[1]+wz*sZ[1], b=wx*sX[2]+wy*sY[2]+wz*sZ[2];
+    let du,dv; if(wx>=wy&&wx>=wz){du=aX[0];dv=aX[1];} else if(wz>=wx&&wz>=wy){du=aZ[0];dv=aZ[1];} else {du=aY[0];dv=aY[1];}
+    const rfac=relief>0?reliefFactor(v2.data,v2.w,v2.h,du,dv,relief):1;
+    r=(r-0.5)*contrast+0.5; g=(g-0.5)*contrast+0.5; b=(b-0.5)*contrast+0.5;
+    if(detail>0){ const md=sampleBilinear(v2.data,v2.w,v2.h,du*dScale,dv*dScale); const ml=(0.2126*md[0]+0.7152*md[1]+0.0722*md[2])-0.5,dm=1+detail*ml*1.3; r*=dm;g*=dm;b*=dm; }
+    const Lr=0.2126*r+0.7152*g+0.0722*b; r=Lr+(r-Lr)*sat; g=Lr+(g-Lr)*sat; b=Lr+(b-Lr)*sat;
+    r*=1+warm*0.22; b*=1-warm*0.22;
+    let lumv=origLumAt(x,y,z); if(lumv<0) lumv=0.2126*oc[i*3]+0.7152*oc[i*3+1]+0.0722*oc[i*3+2];
+    const f=((1-light)+light*clamp(lumv*2,0,2))*bright*rfac; r*=f;g*=f;b*=f;
+    if(sheen>0){ const ndotl=Math.abs(nx*LD[0]+ny*LD[1]+nz*LD[2])/LL, s=sheen*Math.max(0,rfac-1)*ndotl; r+=s;g+=s*0.95;b+=s*0.82; }
+    col[i*3]=clamp(r,0,1); col[i*3+1]=clamp(g,0,1); col[i*3+2]=clamp(b,0,1);
+  }
+}
+function v2Apply(){
+  const c=chan.cab; if(!c.scene){ toast('Load a mask first',true); return; }
+  const sel=c.selected; if(!sel){ toast('No cabinet region — load the mask',true); return; }
+  if(!v2.data){ toast('Load a wood texture first',true); return; }
+  const n=c.scene.n, idxAll=[]; for(let i=0;i<n;i++) if(sel[i]) idxAll.push(i);
+  if(idxAll.length<8){ toast('Cabinet region too small',true); return; }
+  if(v2.project==='tri'){ v2Triplanar(c, idxAll); }
+  else if(v2.project==='perface'){
+    // group splats by dominant normal axis (±X/±Y/±Z) → one plane per wall/face, each with its own UV offset
+    const buckets=[[],[],[],[],[],[]];
+    for(let t=0;t<idxAll.length;t++){ const i=idxAll[t], nn=v2SplatNormal(c.scene,i), ax=Math.abs(nn[0]),ay=Math.abs(nn[1]),az=Math.abs(nn[2]);
+      let b; if(ax>=ay&&ax>=az) b=nn[0]>0?0:1; else if(ay>=ax&&ay>=az) b=nn[1]>0?2:3; else b=nn[2]>0?4:5; buckets[b].push(i); }
+    const leftover=[];
+    for(let b=0;b<6;b++){ if(buckets[b].length>=40) v2ProjectGroup(c, buckets[b], v2.offU+b*0.137, v2.offV); else for(let t=0;t<buckets[b].length;t++) leftover.push(buckets[b][t]); }
+    if(leftover.length) v2ProjectGroup(c, leftover, v2.offU, v2.offV);
+  } else {
+    v2ProjectGroup(c, idxAll, v2.offU, v2.offV);
+  }
+  c.lastApply={v2:true}; c.matSel='Cabinet V2'; c.segData=null;
+  showCombined(); setTab('v2');   // showCombined switches the panel to Combined — keep the V2 controls visible
+  scheduleCopySave();
+}
+/* ===== Cabinet density prep: equalize splat size → fill sparse gaps → apply material =====
+   1 read green cabinet splats · 2 set all to one uniform (flat) footprint · 3 target spacing from that size
+   4 insert uniform splats between neighbours that sit farther apart than the spacing (sparse areas filled)
+   5 v2Apply() projects the wood onto the equalized+densified cabinets. Re-runs from a stored base. */
+function prepChannel(key){
+  const c=chan[key]; if(!c.scene||!c.selected){ toast('Load a mask first',true); return; }
+  if(!c._prepBase) c._prepBase={ positions:c.scene.positions.slice(), scalesLog:c.scene.scalesLog.slice(), quats:c.scene.quats.slice(), alphasU8:c.scene.alphasU8.slice(), colors:c.scene.colors.slice(), originalColors:c.originalColors.slice(), selected:c.selected.slice(), n:c.scene.n, flags:c.scene.flags|0 };
+  const B=c._prepBase, n=B.n, P=B.positions, SL=B.scalesLog, Q=B.quats, AL=B.alphasU8, OC=B.originalColors, COL=B.colors, sel=B.selected;
+  const cab=[]; for(let i=0;i<n;i++) if(sel[i]) cab.push(i);
+  if(cab.length<8){ toast('Region too small',true); return; }
+  // estimate the natural spacing D = median nearest-neighbour distance among cabinet splats
+  const foot=[]; for(let t=0;t<cab.length;t++){ const i=cab[t]; const a=SL[i*3],b=SL[i*3+1],d=SL[i*3+2]; const mn=Math.min(a,b,d),mx=Math.max(a,b,d),mid=a+b+d-mn-mx; foot.push(Math.exp((mid+mx)/2)); }
+  foot.sort((x,y)=>x-y); const medFoot=foot[foot.length>>1]||0.02, gcell=Math.max(0.004,medFoot*1.3), g0=new Map();
+  for(let t=0;t<cab.length;t++){ const i=cab[t]; const k=Math.floor(P[i*3]/gcell)+','+Math.floor(P[i*3+1]/gcell)+','+Math.floor(P[i*3+2]/gcell); let a=g0.get(k); if(!a){a=[];g0.set(k,a);} a.push(i); }
+  const nnd=[]; for(let t=0;t<cab.length;t+=4){ const i=cab[t],xi=P[i*3],yi=P[i*3+1],zi=P[i*3+2],gx=Math.floor(xi/gcell),gy=Math.floor(yi/gcell),gz=Math.floor(zi/gcell); let best=1e9;
+    for(let dz=-1;dz<=1;dz++)for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){ const a=g0.get((gx+dx)+','+(gy+dy)+','+(gz+dz)); if(!a)continue; for(let u=0;u<a.length;u++){ const j=a[u]; if(j===i)continue; const ex=P[j*3]-xi,ey=P[j*3+1]-yi,ez=P[j*3+2]-zi,dd=ex*ex+ey*ey+ez*ez; if(dd<best)best=dd; } }
+    if(best<1e9)nnd.push(Math.sqrt(best)); }
+  nnd.sort((x,y)=>x-y); const D=nnd.length?nnd[nnd.length>>1]:medFoot;
+  // sizes for the optional equalize step
+  const targetSize=Math.max(0.004, D*2.0*v2.prepSizeMul), lt=Math.log(targetSize), lthin=Math.log(targetSize*0.5);
+  const thinAxis=i=>{ let k=0,mn=SL[i*3]; if(SL[i*3+1]<mn){mn=SL[i*3+1];k=1;} if(SL[i*3+2]<mn)k=2; return k; };   // flattest axis = surface normal
+  const setFlat=(arr,w,k)=>{ arr[w*3]=(k===0)?lthin:lt; arr[w*3+1]=(k===1)?lthin:lt; arr[w*3+2]=(k===2)?lthin:lt; };
+  // STEP 4: surface-aware densify — gather each splat's neighbours within a spherical radius, fit the local
+  // plane to their distribution (PCA), then add a K×K grid of splats ON that plane only (up/down + left/right,
+  // never along the surface normal). K = how many splats to add per region.
+  const S=D, K=Math.max(1,Math.round(v2.prepSubdiv)), boost=Math.max(0,Math.round(v2.prepSparseBoost||0)), thresh=Math.max(1,v2.prepDenseThresh||14);
+  const Rsph=Math.max(S*1.1, D*v2.prepRadius), R2=Rsph*Rsph, ncell=Rsph, maxK=K+boost;
+  const sgrid=new Map();
+  for(let t=0;t<cab.length;t++){ const i=cab[t]; const k=Math.floor(P[i*3]/ncell)+','+Math.floor(P[i*3+1]/ncell)+','+Math.floor(P[i*3+2]/ncell); let a=sgrid.get(k); if(!a){a=[];sgrid.set(k,a);} a.push(i); }
+  const fine=Math.max(0.0015, S/Math.max(1,maxK)*0.9), occ=new Set();
+  for(let t=0;t<cab.length;t++){ const i=cab[t]; occ.add(Math.round(P[i*3]/fine)+'|'+Math.round(P[i*3+1]/fine)+'|'+Math.round(P[i*3+2]/fine)); }
+  const insP=[], insSrc=[];
+  if(maxK>1) for(let t=0;t<cab.length;t++){ const i=cab[t]; const xi=P[i*3],yi=P[i*3+1],zi=P[i*3+2], gx=Math.floor(xi/ncell),gy=Math.floor(yi/ncell),gz=Math.floor(zi/ncell);
+    const nbr=[];
+    for(let dz=-1;dz<=1;dz++)for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){ const a=sgrid.get((gx+dx)+','+(gy+dy)+','+(gz+dz)); if(!a)continue; for(let u=0;u<a.length;u++){ const j=a[u]; const ex=P[j*3]-xi,ey=P[j*3+1]-yi,ez=P[j*3+2]-zi; if(ex*ex+ey*ey+ez*ez<=R2)nbr.push(j); } }
+    if(nbr.length<4)continue;
+    const sparseFac=clamp((thresh-nbr.length)/thresh,0,1), Keff=Math.max(1, K+Math.round(boost*sparseFac));   // fewer neighbours than Dense threshold → more subdivisions there
+    if(Keff<2)continue; const ce=(Keff-1)>>1;
+    let cx2=0,cy2=0,cz2=0; for(let q=0;q<nbr.length;q++){ const j=nbr[q]; cx2+=P[j*3];cy2+=P[j*3+1];cz2+=P[j*3+2]; } const mm=nbr.length; cx2/=mm;cy2/=mm;cz2/=mm;
+    let xx=0,xy=0,xz=0,yy=0,yz=0,zz=0; for(let q=0;q<nbr.length;q++){ const j=nbr[q]; const ex=P[j*3]-cx2,ey=P[j*3+1]-cy2,ez=P[j*3+2]-cz2; xx+=ex*ex;xy+=ex*ey;xz+=ex*ez;yy+=ey*ey;yz+=ey*ez;zz+=ez*ez; }
+    const E=eigenSym3([xx/mm,xy/mm,xz/mm,yy/mm,yz/mm,zz/mm]), ord=[0,1,2].sort((a,b)=>E.evals[b]-E.evals[a]);
+    const U=E.evecs[ord[0]], V=E.evecs[ord[1]];   // in-plane axes from the neighbour masses → left/right + up/down
+    for(let a=0;a<Keff;a++)for(let b=0;b<Keff;b++){ if(a===ce&&b===ce)continue;
+      const ou=((a-(Keff-1)/2)/Keff)*S, ov=((b-(Keff-1)/2)/Keff)*S, px=xi+U[0]*ou+V[0]*ov, py=yi+U[1]*ou+V[1]*ov, pz=zi+U[2]*ou+V[2]*ov;
+      const ky=Math.round(px/fine)+'|'+Math.round(py/fine)+'|'+Math.round(pz/fine);
+      if(occ.has(ky))continue; occ.add(ky); insP.push(px,py,pz); insSrc.push(i); }
+  }
+  const nIns=insSrc.length, N=n+nIns;
+  const ns={n:N,shDegree:0,flags:B.flags,positions:new Float32Array(N*3),colors:new Float32Array(N*3),scalesLog:new Float32Array(N*3),quats:new Float32Array(N*4),alphasU8:new Uint8Array(N),shBytes:null};
+  const nOC=new Float32Array(N*3), nsel=new Uint8Array(N);
+  ns.positions.set(P,0); ns.colors.set(B.colors,0); ns.scalesLog.set(SL,0); ns.quats.set(Q,0); ns.alphasU8.set(AL,0); nOC.set(OC,0); nsel.set(sel,0);
+  if(v2.prepEqualize) for(let t=0;t<cab.length;t++){ const i=cab[t]; setFlat(ns.scalesLog,i,thinAxis(i)); }   // STEP 2 (optional): equalize existing cabinet splats
+  for(let t=0;t<nIns;t++){ const w=n+t, src=insSrc[t];
+    ns.positions[w*3]=insP[t*3];ns.positions[w*3+1]=insP[t*3+1];ns.positions[w*3+2]=insP[t*3+2];
+    ns.colors[w*3]=COL[src*3];ns.colors[w*3+1]=COL[src*3+1];ns.colors[w*3+2]=COL[src*3+2]; nOC[w*3]=OC[src*3];nOC[w*3+1]=OC[src*3+1];nOC[w*3+2]=OC[src*3+2];
+    if(v2.prepEqualize) setFlat(ns.scalesLog,w,thinAxis(src)); else { ns.scalesLog[w*3]=SL[src*3];ns.scalesLog[w*3+1]=SL[src*3+1];ns.scalesLog[w*3+2]=SL[src*3+2]; }   // inserts inherit the neighbour's real size unless equalizing
+    ns.quats[w*4]=Q[src*4];ns.quats[w*4+1]=Q[src*4+1];ns.quats[w*4+2]=Q[src*4+2];ns.quats[w*4+3]=Q[src*4+3]; ns.alphasU8[w]=AL[src]; nsel[w]=1; }
+  c.scene=ns; c.originalColors=nOC; c.selected=nsel; c.selCount=cab.length+nIns; c.segData=null; c._baseFor=null;
+  if(key==='cab' && v2.data){ v2Apply(); }                    // project wood onto the densified cabinets
+  else { showCombined(); setTab('v2'); scheduleCopySave(); }   // worktops / no texture: show with the inherited material colours
+  toast('Prepped '+(key==='cab'?'cabinets':'worktops')+': +'+nIns.toLocaleString()+' splats (sparse areas boosted)');
+}
+function prepCabinets(){ const tg=v2.prepTarget||'cab'; if(tg==='both'){ prepChannel('cab'); prepChannel('wt'); } else prepChannel(tg); }
+let v2Timer=null; function v2Live(){ clearTimeout(v2Timer); v2Timer=setTimeout(v2Apply,200); }
+$('v2-apply').onclick=v2Apply;
+$('v2-project').addEventListener('change',()=>{ v2.project=$('v2-project').value; v2Live(); });
+function v2num(id,key,scale,fmt){ const sl=$('v2-'+id), nu=$('v2-'+id+'-n');
+  sl.addEventListener('input',()=>{ v2[key]=parseFloat(sl.value)/scale; nu.value=fmt(v2[key]); v2Live(); });
+  nu.addEventListener('input',()=>{ const v=parseFloat(nu.value); if(Number.isFinite(v)){ v2[key]=v; sl.value=Math.round(v*scale); v2Live(); } }); }
+v2num('cm','cm',1,v=>Math.round(v)); v2num('rot','rot',1,v=>Math.round(v));
+v2num('offu','offU',100,v=>v.toFixed(2)); v2num('offv','offV',100,v=>v.toFixed(2));
+v2num('light','light',100,v=>v.toFixed(2)); v2num('bright','bright',100,v=>v.toFixed(2)); v2num('contrast','contrast',100,v=>v.toFixed(2)); v2num('relief','relief',100,v=>v.toFixed(2));
+v2num('detail','detail',100,v=>v.toFixed(2)); v2num('sat','sat',100,v=>v.toFixed(2)); v2num('warm','warm',100,v=>v.toFixed(2)); v2num('sheen','sheen',100,v=>v.toFixed(2));
+// prep sliders just store the value (no live re-project — prep runs on the button)
+[['psize','prepSizeMul',100,2],['prad','prepRadius',100,1],['psub','prepSubdiv',1,0],['pboost','prepSparseBoost',1,0],['pthr','prepDenseThresh',1,0]].forEach(([id,key,sc,dec])=>{ const sl=$('v2-'+id), nu=$('v2-'+id+'-n');
+  sl.addEventListener('input',()=>{ v2[key]=parseFloat(sl.value)/sc; nu.value=v2[key].toFixed(dec); });
+  nu.addEventListener('input',()=>{ const v=parseFloat(nu.value); if(Number.isFinite(v)){ v2[key]=v; sl.value=Math.round(v*sc); } }); });
+$('v2-ptarget').addEventListener('change',()=>{ v2.prepTarget=$('v2-ptarget').value; });
+$('v2-pequal').addEventListener('change',()=>{ v2.prepEqualize=$('v2-pequal').checked; });
+$('v2-prep').onclick=prepCabinets;
+function syncV2Controls(){ const set=(id,val,scale,fmt)=>{ const sl=$('v2-'+id),nu=$('v2-'+id+'-n'); if(sl)sl.value=Math.round(val*scale); if(nu)nu.value=fmt(val); };
+  set('cm',v2.cm,1,v=>Math.round(v)); set('rot',v2.rot,1,v=>Math.round(v)); set('offu',v2.offU,100,v=>v.toFixed(2)); set('offv',v2.offV,100,v=>v.toFixed(2));
+  set('light',v2.light,100,v=>v.toFixed(2)); set('bright',v2.bright,100,v=>v.toFixed(2)); set('contrast',v2.contrast,100,v=>v.toFixed(2)); set('relief',v2.relief,100,v=>v.toFixed(2));
+  set('detail',v2.detail,100,v=>v.toFixed(2)); set('sat',v2.sat,100,v=>v.toFixed(2)); set('warm',v2.warm,100,v=>v.toFixed(2)); set('sheen',v2.sheen,100,v=>v.toFixed(2));
+  set('psize',v2.prepSizeMul,100,v=>v.toFixed(2)); set('prad',v2.prepRadius,100,v=>v.toFixed(1)); set('psub',v2.prepSubdiv,1,v=>String(Math.round(v)));
+  set('pboost',v2.prepSparseBoost,1,v=>String(Math.round(v))); set('pthr',v2.prepDenseThresh,1,v=>String(Math.round(v)));
+  { const pt=$('v2-ptarget'); if(pt) pt.value=v2.prepTarget||'cab'; }
+  { const pe=$('v2-pequal'); if(pe) pe.checked=!!v2.prepEqualize; }
+  const pf=$('v2-project'); if(pf) pf.value=v2.project||'tri';
+  $('v2-status').textContent = v2.data ? (v2.name+' · '+v2.w+'×'+v2.h) : (chan.cab.scene?'load a wood texture':'load a mask first'); }
+function enterV2(){
+  exitChannelPreview();
+  if(!captureMode && !viewingCombined) saveActive();
+  captureMode=false; setEditTarget('cab');
+  if(chan.cab.scene && chan.wt.scene) showCombined();   // build + show the merged kitchen (this switches the panel to Combined)…
+  setTab('v2'); syncV2Controls();                        // …then put the panel back on V2 (canvas keeps the combined render)
+}
+$('tab-v2').onclick=enterV2;
+
 writeSettings(presets.cab); chan.cab.settings=Object.assign({},presets.cab); setTab('cab'); updateCombineBtns();
-showStartChooser();
+(async()=>{ let ok=false; try{ ok=await restoreSession(); }catch(e){ console.error(e); } if(!ok) showStartChooser(); })();   // saved session reloads the exact setup; otherwise pick a splat
 </script>
 </body>
 </html>

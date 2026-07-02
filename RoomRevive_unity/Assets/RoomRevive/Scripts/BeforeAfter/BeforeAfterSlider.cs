@@ -1,18 +1,32 @@
+using GaussianSplatting.Runtime;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace RoomRevive
 {
-    // Slider (0 = before/passthrough, 1 = after/full splat) that moves GSCutout
-    // between two local positions.
+    // Slider (0 = before/passthrough, 1 = after/full splat) that controls the
+    // normalized reveal value on GaussianArcCutoutManager.
+    [ExecuteAlways]
     public class BeforeAfterSlider : MonoBehaviour
     {
-        [SerializeField] private Transform cutoutTransform;
-        private Slider slider;
+        [Header("Cutout Reveal")]
+        [Tooltip("Optional explicit reference. If empty, the active GaussianArcCutoutManager singleton is used.")]
+        [SerializeField] private GaussianArcCutoutManager cutoutManager;
 
-        [Header("Cutout Positions")]
-        [SerializeField] private Transform beforeLocator;
-        [SerializeField] private Transform afterLocator;
+        [Tooltip("Current normalized value of the UI slider (0 = before, 1 = after).")]
+        [SerializeField, Range(0f, 1f)] private float currentSliderValue = 1f;
+
+        [Tooltip("If enabled, the slider's draggable handle is hidden and interaction disabled — the slider " +
+                 "becomes a display-only bar driven by code (SetSliderValue / the cutout manager).")]
+        [SerializeField] private bool hideHandle = true;
+
+        [Tooltip("If enabled, the reveal value is pushed in OnValidate and (in edit mode) every Update, so the " +
+                 "Scene view previews changes live. Disable to stop the editor from continuously syncing.")]
+        [SerializeField] private bool updateInEditor = true;
+
+        public float CurrentSliderValue => currentSliderValue;
+
+        private Slider slider;
 
         [Header("Follow Settings")]
         [Tooltip("If enabled, this slider follows the user's head/camera.")]
@@ -41,22 +55,52 @@ namespace RoomRevive
 
         private void Start()
         {
+            if (!Application.isPlaying)
+            {
+                SyncEditorPreview();
+                return;
+            }
+
             _canvasGroup = GetComponent<CanvasGroup>();
             if (_canvasGroup == null)
                 _canvasGroup = gameObject.AddComponent<CanvasGroup>();
 
             SetVisible(false);
             SetupCameraReference();
+            SetupCutoutManager();
             SetupSlider();
 
-            // Default = after/full splat
-            ApplyCutoutPosition(1f);
+            ApplyRevealValue(currentSliderValue);
         }
 
         private void Update()
         {
+            if (!Application.isPlaying)
+            {
+                if (updateInEditor)
+                    SyncEditorPreview();
+                return;
+            }
+
             if (OVRInput.GetDown(toggleButton))
                 SetVisible(!_visible);
+        }
+
+        private void OnValidate()
+        {
+            currentSliderValue = Mathf.Clamp01(currentSliderValue);
+            ResolveSlider(false);
+
+            if (slider != null)
+            {
+                ConfigureSliderRange();
+                slider.SetValueWithoutNotify(currentSliderValue);
+            }
+
+            if (!updateInEditor) return;
+
+            SetupCutoutManager();
+            ApplyRevealValue(currentSliderValue);
         }
 
         private void LateUpdate()
@@ -102,30 +146,132 @@ namespace RoomRevive
 
         private void SetupSlider()
         {
-            if (slider == null)
-                slider = GetComponentInChildren<Slider>(true);
-            if (slider == null)
-                slider = FindFirstObjectByType<Slider>();
+            ResolveSlider(true);
             if (slider == null) return;
 
-            slider.minValue = 0f;
-            slider.maxValue = 1f;
-            slider.value = 1f;
+            ConfigureSliderRange();
+            slider.SetValueWithoutNotify(currentSliderValue);
 
             slider.onValueChanged.RemoveListener(OnSliderChanged);
             slider.onValueChanged.AddListener(OnSliderChanged);
         }
 
-        private void OnSliderChanged(float value)
+        private void ResolveSlider(bool allowSceneFallback)
         {
-            ApplyCutoutPosition(value);
+            if (slider == null)
+                slider = GetComponentInChildren<Slider>(true);
+            if (slider == null && allowSceneFallback)
+                slider = FindFirstObjectByType<Slider>();
         }
 
-        private void ApplyCutoutPosition(float value)
+        private void ConfigureSliderRange()
         {
-            if (cutoutTransform == null || beforeLocator == null || afterLocator == null) return;
+            slider.minValue = 0f;
+            slider.maxValue = 1f;
+            slider.wholeNumbers = false;
+            ApplyHandleVisibility();
+        }
 
-            cutoutTransform.position = Vector3.Lerp(beforeLocator.position, afterLocator.position, value);
+        // When hideHandle is on, disable the handle GameObject, detach it from the slider, and turn off
+        // interaction/transition so the slider reads as a display-only bar (no draggable knob).
+        private void ApplyHandleVisibility()
+        {
+            if (slider == null) return;
+
+            if (hideHandle)
+            {
+                if (slider.handleRect != null)
+                {
+                    slider.handleRect.gameObject.SetActive(false);
+                    slider.handleRect = null;
+                }
+                slider.interactable = false;
+                slider.transition = Selectable.Transition.None;
+            }
+            else
+            {
+                slider.interactable = true;
+            }
+        }
+
+        private void SyncEditorPreview()
+        {
+            ResolveSlider(false);
+            if (slider == null) return;
+
+            ConfigureSliderRange();
+            float value = Mathf.Clamp01(slider.value);
+            slider.SetValueWithoutNotify(value);
+
+            if (!Mathf.Approximately(currentSliderValue, value) || cutoutManager == null)
+            {
+                ApplyRevealValue(value);
+            }
+        }
+
+        private void SetupCutoutManager()
+        {
+            if (cutoutManager == null)
+            {
+                cutoutManager = GaussianArcCutoutManager.GetOrFindInstance();
+            }
+        }
+
+        private void OnSliderChanged(float value)
+        {
+            ApplyRevealValue(value);
+        }
+
+        /// <summary>
+        /// Updates this component and its Unity UI Slider from the cutout manager
+        /// without sending the value back to the manager.
+        /// </summary>
+        public void SetValueFromCutoutManager(float normalizedValue)
+        {
+            currentSliderValue = Mathf.Clamp01(normalizedValue);
+            ResolveSlider(false);
+
+            if (slider == null) return;
+
+            ConfigureSliderRange();
+            slider.SetValueWithoutNotify(currentSliderValue);
+        }
+
+        /// <summary>
+        /// Updates the slider and applies the new normalized reveal value to the manager.
+        /// </summary>
+        public void SetSliderValue(float normalizedValue)
+        {
+            currentSliderValue = Mathf.Clamp01(normalizedValue);
+            ResolveSlider(false);
+
+            if (slider != null)
+            {
+                ConfigureSliderRange();
+                slider.SetValueWithoutNotify(currentSliderValue);
+            }
+
+            ApplyRevealValue(currentSliderValue);
+        }
+
+        public bool UsesCutoutManager(GaussianArcCutoutManager manager)
+        {
+            return cutoutManager == null || cutoutManager == manager;
+        }
+
+        private void ApplyRevealValue(float value)
+        {
+            currentSliderValue = Mathf.Clamp01(value);
+
+            if (cutoutManager == null)
+            {
+                SetupCutoutManager();
+            }
+
+            if (cutoutManager != null)
+            {
+                cutoutManager.SetReveal01(currentSliderValue);
+            }
         }
 
         // Call this on intent switch to reset to full splat view
@@ -137,7 +283,15 @@ namespace RoomRevive
             }
             else
             {
-                ApplyCutoutPosition(1f);
+                ApplyRevealValue(1f);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (slider != null)
+            {
+                slider.onValueChanged.RemoveListener(OnSliderChanged);
             }
         }
 

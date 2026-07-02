@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_984dd0a34fb8e1b5 LASER 417
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 984dd0a34fb8e1b5
+  catalogKey: 984dd0a34fb8e1b5
+  brandName: Nobilia
+  productName: LASER 417
+  subtitle: Modern kitchen
+  emotionalLine: Timelessly modern.
+  shortDescription: "If you would rather avoid fleeting interior design trends in
+    favour of timelessly modern kitchen styles that can be enjoyed for many years
+    to come, then, light, monochromatic d\xE9cors are just right for you. Whether
+    you are inspired by a spotless tone on tone design or a balance of fascinating
+    accents in glass colours and worktop d\xE9cors \u2013 the possibilities are virtually
+    endless."
+  productImage: {fileID: 0}
+  specs:
+  - Satin grey
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 417_Satin_grey.jpg
+  splatWtMaterial: 353_White_Concrete_reproduction.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

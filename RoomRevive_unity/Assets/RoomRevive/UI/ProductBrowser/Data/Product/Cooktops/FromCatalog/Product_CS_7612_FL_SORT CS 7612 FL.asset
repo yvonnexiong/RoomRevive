@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_CS_7612_FL_SORT CS 7612 FL
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: CS_7612_FL_SORT
+  catalogKey: CS_7612_FL_SORT
+  brandName: Miele
+  productName: CS 7612 FL
+  subtitle: SmartLine induction hob with PowerFlex cooking zone
+  emotionalLine: with induction-heated PowerFlex cooking zone
+  shortDescription: 'Fast and intuitive: the power level can be selected and the
+    time set via a numeric scale for each cooking zone.'
+  productImage: {fileID: 0}
+  specs:
+  - 2 zones
+  - Induction
+  - 3.6 kW
+  fromPrice: From EUR 1,862
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 
+  splatWtMaterial: 
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

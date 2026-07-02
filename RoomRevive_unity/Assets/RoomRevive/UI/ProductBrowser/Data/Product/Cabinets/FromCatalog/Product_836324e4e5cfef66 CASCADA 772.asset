@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_836324e4e5cfef66 CASCADA 772
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 836324e4e5cfef66
+  catalogKey: 836324e4e5cfef66
+  brandName: Nobilia
+  productName: CASCADA 772
+  subtitle: Cottage style kitchen
+  emotionalLine: We have a passion for skilfully mastered details.
+  shortDescription: This casually arranged cottage kitchen impresses through the
+    details that make a perfect kitchen what it is. For instance, with shorter working
+    distances, an integrated seating area at the cooking island and plenty of storage
+    in the XL base units.
+  productImage: {fileID: 0}
+  specs:
+  - Stone grey
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 772_Stone_grey.jpg
+  splatWtMaterial: 
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

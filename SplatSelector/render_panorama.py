@@ -8,14 +8,41 @@ It renders whatever is in your scene right now (uses the open session, not a sav
 import bpy, math
 
 # ===================== EDIT THESE =====================
-LOC       = (-0.678, -1.6929, 0.29034)   # camera position, Blender world coords (the cube's location)
+USE_VIEWPORT = True                       # True = render from wherever the 3D viewport is looking from RIGHT NOW
+LOC       = (-0.678, -1.6929, 0.29034)   # fallback position (used only if USE_VIEWPORT is False or no viewport found)
 YAW_DEG   = 0.0                           # spin around vertical (Z) to choose what faces the image centre
-RES_X, RES_Y = 2048, 1024                 # equirectangular MUST be 2:1 (bump to 4096x2048 for final quality)
+RES_X, RES_Y = 8192, 4096                 # equirectangular MUST be 2:1 (8192x4096 = final/high quality)
 SAMPLES   = 64                            # Cycles samples (lower = faster, noisier)
-OUTPUT    = r"C:\Unity-Git\SplatSelector\panorama_from_cube.png"
+OUTPUT    = r"C:\Unity-Git\RoomRevive\SplatSelector\panorama_from_cube.png"
 # =====================================================
 
 scene = bpy.context.scene
+
+# Grab the eye point of the current 3D viewport (the spot you're floating at on screen).
+# The view matrix maps world->camera; its inverse translation is the camera/eye position.
+# We scan EVERY screen (not just the visible one) and pick the LARGEST 3D viewport, so this
+# works even when you run the script from the Scripting workspace (whose own viewport is tiny).
+# The big Layout viewport you positioned wins, and its view is remembered across workspaces.
+def _viewport_eye():
+    best, best_area = None, -1
+    for screen in bpy.data.screens:
+        for area in screen.areas:
+            if area.type != 'VIEW_3D':
+                continue
+            size = area.width * area.height
+            if size > best_area:
+                r3d = area.spaces.active.region_3d
+                best = tuple(r3d.view_matrix.inverted().translation)
+                best_area = size
+    return best
+
+if USE_VIEWPORT:
+    eye = _viewport_eye()
+    if eye is not None:
+        LOC = eye
+        print("Using current viewport position:", LOC)
+    else:
+        print("No 3D viewport found (running from a screen without one?) - using fallback LOC:", LOC)
 
 # Panoramic cameras only render in Cycles (Eevee cannot do equirectangular).
 scene.render.engine = 'CYCLES'

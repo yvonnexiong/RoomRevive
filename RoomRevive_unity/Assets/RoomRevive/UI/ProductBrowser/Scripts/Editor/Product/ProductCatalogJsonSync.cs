@@ -37,6 +37,11 @@ namespace RoomRevive.ProductBrowser.EditorTools
             public string catalogPath;
             public string fromCatalogFolder;
             public Action<ProductData, CatalogProduct, string> apply;
+            // When true, each synced asset file is named "Product_<id> <productName>" — the hash id is
+            // KEPT and the product name appended for readability (e.g. "Product_9a39b52d… NOVALUX 519").
+            // Safe: sync re-finds assets by catalogKey and the catalog references them by GUID — both
+            // survive a rename.
+            public bool nameByProductName;
         }
 
         static readonly SyncTarget[] Targets =
@@ -46,14 +51,32 @@ namespace RoomRevive.ProductBrowser.EditorTools
                 catalogPath       = DataRoot + "/ProductCatalog_Fridges.asset",
                 fromCatalogFolder = DataRoot + "/Fridges/FromCatalog",
                 apply             = ApplyFridge,
+                // Fridge assets keep their modelKey name (matches the 3D model / scene object).
             },
             new SyncTarget {
                 jsonCategory      = "Kitchens",
                 catalogPath       = DataRoot + "/ProductCatalog_Cabinets.asset",
                 fromCatalogFolder = DataRoot + "/Cabinets/FromCatalog",
                 apply             = ApplyKitchen,
+                nameByProductName = true,   // Kitchens have hash ids → append the product name for readability.
             },
+            ApplianceTarget("Hoods",          ApplyHood),
+            ApplianceTarget("Cooktops",       ApplyCooktop),
+            ApplianceTarget("CoffeeMachines", ApplyCoffeeMachine),
+            ApplianceTarget("Microwaves",     ApplyMicrowave),
+            ApplianceTarget("Dishwashers",    ApplyDishwasher),
         };
+
+        // Miele appliance categories — same pattern as Fridges; asset name = "Product_<id> <name>".
+        static SyncTarget ApplianceTarget(string category, Action<ProductData, CatalogProduct, string> apply) =>
+            new SyncTarget
+            {
+                jsonCategory      = category,
+                catalogPath       = DataRoot + "/ProductCatalog_" + category + ".asset",
+                fromCatalogFolder = DataRoot + "/" + category + "/FromCatalog",
+                apply             = apply,
+                nameByProductName = true,
+            };
 
         // ── Auto-watch ────────────────────────────────────────────────────────
         static double _nextCheck;
@@ -158,9 +181,12 @@ namespace RoomRevive.ProductBrowser.EditorTools
                 tgt.apply(pd, p, key);
                 EditorUtility.SetDirty(pd);
 
+                if (tgt.nameByProductName) RenameAssetWithProductName(pd, key);
+
                 if (!catalog.products.Contains(pd)) catalog.products.Add(pd);
             }
 
+            catalog.SortPinnedFirst();   // keep pinned products at the front after a sync
             EditorUtility.SetDirty(catalog);
             Debug.Log($"[CatalogJsonSync] {tgt.jsonCategory} → {Path.GetFileName(tgt.catalogPath)}: " +
                       $"{created} created, {updated} updated. Catalog now has {catalog.Count} products.");
@@ -185,11 +211,78 @@ namespace RoomRevive.ProductBrowser.EditorTools
         {
             var specs = new List<string>();
             if (p.fridgeCapacity > 0) specs.Add($"{p.fridgeCapacity} L");
-            if (p.annualEnergy > 0)   specs.Add($"{p.annualEnergy} kWh/yr");
+            if (p.annualEnergy > 0)   specs.Add($"{Num(p.annualEnergy)} kWh/yr");
             if (p.noise > 0)          specs.Add($"{p.noise} dB");
             if (!string.IsNullOrEmpty(p.energyClass)) specs.Add($"Class {p.energyClass}");
             return specs.ToArray();
         }
+
+        // ── Mapping: Miele appliances (Hoods, Cooktops, Coffee, Microwaves, Dishwashers) ──────
+        static void ApplyApplianceCommon(ProductData pd, CatalogProduct p, string key, string[] specs)
+        {
+            pd.catalogKey       = key;
+            pd.id               = key;
+            pd.brandName        = p.brand;
+            pd.productName      = p.name;
+            pd.subtitle         = p.subtitle;
+            pd.emotionalLine    = !string.IsNullOrEmpty(p.headline) ? p.headline : p.emotionalLine;
+            pd.shortDescription = p.description;
+            pd.specs            = specs;
+            pd.fromPrice        = BuildPrice(p);
+        }
+
+        static void ApplyHood(ProductData pd, CatalogProduct p, string key)
+        {
+            var s = new List<string>();
+            if (p.airflow > 0)      s.Add($"{Num(p.airflow)} m³/h");
+            if (p.noise > 0)        s.Add($"{p.noise} dB");
+            if (!string.IsNullOrEmpty(p.energyClass)) s.Add($"Class {p.energyClass}");
+            if (p.annualEnergy > 0) s.Add($"{Num(p.annualEnergy)} kWh/yr");
+            ApplyApplianceCommon(pd, p, key, s.ToArray());
+        }
+
+        static void ApplyCooktop(ProductData pd, CatalogProduct p, string key)
+        {
+            var s = new List<string>();
+            if (p.zones > 0)        s.Add($"{p.zones} zones");
+            if (p.induction)        s.Add("Induction");
+            if (p.totalPowerKw > 0) s.Add($"{Num(p.totalPowerKw)} kW");
+            if (!string.IsNullOrEmpty(p.energyClass)) s.Add($"Class {p.energyClass}");
+            ApplyApplianceCommon(pd, p, key, s.ToArray());
+        }
+
+        static void ApplyCoffeeMachine(ProductData pd, CatalogProduct p, string key)
+        {
+            var s = new List<string>();
+            if (!string.IsNullOrEmpty(p.color))      s.Add(p.color);
+            if (!string.IsNullOrEmpty(p.dimensions)) s.Add(p.dimensions);
+            ApplyApplianceCommon(pd, p, key, s.ToArray());
+        }
+
+        static void ApplyMicrowave(ProductData pd, CatalogProduct p, string key)
+        {
+            var s = new List<string>();
+            if (p.capacityL > 0)       s.Add($"{p.capacityL} L");
+            if (p.microwavePowerW > 0) s.Add($"{p.microwavePowerW} W");
+            if (p.grill)               s.Add("Grill");
+            ApplyApplianceCommon(pd, p, key, s.ToArray());
+        }
+
+        static void ApplyDishwasher(ProductData pd, CatalogProduct p, string key)
+        {
+            var s = new List<string>();
+            if (p.placeSettings > 0) s.Add($"{p.placeSettings} settings");
+            if (!string.IsNullOrEmpty(p.energyClass)) s.Add($"Class {p.energyClass}");
+            if (p.waterPerCycle > 0) s.Add($"{Num(p.waterPerCycle)} L/cycle");
+            if (!string.IsNullOrEmpty(p.noiseClass)) s.Add($"Noise {p.noiseClass}");
+            ApplyApplianceCommon(pd, p, key, s.ToArray());
+        }
+
+        // Whole numbers render without a decimal; fractional keep one place (invariant → always a dot).
+        static string Num(float v) =>
+            Mathf.Approximately(v, Mathf.Round(v))
+                ? Mathf.RoundToInt(v).ToString()
+                : v.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
 
         // ── Mapping: Kitchens (Nobilia) → Cabinets ──────────────────────────────
         static void ApplyKitchen(ProductData pd, CatalogProduct p, string key)
@@ -300,6 +393,30 @@ namespace RoomRevive.ProductBrowser.EditorTools
             return s.Replace(' ', '_');
         }
 
+        // Names the asset "Product_<id> <productName>" — keeps the hash id, appends the readable name.
+        // Idempotent (recomputed from id + name each sync), and unique because the id is unique.
+        static void RenameAssetWithProductName(ProductData pd, string key)
+        {
+            string path = AssetDatabase.GetAssetPath(pd);
+            if (string.IsNullOrEmpty(path)) return;
+
+            string name = SafeAssetName(pd.productName);
+            string desired = string.IsNullOrEmpty(name) ? $"Product_{Safe(key)}" : $"Product_{Safe(key)} {name}";
+            if (Path.GetFileNameWithoutExtension(path) == desired) return;
+
+            string err = AssetDatabase.RenameAsset(path, desired);
+            if (!string.IsNullOrEmpty(err))
+                Debug.LogWarning($"[CatalogJsonSync] Could not rename '{path}' → '{desired}': {err}");
+        }
+
+        // Asset names allow spaces; only strip characters illegal in a filename.
+        static string SafeAssetName(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return s;
+            foreach (char c in Path.GetInvalidFileNameChars()) s = s.Replace(c, '_');
+            return s.Trim();
+        }
+
         static void EnsureFolder(string folder)
         {
             if (AssetDatabase.IsValidFolder(folder)) return;
@@ -324,12 +441,24 @@ namespace RoomRevive.ProductBrowser.EditorTools
             public string description;
             // Fridges
             public int    fridgeCapacity;
-            public int    annualEnergy;
+            public float  annualEnergy;     // float: fridges are whole (239), hoods fractional (91.6)
             public int    noise;
             public string energyClass;
             public float  price;
             public string currency;
             public string modelKey;
+            // Appliances (Hoods / Cooktops / CoffeeMachines / Microwaves / Dishwashers)
+            public string dimensions;
+            public float  airflow;          // hoods (m³/h)
+            public int    zones;            // cooktops
+            public bool   induction;        // cooktops
+            public float  totalPowerKw;     // cooktops
+            public int    capacityL;        // microwaves
+            public int    microwavePowerW;  // microwaves
+            public bool   grill;            // microwaves
+            public int    placeSettings;    // dishwashers
+            public float  waterPerCycle;    // dishwashers
+            public string noiseClass;       // dishwashers
             // Kitchens (Nobilia)
             public string color;
             public string kitchenType;

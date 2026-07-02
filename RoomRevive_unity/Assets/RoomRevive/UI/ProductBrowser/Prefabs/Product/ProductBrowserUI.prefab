@@ -1,5 +1,193 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4793452501556735264
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1742677005762037380}
+  - component: {fileID: 8166885309143582259}
+  m_Layer: 0
+  m_Name: LookAtCollider
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1742677005762037380
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4793452501556735264}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 309635948811624434}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!65 &8166885309143582259
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4793452501556735264}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1082.6215, y: 1169.6907, z: 59.535862}
+  m_Center: {x: -0.00005007501, y: -0.00025467257, z: -29.267796}
+--- !u!1 &6073186409079097399
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3785060221781395527}
+  - component: {fileID: 2464993634855861415}
+  - component: {fileID: 1640802788254433310}
+  - component: {fileID: 5010662977442686204}
+  - component: {fileID: 1674857738776123508}
+  m_Layer: 0
+  m_Name: Loading Screen
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!224 &3785060221781395527
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6073186409079097399}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 309635948811624434}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 520, y: 360}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!223 &2464993634855861415
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6073186409079097399}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 25
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
+--- !u!114 &1640802788254433310
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6073186409079097399}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
+  m_UiScaleMode: 0
+  m_ReferencePixelsPerUnit: 100
+  m_ScaleFactor: 1
+  m_ReferenceResolution: {x: 800, y: 600}
+  m_ScreenMatchMode: 0
+  m_MatchWidthOrHeight: 0
+  m_PhysicalUnit: 3
+  m_FallbackScreenDPI: 96
+  m_DefaultSpriteDPI: 96
+  m_DynamicPixelsPerUnit: 10
+  m_PresetInfoIsWorld: 1
+--- !u!114 &5010662977442686204
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6073186409079097399}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!114 &1674857738776123508
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6073186409079097399}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2435ccb1b3dba8b409c56d71521acd9f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.LoadingUI
+  worldScale: 1
+  canvasSize: {x: 520, y: 360}
+  eventCamera: {fileID: 0}
+  label: Loading
+  dotCount: 8
+  spinSpeed: 0.5
+  accent: {r: 0.36862746, g: 0.5921569, b: 0.72156864, a: 1}
+  textColor: {r: 0.22745098, g: 0.2509804, b: 0.33333334, a: 1}
+  panelColor: {r: 0.71, g: 0.737, b: 0.816, a: 0.985}
+  showOnStart: 0
+  fadeDuration: 0.25
+  followUserHead: 1
+  distance: 1.4
+  rightOffset: 0
+  upOffset: -0.05
+  fontAsset: {fileID: 0}
+  autoRebuildInEditor: 1
 --- !u!1 &7147148136528954602
 GameObject:
   m_ObjectHideFlags: 0
@@ -39,9 +227,11 @@ RectTransform:
   m_LocalScale: {x: 0.001, y: 0.001, z: 0.001}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 3785060221781395527}
   - {fileID: 4001790027812161084}
   - {fileID: 8383396769998773595}
   - {fileID: 4945820408482574714}
+  - {fileID: 1742677005762037380}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -199,6 +389,7 @@ MonoBehaviour:
   initialProductIndex: 0
   reselectSameProductInvokesEvents: 0
   wrapAroundProducts: 0
+  disableCurrent3DModel: 0
   keyboardDebug: 1
   onDiscoverOpened:
     m_PersistentCalls:
@@ -255,6 +446,8 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   liveBinding: 0
+  pushSelectionToSplatEditor: 1
+  splatEditorBaseUrl: http://127.0.0.1:8766
   debugLogs: 1
 --- !u!114 &7870390957634284333
 MonoBehaviour:
@@ -547,6 +740,10 @@ PrefabInstance:
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}
+    - target: {fileID: 235718403537205372, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: 269 kWh/yr
+      objectReference: {fileID: 0}
     - target: {fileID: 350490257549090536, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -570,6 +767,14 @@ PrefabInstance:
     - target: {fileID: 350490257549090536, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 385378328096852193, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: DailyFresh, Longlife AirClean, Freeze&Cool and NoFrost.
+      objectReference: {fileID: 0}
+    - target: {fileID: 415444441976355371, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: "Freestanding fridge-freezer (French door) \xB7 clean steel"
       objectReference: {fileID: 0}
     - target: {fileID: 435586050314138004, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_AnchorMax.x
@@ -607,6 +812,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: ProductSwapPanel
       objectReference: {fileID: 0}
+    - target: {fileID: 453527310657293353, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 524188278739126676, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: Class D
+      objectReference: {fileID: 0}
     - target: {fileID: 680279892857921574, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -630,6 +843,10 @@ PrefabInstance:
     - target: {fileID: 680279892857921574, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1199419891473021860, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: "Freestanding fridge-freezer (French door) \xB7 clean steel"
       objectReference: {fileID: 0}
     - target: {fileID: 1378948432196791669, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_AnchorMax.x
@@ -742,6 +959,10 @@ PrefabInstance:
     - target: {fileID: 1662007042816456070, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -17
+      objectReference: {fileID: 0}
+    - target: {fileID: 1666629000295469742, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: 39 dB
       objectReference: {fileID: 0}
     - target: {fileID: 1734410115410076064, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_AnchorMax.y
@@ -962,7 +1183,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2434010558343039226, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_text
-      value: 37 dB
+      value: 356 L
       objectReference: {fileID: 0}
     - target: {fileID: 2434010558343039226, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_fontColor32.rgba
@@ -1048,6 +1269,26 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 3467461121392483498, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: 356 L
+      objectReference: {fileID: 0}
+    - target: {fileID: 3530084829979098059, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: 39 dB
+      objectReference: {fileID: 0}
+    - target: {fileID: 3600563516579855502, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: DailyFresh, Longlife AirClean, Freeze&Cool and NoFrost.
+      objectReference: {fileID: 0}
+    - target: {fileID: 3669306019260947812, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: 39 dB
+      objectReference: {fileID: 0}
+    - target: {fileID: 3883524256919612217, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: "Freestanding fridge-freezer (French door) \xB7 clean steel"
+      objectReference: {fileID: 0}
     - target: {fileID: 4024346389942310392, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -1072,10 +1313,66 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4078075367468084408, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: Class D
+      objectReference: {fileID: 0}
+    - target: {fileID: 4113162115736285017, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: "Freestanding fridge-freezer (French door) \xB7 clean steel"
+      objectReference: {fileID: 0}
+    - target: {fileID: 4237664925969482592, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: 39 dB
+      objectReference: {fileID: 0}
+    - target: {fileID: 4330542113004520128, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: DailyFresh, Longlife AirClean, Freeze&Cool and NoFrost.
+      objectReference: {fileID: 0}
+    - target: {fileID: 4448428862727273057, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: "Freestanding fridge-freezer (French door) \xB7 clean steel"
+      objectReference: {fileID: 0}
+    - target: {fileID: 4452305008720174378, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: 269 kWh/yr
+      objectReference: {fileID: 0}
     - target: {fileID: 4470073983683849398, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: previewCategory
       value: 
       objectReference: {fileID: 11400000, guid: c505d4904c73886499fb3a09e58ecc80, type: 2}
+    - target: {fileID: 4471641469044078793, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4283777082
+      objectReference: {fileID: 0}
+    - target: {fileID: 4471641469044078793, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 4508962233224877042, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4508962233224877042, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4508962233224877042, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4508962233224877042, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4508962233224877042, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4508962233224877042, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4612575481411212717, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -1126,16 +1423,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4691707101715899478, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 114.700005
+      value: 118.600006
       objectReference: {fileID: 0}
     - target: {fileID: 4691707101715899478, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -17
       objectReference: {fileID: 0}
+    - target: {fileID: 4982055183195093435, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: Class D
+      objectReference: {fileID: 0}
     - target: {fileID: 5080177667174939473, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_text
-      value: A clean, confident fridge that fits right into a modern kitchen without
-        asking for attention.
+      value: French-door space with DailyFresh
       objectReference: {fileID: 0}
     - target: {fileID: 5080177667174939473, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_fontColor32.rgba
@@ -1205,6 +1505,46 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5684266243720986763, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5684266243720986763, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5684266243720986763, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5684266243720986763, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5684266243720986763, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5684266243720986763, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 5684266243720986763, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 283.635
+      objectReference: {fileID: 0}
+    - target: {fileID: 5684266243720986763, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -17
+      objectReference: {fileID: 0}
+    - target: {fileID: 5766772678973231488, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: 39 dB
+      objectReference: {fileID: 0}
+    - target: {fileID: 6019748439672442475, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: DailyFresh, Longlife AirClean, Freeze&Cool and NoFrost.
+      objectReference: {fileID: 0}
     - target: {fileID: 6028908976944772683, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
       value: 1
@@ -1224,6 +1564,10 @@ PrefabInstance:
     - target: {fileID: 6028908976944772683, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
       value: RoomRevive.ProductBrowser.ProductBrowserController, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 6068292079651825424, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: 39 dB
       objectReference: {fileID: 0}
     - target: {fileID: 6150167571391826291, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_text
@@ -1260,6 +1604,10 @@ PrefabInstance:
     - target: {fileID: 6325449778124754602, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6348854866125455361, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: Class D
       objectReference: {fileID: 0}
     - target: {fileID: 6476971904070559098, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_AnchorMax.x
@@ -1305,6 +1653,14 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6945590357401979455, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: DailyFresh, Longlife AirClean, Freeze&Cool and NoFrost.
+      objectReference: {fileID: 0}
+    - target: {fileID: 6972843613668116937, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: Class D
+      objectReference: {fileID: 0}
     - target: {fileID: 7077526480434883892, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -1331,7 +1687,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7125839211480638129, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_text
-      value: Nobilia
+      value: Miele
       objectReference: {fileID: 0}
     - target: {fileID: 7125839211480638129, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_fontColor32.rgba
@@ -1365,9 +1721,17 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7364498016491478640, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: 269 kWh/yr
+      objectReference: {fileID: 0}
+    - target: {fileID: 7580369151315101205, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: Class D
+      objectReference: {fileID: 0}
     - target: {fileID: 7599497290470620242, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_text
-      value: $1,299
+      value: EUR 3,966
       objectReference: {fileID: 0}
     - target: {fileID: 7599497290470620242, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_fontColor32.rgba
@@ -1379,7 +1743,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7616398436788281056, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_text
-      value: Modern Fridge
+      value: KFFD 6741
       objectReference: {fileID: 0}
     - target: {fileID: 7616398436788281056, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_fontColor32.rgba
@@ -1388,6 +1752,10 @@ PrefabInstance:
     - target: {fileID: 7616398436788281056, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_TextStyleHashCode
       value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 7618403202233700504, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7672552239415083411, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_AnchorMax.x
@@ -1415,11 +1783,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7672552239415083411, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 199.05
+      value: 206.85
       objectReference: {fileID: 0}
     - target: {fileID: 7672552239415083411, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -17
+      objectReference: {fileID: 0}
+    - target: {fileID: 7909030342556730807, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: "Freestanding fridge-freezer (French door) \xB7 clean steel"
+      objectReference: {fileID: 0}
+    - target: {fileID: 8528791283698408146, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: DailyFresh, Longlife AirClean, Freeze&Cool and NoFrost.
       objectReference: {fileID: 0}
     - target: {fileID: 8569237500926252490, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_AnchorMax.x
@@ -1453,9 +1829,17 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8671117160036395305, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: 269 kWh/yr
+      objectReference: {fileID: 0}
     - target: {fileID: 8684433298030769739, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8840964823891142999, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_Interactable
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8840964823891142999, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
@@ -1501,6 +1885,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 9081740220413229313, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: 269 kWh/yr
+      objectReference: {fileID: 0}
     - target: {fileID: 9157056123969833329, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_text
       value: 37 dB
@@ -1512,6 +1900,10 @@ PrefabInstance:
     - target: {fileID: 9157056123969833329, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
       propertyPath: m_TextStyleHashCode
       value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 9200463549871984263, guid: 3e44b2c67c78c9844a6ea73b675a2877, type: 3}
+      propertyPath: m_text
+      value: 269 kWh/yr
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace RoomRevive.ProductBrowser
@@ -46,6 +47,27 @@ namespace RoomRevive.ProductBrowser
         {
             ProductData def = GetDefaultProduct();
             return def != null ? IndexOf(def) : -1;
+        }
+
+        /// <summary>
+        /// Stable-sorts the list so products with <see cref="ProductData.pinnedFirst"/> lead, keeping
+        /// relative order within the pinned group and within the rest. Returns true if order changed.
+        /// </summary>
+        public bool SortPinnedFirst()
+        {
+            if (products == null || products.Count < 2) return false;
+            var sorted = products.OrderByDescending(p => p != null && p.pinnedFirst).ToList();
+            bool changed = false;
+            for (int i = 0; i < products.Count; i++)
+                if (!ReferenceEquals(products[i], sorted[i])) { changed = true; break; }
+            if (changed) products = sorted;
+            return changed;
+        }
+
+        /// <summary>Sorts pinned-first only if this catalog actually contains the given product.</summary>
+        public bool SortPinnedFirstIfContains(ProductData product)
+        {
+            return products != null && products.Contains(product) && SortPinnedFirst();
         }
     }
 }

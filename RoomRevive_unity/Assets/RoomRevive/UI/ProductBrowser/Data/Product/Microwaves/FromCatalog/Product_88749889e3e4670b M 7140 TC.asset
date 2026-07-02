@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_88749889e3e4670b M 7140 TC
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 88749889e3e4670b
+  catalogKey: 88749889e3e4670b
+  brandName: Miele
+  productName: M 7140 TC
+  subtitle: Gold
+  emotionalLine: Large 46 L built-in microwave with TouchControl
+  shortDescription: A roomy 46 L cavity and a clean TouchControl display make light
+    work of big bowls and family portions, with even, reliable results.
+  productImage: {fileID: 0}
+  specs:
+  - 46 L
+  - 900 W
+  fromPrice: From EUR 1,594
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 
+  splatWtMaterial: 
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

@@ -3,7 +3,187 @@ guid: 1c9e1250af5f1994ab538abef7072093
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Display
+    second: {fileID: 2100000, guid: 625354a3f57cece43b70c89583b38210, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Eierfassung_Discovery
+    second: {fileID: 2100000, guid: 7ebae24f78fc0c7478264a80091fab1b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Einlegeglas
+    second: {fileID: 2100000, guid: c571f021f2b9fe642b0ab8d31bcdb301, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Eiswuerfelschale
+    second: {fileID: 2100000, guid: 11d6a652ef11abc4398e081a424e73f5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Gummi_schwarz_rueckseite
+    second: {fileID: 2100000, guid: b0f9f47a079aebe4b8ec0f6b3533b460, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: InnenweissTuer
+    second: {fileID: 2100000, guid: 79efeb771da3b014ca2d22ca31cf1ad6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: KST-SilberMetallic
+    second: {fileID: 2100000, guid: f82ea6ae4663a8843853befe70cb9a47, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: KST_milchig_weiss
+    second: {fileID: 2100000, guid: dfbd5ffccd1c26a448a3891a0f3dfcee, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kst-Grau_PowerLED
+    second: {fileID: 2100000, guid: c3249a5f4d7ee9b409889423c5e6db1e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kst-grau
+    second: {fileID: 2100000, guid: d5c853135de19784ca92a6fc428864ca, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kst-schwarz
+    second: {fileID: 2100000, guid: 96e6ddf728790ba4cb72259acba9b04e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kst-weiss
+    second: {fileID: 2100000, guid: ad789989247139349992090eb4e9d7b4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kuehlschrank_InnenWeiss
+    second: {fileID: 2100000, guid: e2aaedda2a194b647a4b0b660c730308, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kupfer
+    second: {fileID: 2100000, guid: 50168f1f0ac6bd34a872da9de4c4a3fc, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Lichter
+    second: {fileID: 2100000, guid: c24fe0abda0ba7b4aa50923da82d258d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Metal_Weiss
+    second: {fileID: 2100000, guid: 9cbb0bbaee38e954b973d8644548cbad, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Miele_Logo_WS
+    second: {fileID: 2100000, guid: 264fb393bc42fcc4bbfaaa875659a9da, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Rueckseite_Edelstahl_Boden
+    second: {fileID: 2100000, guid: c15d993dcca449e42a1fa22656f317a7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Rueckseite_Metall
+    second: {fileID: 2100000, guid: 44a653540b006b545a577548238e5130, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Rueckseite_Metall_Schwarz
+    second: {fileID: 2100000, guid: a93627e3867999c4bb0f8e5b9af2a933, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: S09_PowerLED
+    second: {fileID: 2100000, guid: 5a365781e02f0ca4d84846fec2fa57ec, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: S10_DynaCool
+    second: {fileID: 2100000, guid: 827b7e95127f2bb449663d0bdde0d610, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: S11_DynaCool_ExtraCool
+    second: {fileID: 2100000, guid: d80d32f8448416445a12ce1c5346642d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: S17_DailyFresh_ExtraCool
+    second: {fileID: 2100000, guid: 2e2e6aba5f71e1f47bc41449e5f53488, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: S18_DailyFresh
+    second: {fileID: 2100000, guid: 2e44dd7c4d91820438481d91d0b1dad8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: S19_NoFrost
+    second: {fileID: 2100000, guid: b1a7e88cfb2531b449e0840c334d6dce, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Scharniere-Metall
+    second: {fileID: 2100000, guid: cd66d12f1e9534943932c15991f6262d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: SchlauchMitRiffelung
+    second: {fileID: 2100000, guid: b0436cdda2ff07e41bf84204c8106eeb, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Schubladen_Gefrierfach_Front
+    second: {fileID: 2100000, guid: 454f1081c922ff74da29517301a9e380, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Stahlverzinkt
+    second: {fileID: 2100000, guid: 971670b5b12628e4ebc871860c836cb6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: "T\xFCrabstellerGlas_ORIG"
+    second: {fileID: 2100000, guid: 2bbf4cf3143982c4786ef53077b97f2e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Wasser
+    second: {fileID: 2100000, guid: 1f47f7c410b046841bd1fbd6ed6172d6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: blende.002
+    second: {fileID: 2100000, guid: c9ee5aec1648bd94daec49873dfda4d3, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: el
+    second: {fileID: 2100000, guid: e24e78c23a5a6bd4cb94790fc365053d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: gummi
+    second: {fileID: 2100000, guid: b59860117562e1d44852768511cf4cab, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: gummi_el_dunkler
+    second: {fileID: 2100000, guid: 239ab74c87c16d945ab65a03f162b92c, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

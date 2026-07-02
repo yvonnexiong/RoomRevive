@@ -57,6 +57,20 @@ public class IntersectionRevealSphereEffect : MonoBehaviour
     [Range(0f, 20f)] public float noiseScale = 6f;
     [Range(0f, 1f)] public float noiseStrength = 0.25f;
 
+    [Header("Collider Contact Reveal")]
+    [Tooltip("Also light up when the sphere physically overlaps colliders (e.g. MRUK room meshes). " +
+             "Works even if those meshes don't write to the depth texture, so the depth-based glow can't see them.")]
+    public bool colliderContactReveal = true;
+
+    [Tooltip("Shell alpha to fade in while the sphere is in contact with a collider.")]
+    [Range(0f, 1f)] public float contactShellAlpha = 0.35f;
+
+    [Tooltip("Extra intensity multiplier added while in contact (0 = none).")]
+    [Range(0f, 5f)] public float contactIntensityBoost = 1f;
+
+    [Tooltip("How fast the contact reaction fades in/out.")]
+    [Range(0.5f, 20f)] public float contactSmoothing = 8f;
+
     [Header("Collision / Trigger")]
     public bool useTriggerCollider = true;
     public LayerMask collisionLayers = ~0;
@@ -78,6 +92,15 @@ public class IntersectionRevealSphereEffect : MonoBehaviour
 
     public IReadOnlyList<Collider> CurrentOverlaps => currentOverlaps;
 
+    /// <summary>Number of colliders currently inside the sphere trigger.</summary>
+    public int OverlapCount => currentOverlaps.Count;
+
+    /// <summary>Smoothed 0–1 contact amount (1 = touching something), matching the visual reaction.</summary>
+    public float ContactAmount => _contactT;
+
+    /// <summary>True while the sphere overlaps at least one collider.</summary>
+    public bool IsInContact => currentOverlaps.Count > 0;
+
     private void Reset()
     {
         Initialize();
@@ -96,12 +119,49 @@ public class IntersectionRevealSphereEffect : MonoBehaviour
         ApplySettings();
     }
 
+    private float _contactT;
+
     private void Update()
     {
+        UpdateContact();
         ApplyMaterialSettings();
 
         if (forceCameraDepthTexture)
             EnsureCameraDepthTextures();
+    }
+
+    private readonly Collider[] _overlapBuffer = new Collider[64];
+
+    // Smoothly track whether the sphere is overlapping any collider (e.g. YinanKitchen room meshes).
+    // Uses an ACTIVE overlap query rather than trigger-enter events, so it also catches colliders that
+    // are spawned/enabled already inside the sphere (as MRUK's runtime room meshes are).
+    private void UpdateContact()
+    {
+        if (!colliderContactReveal || !Application.isPlaying)
+        {
+            _contactT = 0f;
+            return;
+        }
+
+        // World-space radius (respects this object's scale).
+        Vector3 s = transform.lossyScale;
+        float worldRadius = sphereMeshRadius * Mathf.Max(Mathf.Abs(s.x), Mathf.Abs(s.y), Mathf.Abs(s.z));
+
+        int count = Physics.OverlapSphereNonAlloc(
+            transform.position, worldRadius, _overlapBuffer,
+            collisionLayers, QueryTriggerInteraction.Collide);
+
+        bool touching = false;
+        for (int i = 0; i < count; i++)
+        {
+            Collider c = _overlapBuffer[i];
+            if (c == null || c == sphereCollider) continue;   // ignore our own trigger
+            touching = true;
+            break;
+        }
+
+        float target = touching ? 1f : 0f;
+        _contactT = Mathf.MoveTowards(_contactT, target, Time.deltaTime * contactSmoothing);
     }
 
     private void OnValidate()
@@ -206,12 +266,17 @@ public class IntersectionRevealSphereEffect : MonoBehaviour
         if (generatedMaterial == null)
             return;
 
+        // Blend in the collider-contact reaction (0 when not touching anything).
+        float contact = colliderContactReveal ? Mathf.Clamp01(_contactT) : 0f;
+        float effectiveShellAlpha = Mathf.Max(invisibleShellAlpha, contactShellAlpha * contact);
+        float effectiveIntensity = intensity * (1f + contactIntensityBoost * contact);
+
         generatedMaterial.SetColor("_IntersectionColor", intersectionColor);
         generatedMaterial.SetFloat("_IntersectionThickness", Mathf.Max(0.001f, intersectionThickness));
         generatedMaterial.SetFloat("_EdgeSoftness", Mathf.Max(0.001f, edgeSoftness));
-        generatedMaterial.SetFloat("_Intensity", intensity);
+        generatedMaterial.SetFloat("_Intensity", effectiveIntensity);
 
-        generatedMaterial.SetFloat("_ShellAlpha", invisibleShellAlpha);
+        generatedMaterial.SetFloat("_ShellAlpha", effectiveShellAlpha);
         generatedMaterial.SetFloat("_FresnelPower", fresnelPower);
 
         generatedMaterial.SetFloat("_PulseSpeed", pulseSpeed);

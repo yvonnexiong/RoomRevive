@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_491abba66660efe2 EASYTOUCH 967
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: 491abba66660efe2
+  catalogKey: 491abba66660efe2
+  brandName: Nobilia
+  productName: EASYTOUCH 967
+  subtitle: Modern kitchen
+  emotionalLine: Welcome home!
+  shortDescription: A ceiling-high kitchen design makes every room appear taller
+    and always creates a tidy impression. Because there is plenty of well-organized
+    storage space behind the doors. The alpine white kitchen with easy-care anti-fingerprint
+    coating looks fresh and inviting.
+  productImage: {fileID: 0}
+  specs:
+  - Alpine white ultra matt
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 967_Alpine_white_ultra_matt.jpg
+  splatWtMaterial: 806_Epic_White_Quartz_stone.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

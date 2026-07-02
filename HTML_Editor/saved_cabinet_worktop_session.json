@@ -1,0 +1,45 @@
+{
+  "_comment": "Saved cabinet + worktop settings captured from the user's screenshots (pink_to_marble_editor.html). Mask: highqualitykitchenmask.ply (500,000 splats). Format matches the editor's pm_session localStorage key, so it can be restored via Save-session/restoreSession. Orientation flips were all OFF.",
+  "mask": "./Splats/highqualitykitchenmask.ply",
+  "maskName": "highqualitykitchenmask.ply",
+  "cab": {
+    "mat": "none",
+    "settings": {
+      "hueLo": "44", "hueHi": "155",
+      "sat": "18", "val": "13",
+      "tilesize": "63", "texrot": "0", "grainvar": "11",
+      "facetsplit": true, "mosaic": "0",
+      "contrast": "50", "relief": "28",
+      "shading": "0", "panocolor": "0",
+      "keeplight": "82", "matchlight": "0"
+    },
+    "detail": 1.0,
+    "spread": 1.10,
+    "even": 0,
+    "autoplane": true,
+    "vonly": false,
+    "noOverhang": true,
+    "between": false,
+    "flatten": { "on": false, "radius": 0.04, "intensity": 0.50 }
+  },
+  "wt": {
+    "mat": "none",
+    "settings": {
+      "hueLo": "250", "hueHi": "360",
+      "sat": "27", "val": "16",
+      "tilesize": "101", "texrot": "0", "grainvar": "11",
+      "facetsplit": true, "mosaic": "0",
+      "contrast": "66", "relief": "28",
+      "shading": "36", "panocolor": "25",
+      "keeplight": "101", "matchlight": "0"
+    },
+    "detail": 1.6,
+    "spread": 1.15,
+    "even": 0,
+    "autoplane": true,
+    "vonly": false,
+    "noOverhang": true,
+    "between": false,
+    "flatten": { "on": true, "radius": 0.05, "intensity": 0.25 }
+  }
+}

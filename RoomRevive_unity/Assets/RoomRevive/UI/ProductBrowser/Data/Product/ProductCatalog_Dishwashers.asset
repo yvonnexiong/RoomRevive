@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6f3ead8468d95f4fb2536af87ca846b, type: 3}
+  m_Name: ProductCatalog_Dishwashers
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductCatalog
+  products:
+  - {fileID: 11400000, guid: 6d0b8125e8a9d364ca3f44f1d616eb78, type: 2}
+  - {fileID: 11400000, guid: 33a8bd25e44c1d745baef4f40261384e, type: 2}
+  - {fileID: 11400000, guid: bd15646286d17c840b282b46a4bc8e21, type: 2}
+  - {fileID: 11400000, guid: 8b9d58dca129c734f8bc596fa3005384, type: 2}
+  - {fileID: 11400000, guid: 9c6a8f92039a4ec4c85e9d25703a7c07, type: 2}

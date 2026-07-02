@@ -69,6 +69,7 @@
     <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Editor\ProductVariantRouterEditor.cs" />
     <Compile Include="Assets\RoomRevive\Capture\Scripts\Editor\CameraRenderSetEditor.cs" />
     <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Editor\Product\ProductSwapViewEditor.cs" />
+    <Compile Include="Assets\RoomRevive\SplatEditorBridge\Scripts\Editor\SplatEditorServerLauncher.cs" />
     <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Editor\Product\ProductBrowserCabinetWizard.cs" />
     <Compile Include="Assets\RoomRevive\UI\IntentSelector\Scripts\Editor\IntentSelectorPrefabCreator.cs" />
     <Compile Include="Assets\RoomRevive\UI\ProductBrowser\Scripts\Editor\Product\ProductCatalogJsonSync.cs" />

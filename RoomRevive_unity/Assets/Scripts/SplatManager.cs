@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.Events;
 using GaussianSplatting.Runtime;
@@ -115,6 +118,24 @@ public class SplatManager : MonoBehaviour
     [Tooltip("New world renderer. Its GaussianCutout should have Invert disabled.")]
     public GaussianSplatRenderer newWorldTransitionRenderer;
 
+    [Tooltip("3rd renderer. When a transition finishes, the OLD transition renderer (SplatRenderer 1) " +
+             "is set to this renderer's splat, so it's primed with that content for the next cycle.")]
+    public GaussianSplatRenderer postTransitionSourceRenderer;
+
+    [Tooltip("Its GaussianSplatRenderer COMPONENT is disabled while a live SPZ swap reveal plays, then " +
+             "re-enabled (e.g. NewKitchenRenderer) so it doesn't double up over the transition. " +
+             "Only the renderer component is toggled — the GameObject stays active.")]
+    public GaussianSplatRenderer hideDuringSpzSwap;
+
+    [Header("SPZ File Transition (reference only)")]
+    [Tooltip("Reference note only — the script does NOT load this. Marks which .spz belongs on " +
+             "'Old World Transition Renderer' (the previous splat). Populate it via a LiveSplatLoader.")]
+    public string oldSplatSpzPath = "LiveSplat/kitchenLastSelected.spz";
+
+    [Tooltip("Reference note only — the script does NOT load this. Marks which .spz belongs on " +
+             "'New World Transition Renderer' (the current splat). Populate it via a LiveSplatLoader.")]
+    public string newSplatSpzPath = "LiveSplat/kitchen-copy.spz";
+
     [Tooltip("The Effect/GaussianCutout child under SplatRendererEffect1.")]
     public Transform oldWorldCutoutTransform;
 
@@ -152,6 +173,37 @@ public class SplatManager : MonoBehaviour
     public bool disableTransitionRenderersWhenIdle = true;
     public bool hideMainSplatDuringTransition = true;
 
+    [Tooltip("GameObjects deactivated for the duration of the transition effect, then restored to " +
+             "whatever active state they had when the transition started.")]
+    public List<GameObject> objectsToDisableDuringTransition = new List<GameObject>();
+
+    [Tooltip("GameObjects activated for the duration of the transition effect (e.g. a loading screen), " +
+             "then restored to whatever active state they had when the transition started.")]
+    public List<GameObject> objectsToEnableDuringTransition = new List<GameObject>();
+
+    [Header("SPZ Snapshots (paths relative to project root, one folder above Assets/)")]
+    [Tooltip("If true, copy the live .spz to the snapshot files below. Editor / Quest-Link dev workflow.")]
+    public bool persistSpzSnapshots = true;
+    [Tooltip("The live working file LiveSplatLoader watches and the HTML editor writes.")]
+    public string liveSpzRelativePath = "LiveSplat/kitchen-copy.spz";
+    [Tooltip("Snapshot taken each time a new splat is delivered (start of SwapToSpz).")]
+    public string currentSelectedRelativePath = "LiveSplat/kitchenCurrentSelected.spz";
+
+    [Tooltip("Optional renderer that displays the 'current selected' snapshot. The new splat is loaded " +
+             "onto it (runtime data — its Asset field stays bypassed).")]
+    public GaussianSplatRenderer currentSelectedRenderer;
+
+    [Header("Last Selected — Baked Asset (Editor only)")]
+    [Tooltip("After each transition the live splat is re-baked into a real GaussianSplatAsset here and " +
+             "assigned to Last Selected Renderer's Data Asset. Editor-only (needs AssetDatabase); stripped from builds.")]
+    public bool bakeLastSelectedAsset = true;
+    [Tooltip("Output folder for the baked asset + its .bytes (must start with 'Assets/').")]
+    public string lastSelectedAssetFolder = "Assets/WorldLabsWorlds/kitchenLastSelected";
+    [Tooltip("Base name for the baked .asset and its side .bytes files.")]
+    public string lastSelectedAssetBaseName = "kitchenLastSelected";
+    [Tooltip("Optional renderer that uses the baked 'last selected' asset as its Data Asset (set after the transition finishes).")]
+    public GaussianSplatRenderer lastSelectedRenderer;
+
     [Header("Cutout / Circle Alignment")]
     [Tooltip("This should stay true. It makes the GaussianCutout seam use the same world center as the CircleEffect.")]
     public bool forceCutoutCenterToCircleEffect = true;
@@ -178,6 +230,8 @@ public class SplatManager : MonoBehaviour
     public float uniformCutoutScaleMultiplier = 2f;
 
     [Header("Cutout Transition Animation")]
+    [Tooltip("Wait this long after a new live splat is loaded before the reveal starts (the old splat stays visible during the wait).")]
+    [Min(0f)] public float preTransitionDelay = 0.5f;
     [Min(0.01f)] public float cutoutTransitionDuration = 1.1f;
     [Min(0f)] public float transitionStartRadius = 0f;
     [Min(0.01f)] public float transitionEndRadius = 6f;
@@ -193,6 +247,14 @@ public class SplatManager : MonoBehaviour
     [Header("Inspector Trigger / Editor Preview")]
     public bool triggerCutoutTransitionFromInspector = false;
     public SplatRoom inspectorTransitionTargetRoom = SplatRoom.FastRoom;
+
+    [Tooltip("Tick to replay the SPZ ping-pong reveal over whatever is currently on the two transition renderers " +
+             "(does NOT load a new splat). In Play mode it animates; in edit mode it shows a static preview at editorPreviewTransitionT.")]
+    public bool triggerSpzTransitionFromInspector = false;
+
+    [Tooltip("If true, automatically plays the SPZ ping-pong reveal once on Start (Play mode). Waits one frame " +
+             "so any LiveSplatLoader has populated the renderers first.")]
+    public bool playSpzTransitionOnStart = false;
 
     public bool previewCutoutTransitionInEditor = false;
 
@@ -212,6 +274,13 @@ public class SplatManager : MonoBehaviour
     [SerializeField] private Vector3 lastOldCutoutWorldPosition;
     [SerializeField] private Vector3 lastNewCutoutWorldPosition;
     [SerializeField] private float lastTransitionRadius;
+
+    /// <summary>World center of the current transition reveal sphere.</summary>
+    public Vector3 LastTransitionCenterWorld => lastTransitionCenterWorld;
+    /// <summary>World radius of the current transition reveal sphere.</summary>
+    public float LastTransitionRadius => lastTransitionRadius;
+    /// <summary>True while a reveal transition is animating.</summary>
+    public bool IsTransitioning => isTransitioning;
 
     [Header("Debug")]
     public bool debugLogs = true;
@@ -365,6 +434,17 @@ public class SplatManager : MonoBehaviour
             if (applyRoomOnStart && startRoom != SplatRoom.None)
                 SetRoom(startRoom);
         }
+
+        if (playSpzTransitionOnStart)
+            StartCoroutine(PlaySpzTransitionNextFrame());
+    }
+
+    // Waits one frame so LiveSplatLoaders (which load in their own Start) have populated the
+    // transition renderers, then plays the reveal over their current content.
+    private IEnumerator PlaySpzTransitionNextFrame()
+    {
+        yield return null;
+        PlaySpzTransition();
     }
 
 #if UNITY_EDITOR
@@ -412,6 +492,24 @@ public class SplatManager : MonoBehaviour
                 editorPreviewNewRoom = inspectorTransitionTargetRoom;
                 editorPreviewTransitionT = 0f;
 
+                CaptureTransitionOriginNow();
+                PreviewCutoutTransitionInEditor();
+            }
+        }
+
+        if (triggerSpzTransitionFromInspector)
+        {
+            triggerSpzTransitionFromInspector = false;
+
+            if (Application.isPlaying)
+            {
+                // Animate the reveal over whatever the two renderers already hold.
+                PlaySpzTransition();
+            }
+            else
+            {
+                // Coroutines don't animate in edit mode — show a static frame of the reveal instead.
+                previewCutoutTransitionInEditor = true;
                 CaptureTransitionOriginNow();
                 PreviewCutoutTransitionInEditor();
             }
@@ -692,7 +790,7 @@ public class SplatManager : MonoBehaviour
             yield break;
         }
 
-        ConfigureTransitionRenderers(renderer, oldAsset, newAsset);
+        ConfigureTransitionRenderers(renderer);
 
         if (hideMainSplatDuringTransition)
             HideMainRoomRenderersForTransition();
@@ -760,7 +858,7 @@ public class SplatManager : MonoBehaviour
             yield break;
         }
 
-        ConfigureTransitionRenderers(sourceRenderer, oldAsset, newAsset);
+        ConfigureTransitionRenderers(sourceRenderer);
 
         if (hideMainSplatDuringTransition)
             HideMainRoomRenderersForTransition();
@@ -1012,11 +1110,8 @@ public class SplatManager : MonoBehaviour
             CaptureTransitionOriginNow();
 
         GaussianSplatRenderer oldRenderer = GetActiveRendererForRoom(editorPreviewOldRoom);
-        GaussianSplatAsset oldAsset = GetAssetFromRendererOrRoom(oldRenderer, editorPreviewOldRoom);
-        GaussianSplatAsset newAsset = GetAssetForRoom(editorPreviewNewRoom);
 
-        if (oldAsset != null && newAsset != null)
-            ConfigureTransitionRenderers(oldRenderer, oldAsset, newAsset);
+        ConfigureTransitionRenderers(oldRenderer);
 
         float t = Mathf.Clamp01(editorPreviewTransitionT);
         float curvedT = transitionRadiusCurve != null ? transitionRadiusCurve.Evaluate(t) : t;
@@ -1025,11 +1120,10 @@ public class SplatManager : MonoBehaviour
         ApplyTransitionVisual(radius, curvedT);
     }
 
-    private void ConfigureTransitionRenderers(
-        GaussianSplatRenderer sourceRenderer,
-        GaussianSplatAsset oldAsset,
-        GaussianSplatAsset newAsset
-    )
+    // Prepares the two transition renderers for the reveal WITHOUT touching their splats — it only
+    // makes them visible, matches their transform to the source, and refreshes the cutout refs.
+    // Whatever splat each renderer already holds (e.g. from a LiveSplatLoader) is what gets revealed.
+    private void ConfigureTransitionRenderers(GaussianSplatRenderer sourceRenderer)
     {
         if (oldWorldTransitionRenderer == null || newWorldTransitionRenderer == null)
             return;
@@ -1042,27 +1136,8 @@ public class SplatManager : MonoBehaviour
             CopyTransform(sourceRenderer.transform, newWorldTransitionRenderer.transform);
         }
 
-        SetRendererAsset(oldWorldTransitionRenderer, oldAsset);
-        SetRendererAsset(newWorldTransitionRenderer, newAsset);
-
         TryAutoAssignTransitionReferences();
         CaptureInitialCutoutScales(false);
-    }
-
-    private void SetRendererAsset(GaussianSplatRenderer renderer, GaussianSplatAsset asset)
-    {
-        if (renderer == null || asset == null)
-            return;
-
-        renderer.gameObject.SetActive(true);
-        renderer.enabled = true;
-        renderer.m_Asset = asset;
-        renderer.UpdateRessources();
-
-#if UNITY_EDITOR
-        if (!Application.isPlaying)
-            EditorUtility.SetDirty(renderer);
-#endif
     }
 
     private void ApplyTransitionVisual(float radius, float normalizedT)
@@ -1246,6 +1321,219 @@ public class SplatManager : MonoBehaviour
         CaptureInitialCutoutScales(true);
     }
 
+    // ── Splat transition test ─────────────────────────────────────────────
+    // Plays the cutout-sphere reveal between WHATEVER is currently on the two transition renderers.
+    // It never loads, applies, or changes the splat on either renderer — it only animates the cutout
+    // and toggles visibility for the reveal. Populate the renderers yourself (e.g. a LiveSplatLoader
+    // on each, pointed at the .spz paths above, which are kept only as a reference).
+
+    [ContextMenu("SPZ Transition / Play Transition (Play mode)")]
+    public void PlaySpzTransition()
+    {
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning("[SplatManager] PlaySpzTransition only animates in Play mode.", this);
+            return;
+        }
+        if (oldWorldTransitionRenderer == null || newWorldTransitionRenderer == null)
+        {
+            Debug.LogWarning("[SplatManager] Assign Old/New World Transition Renderer first.", this);
+            return;
+        }
+        if (circleEffect == null)
+            Debug.LogWarning("[SplatManager] No Circle Effect assigned — the sphere reveal won't be visible.", this);
+
+        if (activeTransitionRoutine != null) StopCoroutine(activeTransitionRoutine);
+        activeTransitionRoutine = StartCoroutine(SpzCutoutTransitionRoutine());
+    }
+
+    IEnumerator SpzCutoutTransitionRoutine()
+    {
+        isTransitioning = true;
+
+        TryAutoAssignTransitionReferences();
+
+        // We do NOT load/apply any splats here — the transition animates whatever is already on
+        // oldWorldTransitionRenderer / newWorldTransitionRenderer. Populate them yourself first.
+
+        SetTransitionRenderersVisible(true);
+        CaptureInitialCutoutScales(false);
+        CaptureTransitionOriginNow();
+
+        if (hideMainSplatDuringTransition)
+            HideMainRoomRenderersForTransition();
+        ApplyTransitionObjectStates();
+
+        ApplyTransitionVisual(0f, 0f);
+
+        float elapsed = 0f;
+        while (elapsed < cutoutTransitionDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / cutoutTransitionDuration);
+            float curvedT = transitionRadiusCurve != null ? transitionRadiusCurve.Evaluate(t) : t;
+            float radius = Mathf.Lerp(transitionStartRadius, transitionEndRadius, curvedT);
+            ApplyTransitionVisual(radius, curvedT);
+            yield return null;
+        }
+
+        ApplyTransitionVisual(transitionEndRadius, 1f);
+
+        RestoreTransitionObjects();
+
+        // Transition done: prime the OLD transition renderer (1) with the 3rd renderer's splat,
+        // so it carries that content into the next cycle.
+        SyncOldRendererFromPostTransitionSource();
+
+        // The new splat is fully revealed. Keep the NEW renderer showing (it holds the current .spz),
+        // reset its cutout to full visibility, and hide the OLD one. No ApplyAssetImmediate here:
+        // the result already lives on newWorldTransitionRenderer, not on a main asset renderer.
+        ResetCutoutScalesToInitial();
+        ResetTransitionVisualsToIdle();
+        SetTransitionRendererVisible(oldWorldTransitionRenderer, false);
+        SetTransitionRendererVisible(newWorldTransitionRenderer, true);
+
+        hasLockedTransitionOrigin = false;
+        isTransitioning = false;
+        activeTransitionRoutine = null;
+    }
+
+    // Copies the 3rd renderer's splat asset onto the OLD transition renderer (SplatRenderer 1),
+    // called after a transition so renderer 1 matches that source for the next reveal.
+    // NOTE: copies the asset reference (m_Asset). If the source is driven by a LiveSplatLoader
+    // (runtime .spz, no asset), point a LiveSplatLoader at renderer 1 instead — m_Asset won't carry it.
+    void SyncOldRendererFromPostTransitionSource()
+    {
+        if (oldWorldTransitionRenderer == null || postTransitionSourceRenderer == null)
+            return;
+
+        oldWorldTransitionRenderer.m_Asset = postTransitionSourceRenderer.m_Asset;
+        oldWorldTransitionRenderer.UpdateRessources();
+    }
+
+    // ── Live SPZ swap: ping-pong reveal fed by LiveSplatLoader ─────────────
+    // Renderer 1 = the persistent CURRENT splat (and the OLD layer during a reveal).
+    // Renderer 2 = the incoming NEW splat. Per swap: new → load into 2 → reveal 2 over 1 → copy 2 → 1.
+    bool _spzDisplaySeeded;
+
+    /// <summary>
+    /// Feed a freshly-loaded splat (from LiveSplatLoader / the HTML editor). The first call seeds
+    /// renderer 1 directly (no transition); later calls load it into renderer 2, play the reveal over
+    /// renderer 1, then copy renderer 2 → 1 so 1 holds the new current for the next swap.
+    /// </summary>
+    public void SwapToSpz(RuntimeSplatData newRsd)
+    {
+        if (oldWorldTransitionRenderer == null || newWorldTransitionRenderer == null)
+        {
+            Debug.LogWarning("[SplatManager] SwapToSpz: assign Old/New World Transition Renderer.", this);
+            return;
+        }
+
+        if (debugLogs)
+            Debug.Log($"<color=cyan><b>[SplatManager]</b></color> SwapToSpz called (playing={Application.isPlaying}, " +
+                      $"seeded={_spzDisplaySeeded}) → {(!_spzDisplaySeeded || !Application.isPlaying ? "SEED (no reveal)" : "TRANSITION")}", this);
+
+        // New data just returned from the live file → snapshot it as the current selection
+        // AND load that content onto the current-selected renderer so it shows it.
+        CopySpzSnapshot(liveSpzRelativePath, currentSelectedRelativePath, "current selected");
+        if (currentSelectedRenderer != null)
+            LoadRsdInto(currentSelectedRenderer, newRsd);
+
+        // First splat (or edit mode, where coroutines don't animate): just show it, no reveal.
+        if (!_spzDisplaySeeded || !Application.isPlaying)
+        {
+            LoadRsdInto(oldWorldTransitionRenderer, newRsd);                       // renderer 1 = current (old layer for the next swap)
+            if (hideDuringSpzSwap != null) LoadRsdInto(hideDuringSpzSwap, newRsd); // standalone display shows it
+            SetTransitionRendererVisible(oldWorldTransitionRenderer, hideDuringSpzSwap == null);
+            SetTransitionRendererVisible(newWorldTransitionRenderer, false);
+            _spzDisplaySeeded = true;
+            return;
+        }
+
+        // New splat → load into renderer 2 (before the transition), then reveal + copy.
+        LoadRsdInto(newWorldTransitionRenderer, newRsd);
+        if (activeTransitionRoutine != null) StopCoroutine(activeTransitionRoutine);
+        activeTransitionRoutine = StartCoroutine(SpzSwapRoutine(newRsd));
+    }
+
+    IEnumerator SpzSwapRoutine(RuntimeSplatData newRsd)
+    {
+        isTransitioning = true;
+        TryAutoAssignTransitionReferences();
+
+        // Show the loading screen / hide the panels for the WHOLE transition, including the pre-delay.
+        ApplyTransitionObjectStates();
+
+        // The new splat is already loaded on renderer 2; hold on the old splat briefly before revealing.
+        if (preTransitionDelay > 0f)
+            yield return new WaitForSeconds(preTransitionDelay);
+
+        // Give the standalone display the NEW splat (copy of renderer 2) but keep it hidden for the
+        // reveal, so when it's re-shown at the end it already holds the new — no flash.
+        if (hideDuringSpzSwap != null)
+        {
+            LoadRsdInto(hideDuringSpzSwap, newRsd);
+            hideDuringSpzSwap.enabled = false;
+        }
+
+        SetTransitionRenderersVisible(true);          // both visible for the reveal
+        CaptureInitialCutoutScales(false);
+        CaptureTransitionOriginNow();
+        if (hideMainSplatDuringTransition) HideMainRoomRenderersForTransition();
+
+        ApplyTransitionVisual(0f, 0f);
+        float elapsed = 0f;
+        while (elapsed < cutoutTransitionDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / cutoutTransitionDuration);
+            float curvedT = transitionRadiusCurve != null ? transitionRadiusCurve.Evaluate(t) : t;
+            float radius = Mathf.Lerp(transitionStartRadius, transitionEndRadius, curvedT);
+            ApplyTransitionVisual(radius, curvedT);
+            yield return null;
+        }
+        ApplyTransitionVisual(transitionEndRadius, 1f);
+
+        // Reveal done — copy renderer 2 (new) into renderer 1 so 1 becomes the current for next time.
+        LoadRsdInto(oldWorldTransitionRenderer, newRsd);
+
+        RestoreTransitionObjects();
+        ResetCutoutScalesToInitial();
+        ResetTransitionVisualsToIdle();
+
+        if (hideDuringSpzSwap != null)
+        {
+            // Standalone display takes over showing the new — hide both transition renderers.
+            hideDuringSpzSwap.enabled = true;
+            SetTransitionRendererVisible(oldWorldTransitionRenderer, false);
+            SetTransitionRendererVisible(newWorldTransitionRenderer, false);
+        }
+        else
+        {
+            // No standalone display assigned — renderer 1 stays as the idle display.
+            SetTransitionRendererVisible(oldWorldTransitionRenderer, true);
+            SetTransitionRendererVisible(newWorldTransitionRenderer, false);
+        }
+
+        // Transition fully finished → bake the live splat into the persistent last-selected
+        // GaussianSplatAsset and assign it to the last-selected renderer's Data Asset.
+#if UNITY_EDITOR
+        BakeLastSelectedAsset();
+#endif
+
+        hasLockedTransitionOrigin = false;
+        isTransitioning = false;
+        activeTransitionRoutine = null;
+    }
+
+    static void LoadRsdInto(GaussianSplatRenderer renderer, RuntimeSplatData rsd)
+    {
+        if (renderer == null) return;
+        renderer.gameObject.SetActive(true);
+        renderer.enabled = true;
+        renderer.LoadFromRuntimeData(rsd);
+    }
+
     private void CaptureInitialCutoutScales(bool force)
     {
         if (hasCapturedInitialCutoutScales && !force)
@@ -1259,6 +1547,150 @@ public class SplatManager : MonoBehaviour
 
         hasCapturedInitialCutoutScales = true;
     }
+
+    // Remembers which listed objects we toggled, so we restore only those to their prior state.
+    private readonly List<GameObject> _disabledForTransition = new List<GameObject>();
+    private readonly List<GameObject> _enabledForTransition = new List<GameObject>();
+
+    // Turn OFF the disable-list and ON the enable-list (e.g. a loading screen) for the transition.
+    private void ApplyTransitionObjectStates()
+    {
+        _disabledForTransition.Clear();
+        if (objectsToDisableDuringTransition != null)
+            foreach (GameObject go in objectsToDisableDuringTransition)
+            {
+                if (go == null || !go.activeSelf) continue;
+                go.SetActive(false);
+                _disabledForTransition.Add(go);
+            }
+
+        _enabledForTransition.Clear();
+        if (objectsToEnableDuringTransition != null)
+            foreach (GameObject go in objectsToEnableDuringTransition)
+            {
+                if (go == null || go.activeSelf) continue;
+                go.SetActive(true);
+                _enabledForTransition.Add(go);
+            }
+    }
+
+    private void RestoreTransitionObjects()
+    {
+        foreach (GameObject go in _disabledForTransition)
+            if (go != null) go.SetActive(true);
+        _disabledForTransition.Clear();
+
+        foreach (GameObject go in _enabledForTransition)
+            if (go != null) go.SetActive(false);
+        _enabledForTransition.Clear();
+    }
+
+    private static string ResolveProjectRelativePath(string relativePath)
+    {
+        return Path.GetFullPath(Path.Combine(Application.dataPath, "..", relativePath));
+    }
+
+    // Copies the live .spz to a snapshot file. Best-effort: logs and continues on any failure
+    // (e.g. in a standalone build where the LiveSplat folder doesn't exist).
+    private void CopySpzSnapshot(string srcRelative, string dstRelative, string reason)
+    {
+        if (!persistSpzSnapshots) return;
+        if (string.IsNullOrEmpty(srcRelative) || string.IsNullOrEmpty(dstRelative)) return;
+
+        try
+        {
+            string src = ResolveProjectRelativePath(srcRelative);
+            string dst = ResolveProjectRelativePath(dstRelative);
+
+            if (!File.Exists(src))
+            {
+                if (debugLogs)
+                    Debug.LogWarning($"[SplatManager] {reason}: source .spz not found: {src}", this);
+                return;
+            }
+
+            if (string.Equals(src, dst, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            File.Copy(src, dst, true);
+
+            if (debugLogs)
+                Debug.Log($"<color=lime><b>[SplatManager]</b></color> {reason}: {srcRelative} → {dstRelative}", this);
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[SplatManager] {reason}: snapshot copy failed — {e.Message}", this);
+        }
+    }
+
+#if UNITY_EDITOR
+    // Re-bakes the live .spz into a real GaussianSplatAsset (matching the existing Float32/lossless
+    // formats) at lastSelectedAssetFolder, replacing the asset in place (same GUID, so any renderer
+    // referencing it stays valid), then assigns it to lastSelectedRenderer's Data Asset.
+    // Editor-only: uses the package's editor API via reflection (Assembly-CSharp can't reference it directly).
+    private void BakeLastSelectedAsset()
+    {
+        if (!bakeLastSelectedAsset) return;
+
+        try
+        {
+            string spzFull = ResolveProjectRelativePath(liveSpzRelativePath);
+            if (!File.Exists(spzFull))
+            {
+                if (debugLogs)
+                    Debug.LogWarning($"[SplatManager] last-selected bake: live .spz not found: {spzFull}", this);
+                return;
+            }
+
+            Type api = FindTypeInLoadedAssemblies("GaussianSplatting.Editor.GaussianSplatAssetCreatorAPI");
+            MethodInfo create = api?.GetMethod("CreateAsset", BindingFlags.Public | BindingFlags.Static);
+            if (create == null)
+            {
+                Debug.LogWarning("[SplatManager] last-selected bake: GaussianSplatAssetCreatorAPI.CreateAsset not found.", this);
+                return;
+            }
+
+            // Match the existing asset's formats (all 0 = lossless Float32).
+            object baked = create.Invoke(null, new object[]
+            {
+                spzFull,
+                lastSelectedAssetFolder,
+                lastSelectedAssetBaseName,
+                GaussianSplatAsset.VectorFormat.Float32,   // position
+                GaussianSplatAsset.VectorFormat.Float32,   // scale
+                GaussianSplatAsset.ColorFormat.Float32x4,  // color
+                GaussianSplatAsset.SHFormat.Float32,       // spherical harmonics
+                false                                       // importCameras
+            });
+
+            if (baked is GaussianSplatAsset asset && lastSelectedRenderer != null)
+            {
+                lastSelectedRenderer.gameObject.SetActive(true);
+                lastSelectedRenderer.enabled = true;
+                lastSelectedRenderer.m_Asset = asset;
+                lastSelectedRenderer.UpdateRessources();
+            }
+
+            if (debugLogs)
+                Debug.Log($"<color=lime><b>[SplatManager]</b></color> baked last-selected asset → " +
+                          $"{lastSelectedAssetFolder}/{lastSelectedAssetBaseName}.asset", this);
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[SplatManager] last-selected bake failed — {e.Message}", this);
+        }
+    }
+
+    private static Type FindTypeInLoadedAssemblies(string fullName)
+    {
+        foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            Type t = a.GetType(fullName);
+            if (t != null) return t;
+        }
+        return null;
+    }
+#endif
 
     private void HideMainRoomRenderersForTransition()
     {

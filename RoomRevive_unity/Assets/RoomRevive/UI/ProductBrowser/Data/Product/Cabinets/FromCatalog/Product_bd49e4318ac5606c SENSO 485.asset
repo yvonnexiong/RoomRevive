@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_bd49e4318ac5606c SENSO 485
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: bd49e4318ac5606c
+  catalogKey: bd49e4318ac5606c
+  brandName: Nobilia
+  productName: SENSO 485
+  subtitle: Designer kitchen
+  emotionalLine: Clever room design
+  shortDescription: Limited space, but plenty of room for ideas. The tone-on-tone
+    colour scheme of the delicate sky pastel creates a visually clear and tidy atmosphere.
+    As is typical for urban kitchen design, functionality merges with aesthetics,
+    with both the access doors and the neighbouring utility room skilfully integrated
+    into the kitchen design.
+  productImage: {fileID: 0}
+  specs:
+  - Premium honed sky
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 485_Premium_honed_sky.jpg
+  splatWtMaterial: 361_Caspian_grey_marble_reproduction.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_DAS_2620_EXTA DAS 2620 EXTA
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: DAS_2620_EXTA
+  catalogKey: DAS_2620_EXTA
+  brandName: Miele
+  productName: DAS 2620 EXTA
+  subtitle: "Pull-out hood \xB7 SILVER"
+  emotionalLine: for combination with an external blower
+  shortDescription: 
+  productImage: {fileID: 0}
+  specs:
+  - Class C
+  - 109.5 kWh/yr
+  fromPrice: From EUR 642
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 
+  splatWtMaterial: 
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

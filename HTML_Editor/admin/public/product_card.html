@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RoomRevive — Product Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Alan+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#3A4055; --ink-2:#6B7388; --ink-3:#9298A8;
+  --amber:#E6A560; --teal:#7BA8C4;
+  --card:rgba(233,234,241,.72); --chip:rgba(255,255,255,.5);
+  --chip-line:rgba(58,64,85,.10); --line:rgba(58,64,85,.10);
+  --btn:#434A63;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 18px;
+  font-family:'Alan Sans',system-ui,sans-serif;color:var(--ink);
+  background:radial-gradient(120% 120% at 25% 0%,#D6DAE6 0%,#BCC2D4 55%,#A9AFC6 100%)}
+.card{width:480px;max-width:100%;background:var(--card);
+  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+  border:1px solid rgba(255,255,255,.55);border-radius:18px;
+  box-shadow:0 18px 50px rgba(52,58,86,.18);padding:22px 24px 18px}
+.brand{display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);font-weight:600;margin-bottom:12px}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--amber)}
+.title{font-size:30px;font-weight:700;letter-spacing:-.01em;margin:0 0 4px;line-height:1.05}
+.subtitle{font-size:13px;color:var(--ink-2);margin:0 0 18px}
+.lead{font-size:21px;font-weight:400;line-height:1.32;margin:0 0 14px}
+.desc{font-size:14px;color:var(--ink-3);line-height:1.5;margin:0 0 18px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.chip{font-size:12.5px;color:var(--ink-2);background:var(--chip);border:1px solid var(--chip-line);
+  border-radius:8px;padding:5px 12px}
+.divider{height:1px;background:var(--line);margin:0 -24px 16px}
+.price-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px}
+.from{font-size:13px;color:var(--ink-2)}
+.price{font-size:28px;font-weight:700;letter-spacing:-.01em}
+.fav{width:100%;border:none;background:var(--btn);color:#fff;font:inherit;font-size:15px;font-weight:600;
+  padding:14px;border-radius:12px;cursor:pointer;transition:background .12s,transform .12s}
+.fav:hover{background:#4d5572}
+.fav:active{transform:scale(.99)}
+.fav.on{background:var(--amber)}
+.pager{display:flex;align-items:center;gap:7px;justify-content:center;margin-top:16px}
+.pdot{width:7px;height:7px;border-radius:50%;background:rgba(58,64,85,.22);cursor:pointer}
+.pdot.on{background:var(--ink)}
+.pnext{margin-left:4px;color:var(--ink-2);cursor:pointer;font-size:14px;line-height:1;background:none;border:none}
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <div class="brand"><span class="dot"></span><span>Nobilia</span></div>
+  <h1 class="title" id="pTitle">Modern Fridge</h1>
+  <p class="subtitle" id="pSub">Four-door refrigerator · brushed steel</p>
+  <p class="lead" id="pLead">A clean, confident fridge that fits right into a modern kitchen without asking for attention.</p>
+  <p class="desc" id="pDesc">Four-door stainless fridge with brushed steel surfaces and a high-end modern kitchen look.</p>
+  <div class="chips" id="pChips">
+    <span class="chip">467 L</span><span class="chip">98 kWh/yr</span><span class="chip">37 dB</span>
+  </div>
+  <div class="divider"></div>
+  <div class="price-row">
+    <span class="from">From</span>
+    <span class="price" id="pPrice">$1,299</span>
+  </div>
+  <button class="fav" id="fav">Add to favorites</button>
+  <div class="pager" id="pager">
+    <span class="pdot on"></span><span class="pdot"></span><span class="pdot"></span><span class="pdot"></span><span class="pdot"></span>
+    <button class="pnext" aria-label="Next">›</button>
+  </div>
+</div>
+<script>
+const fav=document.getElementById('fav');
+fav.addEventListener('click',()=>{
+  fav.classList.toggle('on');
+  fav.textContent=fav.classList.contains('on')?'Added to favorites ✓':'Add to favorites';
+});
+const dots=[...document.querySelectorAll('.pdot')];
+dots.forEach((d,i)=>d.addEventListener('click',()=>{dots.forEach(x=>x.classList.remove('on'));d.classList.add('on');}));
+document.querySelector('.pnext').addEventListener('click',()=>{
+  const i=dots.findIndex(d=>d.classList.contains('on'));const n=(i+1)%dots.length;
+  dots.forEach(x=>x.classList.remove('on'));dots[n].classList.add('on');
+});
+</script>
+</body>
+</html>

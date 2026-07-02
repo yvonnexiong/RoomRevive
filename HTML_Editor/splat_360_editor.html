@@ -91,6 +91,9 @@ button.primary:hover{filter:brightness(1.06)}
       <div class="row"><label>Size X</label><input type="number" id="csx" step="0.1" min="0.1"></div>
       <div class="row"><label>Size Y</label><input type="number" id="csy" step="0.1" min="0.1"></div>
       <div class="row"><label>Size Z</label><input type="number" id="csz" step="0.1" min="0.1"></div>
+      <div class="row"><label>Rot X°</label><input type="number" id="crrx" step="1" value="0"></div>
+      <div class="row"><label>Rot Y°</label><input type="number" id="crry" step="1" value="0"></div>
+      <div class="row"><label>Rot Z°</label><input type="number" id="crrz" step="1" value="0"></div>
       <div class="btnrow"><button id="cropreset" style="flex:1">Fit to scene</button></div>
       <p class="note">Optional: clip away splats outside the room so the panorama has clean walls instead of exterior junk.</p>
     </div>
@@ -199,11 +202,11 @@ if(!gl){document.body.innerHTML='WebGL2 required';throw new Error('no webgl2');}
 const VS=`#version 300 es
 precision highp float;precision highp int;precision highp usampler2D;
 uniform usampler2D u_data;uniform highp usampler2D u_sel;uniform mat4 u_view,u_proj;uniform vec2 u_focal,u_viewport;
-uniform float u_splatScale,u_exposure,u_cropOn,u_floaterHL,u_floaterHide;uniform vec3 u_cropC,u_cropH;
+uniform float u_splatScale,u_exposure,u_cropOn,u_floaterHL,u_floaterHide;uniform vec3 u_cropC,u_cropH;uniform mat3 u_cropR;
 in vec2 a_corner;in int a_index;out vec4 vColor;out vec2 vPos;
 void main(){int ix=(a_index&1023)<<1;int iy=a_index>>10;uvec4 t0=texelFetch(u_data,ivec2(ix,iy),0);
  vec3 p=vec3(uintBitsToFloat(t0.x),uintBitsToFloat(t0.y),uintBitsToFloat(t0.z));
- if(u_cropOn>0.5){vec3 q=abs(p-u_cropC);if(q.x>u_cropH.x||q.y>u_cropH.y||q.z>u_cropH.z){gl_Position=vec4(0.,0.,2.,1.);return;}}
+ if(u_cropOn>0.5){vec3 q=abs(u_cropR*(p-u_cropC));if(q.x>u_cropH.x||q.y>u_cropH.y||q.z>u_cropH.z){gl_Position=vec4(0.,0.,2.,1.);return;}}
  vec4 cam=u_view*vec4(p,1.0);vec4 cp=u_proj*cam;float clip=1.2*cp.w;
  if(cp.z<-clip||cp.x<-clip||cp.x>clip||cp.y<-clip||cp.y>clip){gl_Position=vec4(0.,0.,2.,1.);return;}
  uvec4 t1=texelFetch(u_data,ivec2(ix|1,iy),0);
@@ -229,7 +232,7 @@ const prog=gl.createProgram();gl.attachShader(prog,compile(gl.VERTEX_SHADER,VS))
 if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(prog));
 const U=n=>gl.getUniformLocation(prog,n);
 const uView=U('u_view'),uProj=U('u_proj'),uFocal=U('u_focal'),uVp=U('u_viewport'),uSplatScale=U('u_splatScale'),uExposure=U('u_exposure');
-const uCropOn=U('u_cropOn'),uCropC=U('u_cropC'),uCropH=U('u_cropH'),uFloaterHL=U('u_floaterHL'),uFloaterHide=U('u_floaterHide');
+const uCropOn=U('u_cropOn'),uCropC=U('u_cropC'),uCropH=U('u_cropH'),uCropR=U('u_cropR'),uFloaterHL=U('u_floaterHL'),uFloaterHide=U('u_floaterHide');
 // line program — capture-point sphere marker + crop box
 const LVS=`#version 300 es
 precision highp float;uniform mat4 u_view,u_proj;uniform vec2 u_viewport;uniform float u_halfpx;
@@ -257,14 +260,23 @@ const markBuf=gl.createBuffer();const markVAO=lineVAO(markBuf);let markSeg=0;
 function rebuildMarker(){const ab=sphereAB(capture[0],capture[1],capture[2],0.09,26);markSeg=ab.length/6;
  gl.bindBuffer(gl.ARRAY_BUFFER,markBuf);gl.bufferData(gl.ARRAY_BUFFER,ab,gl.DYNAMIC_DRAW);}
 // crop box geometry
-const CROP={c:[0,1,0],h:[5,3,5]};const cropAB=new Float32Array(EDGES.length*6);
+const CROP={c:[0,1,0],h:[5,3,5],r:[0,0,0]};const cropAB=new Float32Array(EDGES.length*6);
+const CROP_SIGNS=[[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
+// row-major rotation R = Rz·Ry·Rx for euler degrees (x,y,z)
+function cropRotMat(rx,ry,rz){const dx=rx*Math.PI/180,dy=ry*Math.PI/180,dz=rz*Math.PI/180;
+ const sx=Math.sin(dx),cx=Math.cos(dx),sy=Math.sin(dy),cy=Math.cos(dy),sz=Math.sin(dz),cz=Math.cos(dz);
+ return [cy*cz, sx*sy*cz-cx*sz, cx*sy*cz+sx*sz,
+         cy*sz, sx*sy*sz+cx*cz, cx*sy*sz-sx*cz,
+         -sy,   sx*cy,          cx*cy];}
 const cropBuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,cropBuf);gl.bufferData(gl.ARRAY_BUFFER,cropAB,gl.DYNAMIC_DRAW);
 const cropVAO=lineVAO(cropBuf);
-function rebuildCrop(){const c=CROP.c,h=CROP.h;const mk=(sx,sz,sy)=>[c[0]+sx*h[0],c[1]+sy*h[1],c[2]+sz*h[2]];
- const cor=[mk(-1,-1,-1),mk(1,-1,-1),mk(1,1,-1),mk(-1,1,-1),mk(-1,-1,1),mk(1,-1,1),mk(1,1,1),mk(-1,1,1)];
+function rebuildCrop(){const c=CROP.c,h=CROP.h,R=cropRotMat(CROP.r[0],CROP.r[1],CROP.r[2]);
+ const cor=CROP_SIGNS.map(s=>{const lx=s[0]*h[0],ly=s[1]*h[1],lz=s[2]*h[2];
+  return [c[0]+R[0]*lx+R[1]*ly+R[2]*lz, c[1]+R[3]*lx+R[4]*ly+R[5]*lz, c[2]+R[6]*lx+R[7]*ly+R[8]*lz];});
  for(let e=0;e<EDGES.length;e++){const[i,j]=EDGES[e];cropAB.set(cor[i],e*6);cropAB.set(cor[j],e*6+3);}
  gl.bindBuffer(gl.ARRAY_BUFFER,cropBuf);gl.bufferData(gl.ARRAY_BUFFER,cropAB,gl.DYNAMIC_DRAW);
- gl.useProgram(prog);gl.uniform3f(uCropC,c[0],c[1],c[2]);gl.uniform3f(uCropH,h[0],h[1],h[2]);gl.uniform1f(uCropOn,$('crophide').checked?1:0);}
+ // upload R row-major with transpose=false → GLSL receives Rᵀ, so u_cropR·(p−c) maps world→box-local
+ gl.useProgram(prog);gl.uniform3f(uCropC,c[0],c[1],c[2]);gl.uniform3f(uCropH,h[0],h[1],h[2]);gl.uniformMatrix3fv(uCropR,false,new Float32Array(R));gl.uniform1f(uCropOn,$('crophide').checked?1:0);}
 // splat draw state
 const svao=gl.createVertexArray();gl.bindVertexArray(svao);
 const quadBuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,quadBuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-2,-2,2,-2,-2,2,2,2]),gl.STATIC_DRAW);
@@ -393,12 +405,14 @@ $('cp-floor').onclick=()=>{capture[1]=floorY+(pf($('eyeh').value)||1.5);setCaptu
 $('eyeh').addEventListener('input',()=>{capture[1]=floorY+(pf($('eyeh').value)||1.5);setCaptureInputs();rebuildMarker();cameraAtCapture();});
 // ── crop UI ──
 function setCropInputs(){$('ccx').value=CROP.c[0].toFixed(2);$('ccy').value=CROP.c[1].toFixed(2);$('ccz').value=CROP.c[2].toFixed(2);
- $('csx').value=(CROP.h[0]*2).toFixed(2);$('csy').value=(CROP.h[1]*2).toFixed(2);$('csz').value=(CROP.h[2]*2).toFixed(2);}
-function applyCrop(){CROP.c=[+$('ccx').value,+$('ccy').value,+$('ccz').value];CROP.h=[Math.max(0.05,+$('csx').value/2),Math.max(0.05,+$('csy').value/2),Math.max(0.05,+$('csz').value/2)];rebuildCrop();}
+ $('csx').value=(CROP.h[0]*2).toFixed(2);$('csy').value=(CROP.h[1]*2).toFixed(2);$('csz').value=(CROP.h[2]*2).toFixed(2);
+ $('crrx').value=CROP.r[0];$('crry').value=CROP.r[1];$('crrz').value=CROP.r[2];}
+function applyCrop(){CROP.c=[pf($('ccx').value),pf($('ccy').value),pf($('ccz').value)];CROP.h=[Math.max(0.05,pf($('csx').value)/2),Math.max(0.05,pf($('csy').value)/2),Math.max(0.05,pf($('csz').value)/2)];
+ CROP.r=[pf($('crrx').value),pf($('crry').value),pf($('crrz').value)];rebuildCrop();}
 function cropToScene(){if(!scene)return;const p=scene.positions,n=scene.n;let mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];
  for(let i=0;i<n;i+=7){if(scene.alphasU8[i]<60)continue;for(let k=0;k<3;k++){const v=p[i*3+k];if(v<mn[k])mn[k]=v;if(v>mx[k])mx[k]=v;}}
- CROP.c=[(mn[0]+mx[0])/2,(mn[1]+mx[1])/2,(mn[2]+mx[2])/2];CROP.h=[(mx[0]-mn[0])/2,(mx[1]-mn[1])/2,(mx[2]-mn[2])/2];setCropInputs();rebuildCrop();}
-['ccx','ccy','ccz','csx','csy','csz'].forEach(id=>$(id).addEventListener('input',applyCrop));
+ CROP.c=[(mn[0]+mx[0])/2,(mn[1]+mx[1])/2,(mn[2]+mx[2])/2];CROP.h=[(mx[0]-mn[0])/2,(mx[1]-mn[1])/2,(mx[2]-mn[2])/2];CROP.r=[0,0,0];setCropInputs();rebuildCrop();}
+['ccx','ccy','ccz','csx','csy','csz','crrx','crry','crrz'].forEach(id=>$(id).addEventListener('input',applyCrop));
 $('cropreset').onclick=cropToScene;
 $('crophide').addEventListener('change',()=>{gl.useProgram(prog);gl.uniform1f(uCropOn,$('crophide').checked?1:0);});
 // ── view UI ──

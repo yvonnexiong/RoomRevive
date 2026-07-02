@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_bfe4f8581e2896fa SOFTLINE 507
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: bfe4f8581e2896fa
+  catalogKey: bfe4f8581e2896fa
+  brandName: Nobilia
+  productName: SOFTLINE 507
+  subtitle: Designer kitchen
+  emotionalLine: Minimalist aesthetics with an artistic eye-catcher
+  shortDescription: The green niche cladding featuring a mosaic tile design in subtle
+    alpine white makes quite a statement with its minimalist aesthetics. The high-quality
+    equipment with smart Philips Hue lighting ensures just the right mood. The combination
+    of exclusive Xtra Hob hot plate extractor fan in matt black and elegant, marble-look
+    worktop rounds off the sophisticated design to perfection. The anti-fingerprint
+    coating offers yet another benefit, ensuring flawless surfaces for a clean look.
+  productImage: {fileID: 0}
+  specs:
+  - Perfect honed alpine white
+  fromPrice: Price on request
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 507_Perfect_honed_alpine_white.jpg
+  splatWtMaterial: 361_Caspian_grey_marble_reproduction.jpg
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []

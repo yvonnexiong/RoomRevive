@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d55310410b9e943bc78210db30612d, type: 3}
+  m_Name: Product_DA_9092_W_Screen DA 9092 W Screen
+  m_EditorClassIdentifier: Assembly-CSharp::RoomRevive.ProductBrowser.ProductData
+  id: DA_9092_W_Screen
+  catalogKey: DA_9092_W_Screen
+  brandName: Miele
+  productName: DA 9092 W Screen
+  subtitle: "Wall-mounted hood \xB7 SILVER"
+  emotionalLine: with a vertical glass front and particularly flat design for a clear
+    view
+  shortDescription: 
+  productImage: {fileID: 0}
+  specs:
+  - "670 m\xB3/h"
+  - 62 dB
+  - Class B
+  - 67.7 kWh/yr
+  fromPrice: From EUR 1,326
+  splatAsset: {fileID: 0}
+  splatCabMaterial: 
+  splatWtMaterial: 
+  variants: []
+  startsSelectedByDefault: 0
+  pinnedFirst: 0
+  onSelectedAssetEvent:
+    m_PersistentCalls:
+      m_Calls: []
